@@ -45,6 +45,12 @@ namespace Waaang
         public GameObject beamPrefab;
         [Tooltip("누르고 있는 동안 레이저 이펙트를 다시 쏘는 주기(초).")]
         public float beamLoopPeriod = 0.45f;
+        [Tooltip("레이저 굵기. 거리와 상관없이 일정합니다 (이펙트 원본 대비 배율).")]
+        public float beamThickness = 0.12f;
+        [Tooltip("맞은 자리 이펙트 크기 (이펙트 원본 대비 배율).")]
+        public float impactSize = 0.06f;
+        [Tooltip("레이저가 지팡이 끝에서 얼마나 떨어져서 시작할지(m).")]
+        public float beamStartGap = 0.04f;
         [Tooltip("오른손 손가락을 지팡이에 감는 정도.")]
         [Range(0f, 1.5f)] public float fingerCurl = 1f;
 
@@ -83,6 +89,9 @@ namespace Waaang
         const int MaxTrails = 16;
         const int MaxTrailPoints = 512;
         GameObject beamInstance;
+        Transform impactRoot;
+        ParticleSystem[] strokeSystems = new ParticleSystem[0];
+        Vector2[] strokeBaseWidth = new Vector2[0];
         const float AssetBeamLength = 20f;
 
         void Awake()
@@ -117,6 +126,8 @@ namespace Waaang
             // The asset beam lives at the scene root, so a despawned second caster would leave it behind.
             if (beamInstance != null)
                 Destroy(beamInstance);
+            if (impactRoot != null)
+                Destroy(impactRoot.gameObject);
         }
 
         void EnsureAssetBeam()
@@ -136,8 +147,15 @@ namespace Waaang
         // Same treatment as the cutscene beams (CutsceneKit.KlausBeam + Looping): the HCFX beam is a one-shot,
         // so re-fire it every beamLoopPeriod while held, and drop the smoke and dark stroke layers that pile
         // up into mud when it re-fires.
+        //
+        // The layers are also split by job. The stretched strokes (the core on the root, "laser_outer") stay on the
+        // beam and are scaled to its length; the hit layers move to their own object so the impact keeps one size
+        // and lies on the surface that was hit.
         void LoopBeam(GameObject beam)
         {
+            impactRoot = new GameObject("Asset Laser Impact").transform;
+            impactRoot.gameObject.SetActive(false);
+            var strokes = new System.Collections.Generic.List<ParticleSystem>();
             var systems = beam.GetComponentsInChildren<ParticleSystem>(true);
             for (int i = 0; i < systems.Length; i++)
             {
@@ -148,14 +166,37 @@ namespace Waaang
                     system.gameObject.SetActive(false);
                     continue;
                 }
-                bool wasPlaying = system.isPlaying;
                 system.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
                 var main = system.main;
                 main.loop = true;
                 main.duration = beamLoopPeriod;
                 main.playOnAwake = true;
-                if (wasPlaying)
-                    system.Play(false);
+
+                var renderer = system.GetComponent<ParticleSystemRenderer>();
+                if (renderer != null && renderer.renderMode == ParticleSystemRenderMode.Stretch)
+                {
+                    // The core is 22 units long on a 20-unit beam, so it poked 10% of the beam length back past
+                    // the tip into the wand. Trim it to the beam.
+                    // Its -0.05 pivot also pushed it ~1 unit toward the caster; -0.004 (measured with BakeMesh)
+                    // starts it with laser_outer, at the beam start just past the wand tip.
+                    if (main.startSize3D && main.startSizeYMultiplier > AssetBeamLength)
+                    {
+                        main.startSizeYMultiplier = AssetBeamLength;
+                        renderer.pivot = new Vector3(renderer.pivot.x, -0.004f, renderer.pivot.z);
+                    }
+                    strokes.Add(system);
+                }
+                else if (system.gameObject != beam)
+                {
+                    system.transform.SetParent(impactRoot, false);
+                }
+            }
+            strokeSystems = strokes.ToArray();
+            strokeBaseWidth = new Vector2[strokeSystems.Length];
+            for (int i = 0; i < strokeSystems.Length; i++)
+            {
+                var main = strokeSystems[i].main;
+                strokeBaseWidth[i] = new Vector2(main.startSizeXMultiplier, main.startSizeZMultiplier);
             }
         }
 
@@ -229,12 +270,13 @@ namespace Waaang
                 pointerUv.x * Screen.width,
                 pointerUv.y * Screen.height,
                 0f));
+            // The pointer only steers the caster. The laser itself leaves the staff tip along the staff, so it
+            // sweeps with the arms (and their damping) instead of snapping to the pointer.
             Vector3 aimPoint;
-            bool hit = Physics.Raycast(ray, out RaycastHit info, 40f, roomMask, QueryTriggerInteraction.Ignore);
-            if (hit)
+            if (Physics.Raycast(ray, out RaycastHit pointerHit, 40f, roomMask, QueryTriggerInteraction.Ignore))
             {
-                aimPoint = info.point;
-                hitName = info.collider.name;
+                aimPoint = pointerHit.point;
+                hitName = pointerHit.collider.name;
             }
             else
             {
@@ -243,14 +285,8 @@ namespace Waaang
             }
 
             bool firing = IsFiring();
-            if (firing && hit)
-                ExtendTrail(info);
-            else
-                trail = null;
-            wasFiring = firing;
 
-            // The body and staff follow a damped aim so phone jitter does not shake the whole caster;
-            // the beam itself still lands exactly on the pointer.
+            // The body and staff follow a damped aim so phone jitter does not shake the whole caster.
             if (!hasSmoothedAim)
             {
                 smoothedAim = aimPoint;
@@ -266,6 +302,20 @@ namespace Waaang
             else
                 AimStaff(smoothedAim);
 
+            var tip = staff.Find("Staff Tip");
+            Vector3 tipPosition = tip != null ? tip.position : staff.TransformPoint(Vector3.up);
+            Vector3 staffAxis = staff.up;
+            // Start a little past the wand head so the glow never sits on the ornament.
+            Vector3 beamStart = tipPosition + staffAxis * beamStartGap;
+            bool hit = Physics.Raycast(beamStart, staffAxis, out RaycastHit info, 40f, roomMask, QueryTriggerInteraction.Ignore);
+            Vector3 beamEnd = hit ? info.point : beamStart + staffAxis * 40f;
+
+            if (firing && hit)
+                ExtendTrail(info);
+            else
+                trail = null;
+            wasFiring = firing;
+
             if (hitMarker != null)
             {
                 hitMarker.gameObject.SetActive(firing && hit);
@@ -279,18 +329,16 @@ namespace Waaang
                     hitLight.transform.position = info.point + info.normal * lightSurfaceOffset;
             }
 
-            var tip = staff.Find("Staff Tip");
-            Vector3 tipPosition = tip != null ? tip.position : staff.TransformPoint(Vector3.up);
             // SecondCaster assigns beamPrefab after AddComponent, i.e. after Awake already ran.
             if (beamInstance == null && beamPrefab != null)
                 EnsureAssetBeam();
             if (beamInstance != null)
-                UpdateAssetBeam(firing, tipPosition, aimPoint);
+                UpdateAssetBeam(firing, beamStart, beamEnd, hit, hit ? info.normal : -staffAxis);
             else
             {
                 SetBeamActive(firing);
-                SetBeam(aimLine, tipPosition, aimPoint);
-                SetBeam(glowLine, tipPosition, aimPoint);
+                SetBeam(aimLine, beamStart, beamEnd);
+                SetBeam(glowLine, beamStart, beamEnd);
             }
         }
 
@@ -429,24 +477,43 @@ namespace Waaang
             return false;
         }
 
-        void UpdateAssetBeam(bool firing, Vector3 tip, Vector3 aimPoint)
+        void UpdateAssetBeam(bool firing, Vector3 start, Vector3 end, bool hit, Vector3 normal)
         {
             if (aimLine != null)
                 aimLine.enabled = false;
             if (glowLine != null)
                 glowLine.enabled = false;
+            if (impactRoot != null && impactRoot.gameObject.activeSelf != (firing && hit))
+                impactRoot.gameObject.SetActive(firing && hit);
             if (!firing)
             {
                 beamInstance.SetActive(false);
                 return;
             }
-            Vector3 along = tip - aimPoint;
+            Vector3 along = start - end;
             float length = along.magnitude;
             if (length < 0.05f)
                 return;
-            beamInstance.transform.SetPositionAndRotation(
-                aimPoint, Quaternion.FromToRotation(Vector3.up, along / length));
-            beamInstance.transform.localScale = Vector3.one * (length / AssetBeamLength);
+
+            // Impact at the pivot, strokes running AssetBeamLength up local +Y to the staff. The strokes are
+            // stretched billboards: Unity sizes them from the uniform scale only, so scale uniformly to the length
+            // and hand the width back through the start size, keeping the beam equally thick at any distance.
+            float scale = length / AssetBeamLength;
+            beamInstance.transform.SetPositionAndRotation(end, Quaternion.FromToRotation(Vector3.up, along / length));
+            beamInstance.transform.localScale = Vector3.one * scale;
+            float widthFix = Mathf.Clamp(beamThickness / scale, 0.1f, 4f);
+            for (int i = 0; i < strokeSystems.Length; i++)
+            {
+                var main = strokeSystems[i].main;
+                main.startSizeXMultiplier = strokeBaseWidth[i].x * widthFix;
+                main.startSizeZMultiplier = strokeBaseWidth[i].y * widthFix;
+            }
+
+            if (impactRoot != null && hit)
+            {
+                impactRoot.SetPositionAndRotation(end, Quaternion.FromToRotation(Vector3.up, normal));
+                impactRoot.localScale = Vector3.one * impactSize;
+            }
             // Activating restarts the looping systems (playOnAwake), so each press starts a fresh beam.
             if (!beamInstance.activeSelf)
                 beamInstance.SetActive(true);

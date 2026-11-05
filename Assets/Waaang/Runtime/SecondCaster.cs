@@ -75,7 +75,10 @@ namespace Waaang
             copy.aimSharpness = primary.aimSharpness;
             copy.useLeftHand = primary.useLeftHand;
             copy.fingerCurl = primary.fingerCurl;
-            copy.beamLoopPeriod = primary.beamLoopPeriod;        }
+            copy.beamLoopPeriod = primary.beamLoopPeriod;
+            copy.beamThickness = primary.beamThickness;
+            copy.impactSize = primary.impactSize;
+            copy.beamStartGap = primary.beamStartGap;        }
 
         void Despawn()
         {
