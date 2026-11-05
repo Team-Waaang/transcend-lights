@@ -96,7 +96,7 @@ namespace PhonePointer
                 transport=new PointerServerTransport(activeOptions,MaxPhones);
                 Pairing=new PairingInfo { host=address,token=Guid.NewGuid().ToString("N"),tcpPort=transport.TcpPort,udpPort=transport.UdpPort };
                 screenSize=size; displayWidth=Screen.width; displayHeight=Screen.height; wasDisplayValid=DisplayValid;
-                MarkerWidth=Mathf.Min(size.x,size.y)*.72f;
+                MarkerWidth=ScreenMarkerLayout.ReferenceWidthMeters(size,Screen.width,Screen.height);
                 try { log=new DiagnosticLog(Path.Combine(Application.persistentDataPath,"PhonePointerLogs"),"pc"); }
                 catch(Exception e) { Error="Diagnostic file unavailable: "+e.Message; }
                 log?.Add(null,"server",$"Protocol v2 TCP {Pairing.tcpPort} UDP {Pairing.udpPort}");
@@ -292,7 +292,12 @@ namespace PhonePointer
             }
             if(!ok) { s.Diagnostics.RejectedEvents++; log?.Add(s.Session,"inputRejected",m.type+": "+(rejection ?? "Invalid state, snapshot or duplicate event")); }
         }
-        public void Reregister() { if(Screen.fullScreen || Application.isEditor) { displayWidth=Screen.width; displayHeight=Screen.height; } foreach(var s in sessions) Reregister(s,DisconnectReason.None); }
+        public void Reregister()
+        {
+            if(Screen.fullScreen || Application.isEditor) { displayWidth=Screen.width; displayHeight=Screen.height; }
+            MarkerWidth=ScreenMarkerLayout.ReferenceWidthMeters(screenSize,Screen.width,Screen.height);
+            foreach(var s in sessions) Reregister(s,DisconnectReason.None);
+        }
         void Reregister(PhoneSession s,DisconnectReason reason)
         {
             s.Model.BeginRegistration(); s.AwaitingResumePose=false; s.DisconnectReason=reason; s.Diagnostics.LastReason=reason;

@@ -10,6 +10,7 @@ namespace Waaang
         string pairingToken;
         // Players in the running game: the phones it required, or more if more joined during play.
         int expectedPlayers;
+        GUIStyle label;
 
         void Awake()
         {
@@ -56,8 +57,14 @@ namespace Waaang
             // Same places as on the connection screen, so a phone finds the marker where it first registered it.
             var markerRect = new Rect(margin, y, side, side);
             var qrRect = new Rect(Screen.width - margin - side, y, side, side);
+            if (PhonePointer.ScreenMarkerLayout.TryGetRects(Screen.width, Screen.height, out var slab, out _))
+            {
+                markerRect = slab;
+                qrRect = PhonePointer.ScreenMarkerLayout.QrRect(Screen.width, Screen.height);
+            }
 
-            var label = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.UpperCenter };
+            if (label == null)
+                label = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.UpperCenter };
             if (showMarker)
             {
                 if (marker != null)

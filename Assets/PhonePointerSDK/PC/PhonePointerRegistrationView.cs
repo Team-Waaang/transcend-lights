@@ -28,9 +28,11 @@ namespace PhonePointer
                 if(marker==null) { GUI.Label(new Rect(20,20,700,40),"ScreenMarker resource missing. Restore the SDK registration image."); return; }
                 float w=Receiver.MarkerWidth/Receiver.Size.x*Screen.width, h=Receiver.MarkerWidth/Receiver.Size.y*Screen.height;
                 var area=new Rect((Screen.width-w)/2,(Screen.height-h)/2,w,h);
+                bool slabLayout=ScreenMarkerLayout.TryGetRects(Screen.width,Screen.height,out var slab,out _);
+                if(slabLayout) area=slab;
                 GUI.DrawTexture(area,marker,ScaleMode.StretchToFill);
-                GUI.DrawTexture(QrUtility.CombinedQrRect(area),qr,ScaleMode.StretchToFill);
-                GUI.Label(new Rect(20,20,700,40),$"Scan this square and keep it in view / TCP {Receiver.Pairing.tcpPort} / UDP {Receiver.Pairing.udpPort}");
+                GUI.DrawTexture(slabLayout ? ScreenMarkerLayout.QrRect(Screen.width,Screen.height) : QrUtility.CombinedQrRect(area),qr,ScaleMode.StretchToFill);
+                GUI.Label(new Rect(20,20,900,40),$"Scan the QR, then point at the slab / TCP {Receiver.Pairing.tcpPort} / UDP {Receiver.Pairing.udpPort}");
             }
             else if(initial && Receiver.ExpectedPlayersRegistered && !Receiver.ExpectedPlayersCalibrated)
             {
