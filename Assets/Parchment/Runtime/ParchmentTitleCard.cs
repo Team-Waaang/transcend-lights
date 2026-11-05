@@ -56,6 +56,8 @@ namespace AiHackathon.Parchment
         [Tooltip("How long Play() keeps the card open after the text is written.")]
         public float holdDuration = 1.8f;
         public float titleCharInterval = 0.12f;
+        [Tooltip("Fade + rise of the whole card. Closing plays the same motion backwards.")]
+        public float appearDuration = 0.32f;
         public bool useUnscaledTime = true;
 
         [Header("Sound (optional)")]
@@ -189,7 +191,7 @@ namespace AiHackathon.Parchment
         {
             Step();
             float dt = Dt;
-            appearK = Mathf.MoveTowards(appearK, shown ? 1f : 0f, dt / 0.32f);
+            appearK = Mathf.MoveTowards(appearK, shown ? 1f : 0f, dt / Mathf.Max(appearDuration, 1e-4f));
             nameplateK = Mathf.MoveTowards(nameplateK, nameplateOn ? 1f : 0f, dt / 0.28f);
             ornamentK = Mathf.MoveTowards(ornamentK, ornamentOn ? 1f : 0f, dt / 0.45f);
             if (glintK < 1f) glintK = Mathf.Min(1f, glintK + dt / 0.9f);
@@ -281,9 +283,11 @@ namespace AiHackathon.Parchment
             content.alpha = 0f;
             ornamentOn = false;
 
+            // Mirror of opening: there the card starts appearing riseDelay before the unroll, so here it starts
+            // disappearing as many seconds before the roll-up ends as the two overlapped when opening.
             PlayClip(rollUpClip);
-            yield return Tween(0f, closeDuration, EaseInOutCubic);
-            yield return Wait(0.08f);
+            float overlap = Mathf.Clamp(appearDuration - riseDelay, 0f, closeDuration);
+            yield return Tween(0f, closeDuration, EaseInOutCubic, closeDuration - overlap, () => shown = false);
             shown = false;
             while (appearK > 0f) yield return null;
             phase = Phase.Closed;
@@ -308,11 +312,12 @@ namespace AiHackathon.Parchment
             return subtitleReveal.IsWordEnd(i) ? 0.07f : 0.038f;
         }
 
-        IEnumerator Tween(float to, float duration, Func<float, float> ease)
+        IEnumerator Tween(float to, float duration, Func<float, float> ease, float markAt = float.PositiveInfinity, Action mark = null)
         {
             float from = P;
             for (float t = 0f; t < duration; t += Dt)
             {
+                if (mark != null && t >= markAt) { mark(); mark = null; }
                 P = Mathf.LerpUnclamped(from, to, ease(t / duration));
                 Layout(P);
                 yield return null;
@@ -364,8 +369,11 @@ namespace AiHackathon.Parchment
             float cap = d * 0.34f;
             float half = t * (W * 0.5f - D);                           // center → inner edge of each roll
 
-            // Only the paper between the two roll centers is visible.
-            sheetClip.sizeDelta = new Vector2(2f * (half + r), sheetClip.sizeDelta.y);
+            // Show the paper up to a little inside each roll (enough to hide the seam), but never more than the gap
+            // between them: CanvasGroup alpha fades every layer on its own, so paper left under a roll would show
+            // through it while the card fades. Fully rolled up, nothing of the sheet remains.
+            float tuck = Mathf.Min(r * 0.5f, half);
+            sheetClip.sizeDelta = new Vector2(2f * (half + tuck), sheetClip.sizeDelta.y);
 
             float spin = half * spinRatio;                             // the surface turns by the paper it let out
             PlaceRoll(rollL, capL, rollTexL, rollMaskL, -(half + r), spin, d, cap, H);
@@ -388,9 +396,10 @@ namespace AiHackathon.Parchment
         {
             var rt = (RectTransform)transform;
 
-            // Whole card: fade in, rise 26 units and grow from 96 %.
-            float e = shown ? EaseOutBack(appearK, 1.4f) : appearK * appearK * (3f - 2f * appearK);
-            if (group) group.alpha = shown ? Mathf.Clamp01(appearK / 0.7f) : appearK;
+            // Whole card: fade in, rise 26 units and grow from 96 %. appearK runs linearly both ways and the
+            // curves depend only on it, so disappearing is exactly the appearing motion played backwards.
+            float e = EaseOutBack(appearK, 1.4f);
+            if (group) group.alpha = Mathf.Clamp01(appearK / 0.7f);
             rt.anchoredPosition = basePos + new Vector2(0f, -26f * (1f - e));
             rt.localScale = Vector3.one * Mathf.LerpUnclamped(0.96f, 1f, e);
 

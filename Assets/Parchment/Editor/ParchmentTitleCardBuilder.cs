@@ -35,6 +35,11 @@ namespace AiHackathon.Parchment.Editor
         [MenuItem("Tools/Parchment/Build Title Card")]
         internal static void Build()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                Debug.LogError("[Parchment] Exit Play mode before building the title card.");
+                return;
+            }
             EnsureFolder(TexDir);
             var tex = BakeTextures();
             var bold = FontAsset("GowunBatang-Bold");
