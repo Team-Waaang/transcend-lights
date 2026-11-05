@@ -20,7 +20,7 @@ namespace Waaang
         Texture2D qr;
         string pairingToken;
         int expectedPlayers;
-        bool visible, showQr;
+        bool visible, showQr, overGame;
 
         void Awake()
         {
@@ -35,13 +35,16 @@ namespace Waaang
         void Update()
         {
             visible = Receiver && Receiver.Listening && Receiver.Pairing != null;
+            overGame = false;
             if (visible)
             {
                 bool started = Receiver.GameStarted || StartedWith >= 0;
                 showQr = !started ? !Receiver.ExpectedPlayersConnected : AnyConnectionLost();
                 visible = !started || showQr || AnyTrackingLost();
+                // Re-registering mid-game: the stone appears over the game screen instead of the dark chamber.
+                overGame = started && !showQr;
             }
-            if (stage) stage.Present(visible, !showQr);
+            if (stage) stage.Present(visible, !showQr, overGame);
         }
 
         void OnGUI()
@@ -54,6 +57,17 @@ namespace Waaang
                 pairingToken = Receiver.Pairing.token;
             }
             var screen = new Rect(0, 0, Screen.width, Screen.height);
+            if (overGame && stage && stage.View)
+            {
+                // A soft dark halo just behind the stone keeps its outline crisp for the phone's image tracking.
+                if (PhonePointer.ScreenMarkerLayout.TryGetRects(Screen.width, Screen.height, out _, out var reference))
+                {
+                    float halo = Mathf.Max(reference.width, reference.height) * 1.6f;
+                    AiHackathon.Game.GameGui.DrawCentered(AiHackathon.Game.GameGui.Soft, reference.center, halo, new Color(0f, 0f, 0f, 0.75f));
+                }
+                GUI.DrawTexture(screen, stage.View, ScaleMode.StretchToFill, true);
+                return;
+            }
             if (stage && stage.View) GUI.DrawTexture(screen, stage.View, ScaleMode.StretchToFill);
             else Fill(screen, new Color(.008f, .015f, .025f));
             // A faint lift in the middle and darker corners, so the backdrop isn't one flat colour.

@@ -43,7 +43,7 @@ namespace AiHackathon.Game
 
         public static Texture2D Ring => ring != null ? ring : ring = MakeRadial(128, (r, aa) => Mathf.Clamp01((0.98f - r) / aa) * Mathf.Clamp01((r - 0.86f) / aa));
         /// <summary>Bolder ring for the crosshair.</summary>
-        public static Texture2D ThickRing => thickRing != null ? thickRing : thickRing = MakeRadial(128, (r, aa) => Mathf.Clamp01((0.98f - r) / aa) * Mathf.Clamp01((r - 0.76f) / aa));
+        public static Texture2D ThickRing => thickRing != null ? thickRing : thickRing = MakeRadial(128, (r, aa) => Mathf.Clamp01((0.98f - r) / aa) * Mathf.Clamp01((r - 0.68f) / aa));
         public static Texture2D Disc => disc != null ? disc : disc = MakeRadial(64, (r, aa) => Mathf.Clamp01((1f - r) / aa));
         /// <summary>Soft glow blob.</summary>
         public static Texture2D Soft => soft != null ? soft : soft = MakeRadial(64, (r, aa) => Mathf.Pow(Mathf.Clamp01(1f - r), 2f));
@@ -304,8 +304,8 @@ namespace AiHackathon.Game
         {
             float x = uv.x * Screen.width, y = (1f - uv.y) * Screen.height;
             var c = new Vector2(x, y);
-            float t = Mathf.Max(3f, 5f * Scale);   // arm thickness
-            float o = Mathf.Max(1f, 1.5f * Scale); // dark outline so it reads on bright backgrounds
+            float t = Mathf.Max(4f, 7f * Scale);   // arm thickness
+            float o = Mathf.Max(1.5f, 2f * Scale); // dark outline so it reads on bright backgrounds
             var dark = new Color(0f, 0f, 0f, color.a * 0.6f);
             DrawCentered(Soft, c, size * 1.3f, new Color(color.r, color.g, color.b, color.a * 0.4f));
             // Outline pass, then the colored pass on top.

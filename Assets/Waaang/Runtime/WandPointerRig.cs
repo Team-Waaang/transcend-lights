@@ -1009,7 +1009,7 @@ namespace Waaang
             float y = (1f - pointerUv.y) * Screen.height;
             var color = phoneSlot == 0 ? new Color(1f, 0.82f, 0.3f, 1f) : new Color(0.45f, 0.75f, 1f, 1f);
             // Tightens and brightens while firing.
-            float size = (Firing ? 44f : 54f) * AiHackathon.Game.GameGui.Scale;
+            float size = (Firing ? 54f : 66f) * AiHackathon.Game.GameGui.Scale;
             if (!Firing) color.a = 0.9f;
             AiHackathon.Game.GameGui.Crosshair(pointerUv, color, size);
             if (showHitLabel && !string.IsNullOrEmpty(hitName))

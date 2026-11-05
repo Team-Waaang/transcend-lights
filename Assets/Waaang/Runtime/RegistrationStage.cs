@@ -37,7 +37,7 @@ namespace Waaang
             stageCamera.orthographicSize = 4.5f;
             stageCamera.nearClipPlane = .1f; stageCamera.farClipPlane = 40f;
             stageCamera.clearFlags = CameraClearFlags.SolidColor;
-            stageCamera.backgroundColor = new Color(.008f, .015f, .025f);
+            stageCamera.backgroundColor = Backdrop;
             stageCamera.cullingMask = 1 << StageLayer;
             stageCamera.allowHDR = false; stageCamera.allowMSAA = true;
 
@@ -57,10 +57,14 @@ namespace Waaang
             Resize();
         }
 
-        public void Present(bool visible, bool marker)
+        static readonly Color Backdrop = new Color(.008f, .015f, .025f, 1f);
+
+        /// <param name="overGame">Clear to transparent so only the stone is drawn over the running game.</param>
+        public void Present(bool visible, bool marker, bool overGame = false)
         {
             Build();
             if (!world) return;
+            stageCamera.backgroundColor = overGame ? new Color(Backdrop.r, Backdrop.g, Backdrop.b, 0f) : Backdrop;
             world.SetActive(visible);
             if (!visible) { stoneVisible = false; return; }
             Resize();
@@ -91,7 +95,8 @@ namespace Waaang
             lastWidth = Screen.width; lastHeight = Screen.height;
             if (target) { stageCamera.targetTexture = null; target.Release(); Destroy(target); }
             float ratio = Mathf.Min(1f, 1920f / Mathf.Max(Screen.width, Screen.height));
-            target = new RenderTexture(Mathf.Max(1, Mathf.RoundToInt(Screen.width * ratio)), Mathf.Max(1, Mathf.RoundToInt(Screen.height * ratio)), 24);
+            // ARGB32 keeps the alpha channel, so the stone can be laid over the game (Present overGame).
+            target = new RenderTexture(Mathf.Max(1, Mathf.RoundToInt(Screen.width * ratio)), Mathf.Max(1, Mathf.RoundToInt(Screen.height * ratio)), 24, RenderTextureFormat.ARGB32);
             target.name = "Registration Chamber"; target.antiAliasing = 4; target.Create();
             stageCamera.targetTexture = target;
             stageCamera.aspect = (float)Screen.width / Screen.height;
