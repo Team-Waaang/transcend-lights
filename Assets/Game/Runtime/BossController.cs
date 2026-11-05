@@ -304,6 +304,7 @@ namespace AiHackathon.Game
         IEnumerator Volley(int count, Tuning t, bool fromAbove)
         {
             Message?.Invoke(fromAbove ? "저주의 비! 전부 쏴서 떨어뜨려!" : "저주 구슬! 레이저로 쏴서 막아!");
+            Voice.Boss(VoiceLine.BossSkill);
             Play(fromAbove ? "Summon" : "Cast", 0.2f, fromAbove ? 0.4f : 0.5f);
             if (castFx != null && wandTip != null)
             {
@@ -373,6 +374,7 @@ namespace AiHackathon.Game
             yield return new WaitForSeconds(0.35f);
             wardMax = wardHp = t.wardHp;
             if (ward != null) ward.Raise();
+            Voice.Boss(VoiceLine.BossShield);
             float end = Time.time + t.wardTime;
             while (Time.time < end && wardHp > 0f) yield return null;
             if (wardHp <= 0f)

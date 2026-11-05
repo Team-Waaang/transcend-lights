@@ -60,6 +60,10 @@ namespace AiHackathon.Game
         public float resonanceMultiplier = 1.5f;
         [Tooltip("HP the boss gets back when a curse orb reaches the players.")]
         public float orbHeal = 4f;
+        [Tooltip("Orbs landing within 0.8 s that count as a heavy hit (Amelia's long cry).")]
+        public int heavyHits = 3;
+        [Tooltip("Seconds between two hurt voice lines.")]
+        public float hurtCooldown = 3f;
         [Tooltip("Dev keys: F1 = to the phase 2 cutscene, F2 = to the defeat cutscene.")]
         public bool devKeys = true;
 
@@ -137,6 +141,7 @@ namespace AiHackathon.Game
             Say("2페이즈! 저주가 더 거세진다!");
             boss.HealCap = phase2At;
             boss.Begin(2);
+            Voice.Boss(VoiceLine.BossPhase2, true);
             while (boss.Hp > defeatAt) yield return null;
             boss.Hp = defeatAt;
             yield return EndPhase();
@@ -252,11 +257,35 @@ namespace AiHackathon.Game
             shake = Mathf.Max(shake, 0.12f);
             flash = 0.45f;
             Say("저주에 맞았다! 보스가 회복한다");
+            hitsLanded++;
+            if (!hurtVoicePending) StartCoroutine(HurtVoice());
             foreach (var p in game.players)
             {
                 var motion = p.character != null ? p.character.GetComponent<CasterMotion>() : null;
                 if (motion != null) motion.Flinch(0.9f);
             }
+        }
+
+        int hitsLanded;
+        bool hurtVoicePending;
+        float hurtVoiceAt = -10f;
+
+        /// <summary>
+        /// Gathers the orbs that land within 0.8 s: one or two get Amelia's short cry, a pile-up
+        /// (<see cref="heavyHits"/> or more) her long one; Kaela answers after her. At most once per <see cref="hurtCooldown"/>.
+        /// </summary>
+        IEnumerator HurtVoice()
+        {
+            hurtVoicePending = true;
+            yield return new WaitForSecondsRealtime(0.8f);
+            int n = hitsLanded;
+            hitsLanded = 0;
+            hurtVoicePending = false;
+            if (Time.unscaledTime - hurtVoiceAt < hurtCooldown || !boss.Fighting) yield break;
+            hurtVoiceAt = Time.unscaledTime;
+            Voice.Say(n >= heavyHits ? VoiceLine.AmeliaHurt : VoiceLine.AmeliaHurtShort, 1f);
+            // Kaela answers after Amelia's cry, even the long one.
+            Voice.Say(VoiceLine.NoxHurt, 8f);
         }
 
         void OnWardBroken()

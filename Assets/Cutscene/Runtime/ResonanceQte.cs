@@ -52,6 +52,11 @@ namespace AiHackathon.Cutscene
         public Light resonanceLight;
         public float tapShake = 0.9f;
 
+        [Header("Voice")]
+        public bool voices = true;
+        [Tooltip("Timeline second the boss is blasted (after the ultimate): his defeat line, then Amelia's.")]
+        public float defeatVoiceAt = 17.65f;
+
         [Header("HUD")]
         public Font titleFont;
         public Font bodyFont;
@@ -103,6 +108,7 @@ namespace AiHackathon.Cutscene
             }
 
             UpdateTarget();
+            UpdateVoices(t);
             if (Current == State.Waiting && t >= loopStart && t < loopEnd) Begin();
             if (Current != State.Live) return;
 
@@ -139,6 +145,8 @@ namespace AiHackathon.Cutscene
             {
                 Current = State.Success;
                 director.time = ultimateAt;
+                lastVoiceTime = ultimateAt;
+                if (voices) { Voice.ClearQueue(); Voice.Say(VoiceLine.UltimateBeam, 1f); }
                 onSuccess.Invoke();
                 return;
             }
@@ -149,6 +157,30 @@ namespace AiHackathon.Cutscene
                 retryMessage = Time.unscaledTime;
                 retries++;
                 for (int i = 0; i < 2; i++) gauge[i] *= 0.5f;
+            }
+        }
+
+        double lastVoiceTime = -1;
+        bool saidPreUltimate, saidDefeat;
+
+        // Timeline cues: Kaela's pre-ultimate line as the resonance intro starts; after the ultimate (its shout is
+        // played on success) the boss's defeat line at the blast, then Amelia's. A skip past a cue drops it.
+        void UpdateVoices(double t)
+        {
+            double prev = lastVoiceTime;
+            lastVoiceTime = t;
+            if (!voices || prev < 0) return;
+            if (!saidPreUltimate && Current != State.Success && prev < introAt && t >= introAt)
+            {
+                saidPreUltimate = true;
+                Voice.Say(VoiceLine.NoxPreUltimate, 2f);
+            }
+            if (!saidDefeat && Current == State.Success && prev < defeatVoiceAt && t >= defeatVoiceAt)
+            {
+                saidDefeat = true;
+                if (t - prev > 0.5) return;
+                Voice.Say(VoiceLine.BossDefeat, 4f);
+                Voice.Say(VoiceLine.AmeliaBossDown, 8f);
             }
         }
 

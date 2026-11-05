@@ -27,6 +27,9 @@ namespace AiHackathon.Game
         [Tooltip("Seconds the clear screen stays before the next period loads (PeriodFlow). Negative: stay.")]
         public float advanceAfter = 4f;
 
+        [Tooltip("Period 2 lines: opening, searching, kills, Kaela's 2교시 강화 on clear.")]
+        public bool voices = true;
+
         public UnityEvent onCleared = new UnityEvent();
         public bool Cleared { get; private set; }
 
@@ -52,6 +55,14 @@ namespace AiHackathon.Game
                 started = true;
                 foreach (var c in creatures) if (c != null) c.Wake();
                 Say("빛을 비춰 찾아요!");
+                if (voices)
+                {
+                    // Opening lines, then both start searching: Amelia first each time.
+                    Voice.Say(VoiceLine.AmeliaPeriod2, 10f);
+                    Voice.Say(VoiceLine.NoxPeriod2, 15f);
+                    Voice.Say(VoiceLine.AmeliaSearch, 20f);
+                    Voice.Say(VoiceLine.NoxSearch, 25f);
+                }
             }
 
             foreach (var c in creatures)
@@ -97,15 +108,24 @@ namespace AiHackathon.Game
             {
                 scores[c.LastLighter]++;
                 if (c.LastLighter < scoredAt.Length) scoredAt[c.LastLighter] = Time.unscaledTime;
+                if (voices && left > 0) SayKill(c.LastLighter, scores[c.LastLighter]);
             }
             if (left <= 0)
             {
                 Cleared = true;
                 clearedAt = Time.unscaledTime;
+                if (voices) { Voice.ClearQueue(); Voice.Say(VoiceLine.NoxBoost2, 8f); }
                 onCleared.Invoke();
                 if (advanceAfter >= 0f) StartCoroutine(Advance());
             }
             else Say(left == 1 ? "마지막 하나!" : "석화! 남은 " + left);
+        }
+
+        // Player 0 is Amelia, 1 Kaela. Her second creature is the streak line; Amelia calls her skill on the others.
+        static void SayKill(int who, int count)
+        {
+            if (count == 2) Voice.Say(who == 0 ? VoiceLine.AmeliaCombo : VoiceLine.NoxCombo, 6f);
+            else if (who == 0) Voice.Say(VoiceLine.AmeliaSkill, 3f);
         }
 
         float clearedAt = -10f;

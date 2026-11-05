@@ -51,6 +51,12 @@ namespace AiHackathon.Game
         [Tooltip("Stone brightness while the rune is hidden (1 = unchanged). Hides the painted rune in the dark.")]
         [Range(0f, 1f)] public float darkShade = 1f;
 
+        [Header("Voice")]
+        [Tooltip("Period 1 lines: Amelia / Kaela at the start and on every judgement.")]
+        public bool voices = true;
+        [Tooltip("Kaela's 1교시 강화 line when every lane is done.")]
+        public bool clearVoice = true;
+
         public UnityEvent onCleared = new UnityEvent();
         public bool Cleared { get; private set; }
 
@@ -69,6 +75,11 @@ namespace AiHackathon.Game
             if (!started)
             {
                 started = true;
+                if (voices)
+                {
+                    Voice.Say(VoiceLine.AmeliaCalm, 10f);
+                    Voice.Say(VoiceLine.NoxRune, 15f);
+                }
                 if (memory)
                     for (int i = 0; i < lanes.Length; i++) StartCoroutine(Show(i, showSeconds, false));
             }
@@ -100,6 +111,7 @@ namespace AiHackathon.Game
             var trace = lane.stone.trace;
             bool ok = trace.Finish();
             if (memory && ok) lane.stone.shade = 1f;
+            if (voices) SayJudgement(i, ok);
             lane.message = ok ? "성공!" : "다시!";
             lane.messageTime = Time.time;
             yield return new WaitForSeconds(0.35f);
@@ -150,6 +162,15 @@ namespace AiHackathon.Game
             lane.showing = false;
         }
 
+        int ameliaFails;
+
+        // Lane 0 is Amelia, lane 1 Kaela. Amelia's two failure lines take turns.
+        void SayJudgement(int i, bool ok)
+        {
+            if (i == 0) Voice.Say(ok ? VoiceLine.AmeliaRuneOk : ameliaFails++ % 2 == 0 ? VoiceLine.AmeliaRuneFail1 : VoiceLine.AmeliaRuneFail2);
+            else if (i == 1) Voice.Say(ok ? VoiceLine.NoxRuneOk : VoiceLine.NoxRuneFail);
+        }
+
         float clearedAt = -10f;
 
         IEnumerator Advance()
@@ -163,6 +184,7 @@ namespace AiHackathon.Game
             foreach (var lane in lanes) if (!lane.done) return;
             Cleared = true;
             clearedAt = Time.unscaledTime;
+            if (voices && clearVoice) { Voice.ClearQueue(); Voice.Say(VoiceLine.NoxBoost1, 8f); }
             onCleared.Invoke();
             if (advanceAfter >= 0f) StartCoroutine(Advance());
         }

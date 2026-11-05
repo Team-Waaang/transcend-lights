@@ -192,6 +192,7 @@ namespace AiHackathon.Cutscene.Editor
             qte.loopStart = TQteLoop;
             qte.loopEnd = TQteEnd;
             qte.ultimateAt = TUlt;
+            qte.defeatVoiceAt = TBlast;
             qte.clash = fx.transform.Find("Clash");
             qte.names = new[] { ameliaProfile.displayName, noxProfile.displayName };
             qte.colors = new[] { ameliaProfile.playerColor, noxProfile.playerColor };

@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c83566fdf6cd715469923abc206ca553, type: 3}
+  m_Name: VoiceBank
+  m_EditorClassIdentifier: Assembly-CSharp::AiHackathon.Game.VoiceBank
+  masterVolume: 1
+  gap: 0.15
+  entries:
+  - line: 0
+    clip: {fileID: 8300000, guid: fc064848c3fc2405a8d6c8c5300e9b8c, type: 3}
+    volume: 1
+  - line: 1
+    clip: {fileID: 8300000, guid: c11d63f301310481281229088c268d90, type: 3}
+    volume: 1
+  - line: 2
+    clip: {fileID: 8300000, guid: 7d9effadf86a845a98e4ee408dfb4f43, type: 3}
+    volume: 1
+  - line: 3
+    clip: {fileID: 8300000, guid: 1993832d306b4480699c88bb117d0db6, type: 3}
+    volume: 1
+  - line: 4
+    clip: {fileID: 8300000, guid: cba1b41eaa5ce41629404f4b52303df5, type: 3}
+    volume: 1
+  - line: 5
+    clip: {fileID: 8300000, guid: 909ebfa435e4949a5ba3652296dfa38a, type: 3}
+    volume: 1
+  - line: 6
+    clip: {fileID: 8300000, guid: 7b8cf573dbf8e452397acbaf4781f1a5, type: 3}
+    volume: 1
+  - line: 7
+    clip: {fileID: 8300000, guid: fccd826cc6a9c4fbf896b6b7d8c9dcf2, type: 3}
+    volume: 1
+  - line: 8
+    clip: {fileID: 8300000, guid: 390f1fc40dc3e44118c890a3f7d2facc, type: 3}
+    volume: 1
+  - line: 9
+    clip: {fileID: 8300000, guid: 4e9669e6a400047c4b6c0157664e1353, type: 3}
+    volume: 1
+  - line: 10
+    clip: {fileID: 8300000, guid: 29d99115e6a37458b88e224cf4746d57, type: 3}
+    volume: 1
+  - line: 11
+    clip: {fileID: 8300000, guid: c914b1fead9cd4102b8731015b323e7a, type: 3}
+    volume: 1
+  - line: 12
+    clip: {fileID: 8300000, guid: 7e9f4eb24efaf4a5daf70eefea081546, type: 3}
+    volume: 1
+  - line: 13
+    clip: {fileID: 8300000, guid: e184bbb42dc15428091dcd97a2070652, type: 3}
+    volume: 1
+  - line: 14
+    clip: {fileID: 8300000, guid: 600f4e14ed7e64eb493b94f29bde8e0d, type: 3}
+    volume: 1
+  - line: 15
+    clip: {fileID: 8300000, guid: 71a2efc96fa0d40c08f76df00a26e9c2, type: 3}
+    volume: 1
+  - line: 16
+    clip: {fileID: 8300000, guid: 0814452acc2e043c5b36de9abd2e69bc, type: 3}
+    volume: 1
+  - line: 17
+    clip: {fileID: 8300000, guid: c10114b3846274e26bc940dcb1b4fede, type: 3}
+    volume: 1
+  - line: 18
+    clip: {fileID: 8300000, guid: a5c15d212667c4616a4e1d736eadf6e0, type: 3}
+    volume: 1
+  - line: 19
+    clip: {fileID: 8300000, guid: 3cbfc7d2a3c674c38b37d10aee431679, type: 3}
+    volume: 1
+  - line: 20
+    clip: {fileID: 8300000, guid: 53c42b103f61f4da889e27c0cd5038ce, type: 3}
+    volume: 1
+  - line: 21
+    clip: {fileID: 8300000, guid: d431e59ab25d74765a784289b3d087f0, type: 3}
+    volume: 1
+  - line: 22
+    clip: {fileID: 8300000, guid: 99acf348401a84accaf4dff0436ab608, type: 3}
+    volume: 1
+  - line: 23
+    clip: {fileID: 8300000, guid: 13fc77d4801b747e1bb62e2bbf4a5ce8, type: 3}
+    volume: 1
+  - line: 24
+    clip: {fileID: 8300000, guid: ab365db2589af4ec2ab7572f61927807, type: 3}
+    volume: 1
+  - line: 25
+    clip: {fileID: 8300000, guid: 0e489bbe0d52e44cabfbec291189f091, type: 3}
+    volume: 1
