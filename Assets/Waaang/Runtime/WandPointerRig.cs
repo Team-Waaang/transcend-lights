@@ -43,6 +43,26 @@ namespace Waaang
         [Tooltip("켜면 왼손도 지팡이를 잡습니다.")]
         public bool useLeftHand = true;
         public GameObject beamPrefab;
+        [Tooltip("누르고 있는 동안 레이저 이펙트를 다시 쏘는 주기(초).")]
+        public float beamLoopPeriod = 0.45f;
+        [Tooltip("레이저 굵기. 거리와 상관없이 일정합니다 (이펙트 원본 대비 배율).")]
+        public float beamThickness = 0.12f;
+        [Tooltip("맞은 자리 이펙트 크기 (이펙트 원본 대비 배율).")]
+        public float impactSize = 0.06f;
+        [Tooltip("레이저가 지팡이 끝에서 얼마나 떨어져서 시작할지(m).")]
+        public float beamStartGap = 0.04f;
+        [Tooltip("레이저 이펙트 색. 알파가 0이면 원본 색을 씁니다.")]
+        public Color beamTint = new Color(0f, 0f, 0f, 0f);
+        [Tooltip("벽에 남는 흔적 색 (HDR).")]
+        [ColorUsage(false, true)] public Color trailColor = new Color(1.5f, 0.78f, 0.28f, 1f);
+        [Tooltip("오른손이 지팡이를 잡는 위치. 0=손잡이 끝, 1=지팡이 끝. 클수록 지팡이가 뒤로 들어갑니다.")]
+        [Range(0.05f, 0.7f)] public float gripAlongStaff = 0.32f;
+        [Tooltip("손을 어깨 높이에서 얼마나 내려 쥘지(m). 지팡이 뒤끝이 머리에 걸리지 않게 합니다.")]
+        public float holdDrop = 0.16f;
+        [Tooltip("손을 몸 바깥으로 얼마나 빼서 쥘지(m).")]
+        public float holdSide = 0.06f;
+        [Tooltip("켜면 왼손이 앞손이 되어 지팡이를 몸 왼쪽에서 잡습니다.")]
+        public bool leftHanded;
         [Tooltip("오른손 손가락을 지팡이에 감는 정도.")]
         [Range(0f, 1.5f)] public float fingerCurl = 1f;
 
@@ -79,7 +99,11 @@ namespace Waaang
         Vector3 lastTrailPoint;
         bool trailHasPoint;
         const int MaxTrails = 16;
+        const int MaxTrailPoints = 512;
         GameObject beamInstance;
+        Transform impactRoot;
+        ParticleSystem[] strokeSystems = new ParticleSystem[0];
+        Vector2[] strokeBaseWidth = new Vector2[0];
         const float AssetBeamLength = 20f;
 
         void Awake()
@@ -109,6 +133,61 @@ namespace Waaang
             ToonLook.ApplyScene();
         }
 
+        // Recolour one layer to tint, keeping each layer's own alpha and fades (CutsceneKit.Tint).
+        static void Tint(ParticleSystem system, Color tint)
+        {
+            var main = system.main;
+            var start = main.startColor;
+            Color c = start.mode == ParticleSystemGradientMode.Color ? start.color : start.colorMax;
+            main.startColor = new Color(tint.r, tint.g, tint.b, c.a);
+            var overLife = system.colorOverLifetime;
+            if (overLife.enabled && overLife.color.mode == ParticleSystemGradientMode.Gradient && overLife.color.gradient != null)
+            {
+                var gradient = overLife.color.gradient;
+                var colorKeys = gradient.colorKeys;
+                for (int i = 0; i < colorKeys.Length; i++)
+                    colorKeys[i].color = Color.white;
+                var recoloured = new Gradient();
+                recoloured.SetKeys(colorKeys, gradient.alphaKeys);
+                overLife.color = recoloured;
+            }
+        }
+
+        // Slide the staff back through the hands: the right grip sits gripAlongStaff of the way from the butt to
+        // the tip, so more of the shaft is behind the hands and less sticks out in front.
+        void PlaceGrip()
+        {
+            if (staff == null || rightGrip == null)
+                return;
+            var tip = staff.Find("Staff Tip");
+            if (tip != null)
+                rightGrip.localPosition = tip.localPosition * gripAlongStaff;
+        }
+
+        // A second caster is switched off when its phone leaves: hide everything it drew outside its own object.
+        void OnDisable()
+        {
+            trail = null;
+            if (beamInstance != null)
+                beamInstance.SetActive(false);
+            if (impactRoot != null)
+                impactRoot.gameObject.SetActive(false);
+            if (hitMarker != null)
+                hitMarker.gameObject.SetActive(false);
+            if (hitLight != null)
+                hitLight.enabled = false;
+            SetBeamActive(false);
+        }
+
+        void OnDestroy()
+        {
+            // The asset beam lives at the scene root, so a despawned second caster would leave it behind.
+            if (beamInstance != null)
+                Destroy(beamInstance);
+            if (impactRoot != null)
+                Destroy(impactRoot.gameObject);
+        }
+
         void EnsureAssetBeam()
         {
             if (beamInstance != null)
@@ -119,26 +198,91 @@ namespace Waaang
                 return;
             beamInstance = Instantiate(beamPrefab);
             beamInstance.name = "Asset Laser";
+            LoopBeam(beamInstance);
             beamInstance.SetActive(false);
         }
 
+        // Same treatment as the cutscene beams (CutsceneKit.KlausBeam + Looping): the HCFX beam is a one-shot,
+        // so re-fire it every beamLoopPeriod while held, and drop the smoke and dark stroke layers that pile
+        // up into mud when it re-fires.
+        //
+        // The layers are also split by job. The stretched strokes (the core on the root, "laser_outer") stay on the
+        // beam and are scaled to its length; the hit layers move to their own object so the impact keeps one size
+        // and lies on the surface that was hit.
+        void LoopBeam(GameObject beam)
+        {
+            impactRoot = new GameObject("Asset Laser Impact").transform;
+            impactRoot.gameObject.SetActive(false);
+            var strokes = new System.Collections.Generic.List<ParticleSystem>();
+            var systems = beam.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < systems.Length; i++)
+            {
+                var system = systems[i];
+                string layer = system.name;
+                if (layer == "smoke_up" || layer == "hit_smoke" || layer == "laser_black")
+                {
+                    system.gameObject.SetActive(false);
+                    continue;
+                }
+                system.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                var main = system.main;
+                if (beamTint.a > 0f)
+                    Tint(system, beamTint);
+                main.loop = true;
+                main.duration = beamLoopPeriod;
+                main.playOnAwake = true;
+
+                var renderer = system.GetComponent<ParticleSystemRenderer>();
+                if (renderer != null && renderer.renderMode == ParticleSystemRenderMode.Stretch)
+                {
+                    // The core is 22 units long on a 20-unit beam, so it poked 10% of the beam length back past
+                    // the tip into the wand. Trim it to the beam.
+                    // Its -0.05 pivot also pushed it ~1 unit toward the caster; -0.004 (measured with BakeMesh)
+                    // starts it with laser_outer, at the beam start just past the wand tip.
+                    if (main.startSize3D && main.startSizeYMultiplier > AssetBeamLength)
+                    {
+                        main.startSizeYMultiplier = AssetBeamLength;
+                        renderer.pivot = new Vector3(renderer.pivot.x, -0.004f, renderer.pivot.z);
+                    }
+                    strokes.Add(system);
+                }
+                else if (system.gameObject != beam)
+                {
+                    system.transform.SetParent(impactRoot, false);
+                }
+            }
+            strokeSystems = strokes.ToArray();
+            strokeBaseWidth = new Vector2[strokeSystems.Length];
+            for (int i = 0; i < strokeSystems.Length; i++)
+            {
+                var main = strokeSystems[i].main;
+                strokeBaseWidth[i] = new Vector2(main.startSizeXMultiplier, main.startSizeZMultiplier);
+            }
+        }
+
         // Also called later when character is assigned after AddComponent (SecondCaster).
+        //
+        // "right*" bones and rightGrip are the lead arm (the hand nearer the tip, fingers curled round the shaft) and
+        // "left*" the support arm. For a left-handed caster those are the left and right arms respectively.
         void BindBones()
         {
             boundCharacter = character;
-            rightUpper = FindBone("Right_UpperArm");
-            rightLower = FindBone("Right_LowerArm");
-            rightHand = FindBone("Right_Hand");
-            leftUpper = FindBone("Left_UpperArm");
-            leftLower = FindBone("Left_LowerArm");
-            leftHand = FindBone("Left_Hand");
+            PlaceGrip();
+            string lead = leftHanded ? "Left_" : "Right_";
+            string support = leftHanded ? "Right_" : "Left_";
+            rightUpper = FindBone(lead + "UpperArm");
+            rightLower = FindBone(lead + "LowerArm");
+            rightHand = FindBone(lead + "Hand");
+            leftUpper = FindBone(support + "UpperArm");
+            leftLower = FindBone(support + "LowerArm");
+            leftHand = FindBone(support + "Hand");
             spine = FindBone("Spine");
             chest = FindBone("Chest");
             upperChest = FindBone("UpperChest");
             head = FindBone("Head");
-            var middle = FindBone("Right_MiddleProximal");
-            var index = FindBone("Right_IndexProximal");
-            var pinky = FindBone("Right_PinkyProximal");
+            var middle = FindBone(lead + "MiddleProximal");
+            var index = FindBone(lead + "IndexProximal");
+            var pinky = FindBone(lead + "PinkyProximal");
             if (rightHand != null && middle != null)
                 handLength = Vector3.Distance(rightHand.position, middle.position);
             if (rightUpper != null && rightLower != null && rightHand != null)
@@ -149,16 +293,17 @@ namespace Waaang
                 Quaternion toLocal = Quaternion.Inverse(rightHand.rotation);
                 fingerLocal = (toLocal * (middle.position - rightHand.position)).normalized;
                 acrossLocal = Vector3.ProjectOnPlane(toLocal * (index.position - pinky.position), fingerLocal).normalized;
-                palmLocal = Vector3.Cross(fingerLocal, acrossLocal);
+                // A left hand is a mirror image, so the same cross product points out of its back instead.
+                palmLocal = Vector3.Cross(fingerLocal, acrossLocal) * (leftHanded ? -1f : 1f);
             }
             fingerBones = new Transform[FingerNames.Length * JointNames.Length];
             for (int f = 0; f < FingerNames.Length; f++)
                 for (int j = 0; j < JointNames.Length; j++)
-                    fingerBones[f * JointNames.Length + j] = FindBone("Right_" + FingerNames[f] + JointNames[j]);
+                    fingerBones[f * JointNames.Length + j] = FindBone(lead + FingerNames[f] + JointNames[j]);
             fingerRest = new Quaternion[fingerBones.Length];
             for (int i = 0; i < fingerBones.Length; i++)
                 fingerRest[i] = fingerBones[i] != null ? fingerBones[i].localRotation : Quaternion.identity;
-            thumb = FindBone("Right_ThumbProximal");
+            thumb = FindBone(lead + "ThumbProximal");
             thumbRest = thumb != null ? thumb.localRotation : Quaternion.identity;
             twistBones = new[] { spine, chest, upperChest, head, rightUpper, rightLower, rightHand, leftUpper, leftLower, leftHand };
             restRotations = new Quaternion[twistBones.Length];
@@ -192,12 +337,13 @@ namespace Waaang
                 pointerUv.x * Screen.width,
                 pointerUv.y * Screen.height,
                 0f));
+            // The pointer only steers the caster. The laser itself leaves the staff tip along the staff, so it
+            // sweeps with the arms (and their damping) instead of snapping to the pointer.
             Vector3 aimPoint;
-            bool hit = Physics.Raycast(ray, out RaycastHit info, 40f, roomMask, QueryTriggerInteraction.Ignore);
-            if (hit)
+            if (Physics.Raycast(ray, out RaycastHit pointerHit, 40f, roomMask, QueryTriggerInteraction.Ignore))
             {
-                aimPoint = info.point;
-                hitName = info.collider.name;
+                aimPoint = pointerHit.point;
+                hitName = pointerHit.collider.name;
             }
             else
             {
@@ -206,14 +352,8 @@ namespace Waaang
             }
 
             bool firing = IsFiring();
-            if (firing && hit)
-                ExtendTrail(info);
-            else
-                trail = null;
-            wasFiring = firing;
 
-            // The body and staff follow a damped aim so phone jitter does not shake the whole caster;
-            // the beam itself still lands exactly on the pointer.
+            // The body and staff follow a damped aim so phone jitter does not shake the whole caster.
             if (!hasSmoothedAim)
             {
                 smoothedAim = aimPoint;
@@ -229,6 +369,20 @@ namespace Waaang
             else
                 AimStaff(smoothedAim);
 
+            var tip = staff.Find("Staff Tip");
+            Vector3 tipPosition = tip != null ? tip.position : staff.TransformPoint(Vector3.up);
+            Vector3 staffAxis = staff.up;
+            // Start a little past the wand head so the glow never sits on the ornament.
+            Vector3 beamStart = tipPosition + staffAxis * beamStartGap;
+            bool hit = Physics.Raycast(beamStart, staffAxis, out RaycastHit info, 40f, roomMask, QueryTriggerInteraction.Ignore);
+            Vector3 beamEnd = hit ? info.point : beamStart + staffAxis * 40f;
+
+            if (firing && hit)
+                ExtendTrail(info);
+            else
+                trail = null;
+            wasFiring = firing;
+
             if (hitMarker != null)
             {
                 hitMarker.gameObject.SetActive(firing && hit);
@@ -242,15 +396,16 @@ namespace Waaang
                     hitLight.transform.position = info.point + info.normal * lightSurfaceOffset;
             }
 
-            var tip = staff.Find("Staff Tip");
-            Vector3 tipPosition = tip != null ? tip.position : staff.TransformPoint(Vector3.up);
+            // SecondCaster assigns beamPrefab after AddComponent, i.e. after Awake already ran.
+            if (beamInstance == null && beamPrefab != null)
+                EnsureAssetBeam();
             if (beamInstance != null)
-                UpdateAssetBeam(firing, tipPosition, aimPoint);
+                UpdateAssetBeam(firing, beamStart, beamEnd, hit, hit ? info.normal : -staffAxis);
             else
             {
                 SetBeamActive(firing);
-                SetBeam(aimLine, tipPosition, aimPoint);
-                SetBeam(glowLine, tipPosition, aimPoint);
+                SetBeam(aimLine, beamStart, beamEnd);
+                SetBeam(glowLine, beamStart, beamEnd);
             }
         }
 
@@ -285,7 +440,8 @@ namespace Waaang
 
             // Both arms reach straight toward the pointer. The right hand is nearer the tip, the left hand behind it on the shaft.
             Vector3 bodyForward = Quaternion.AngleAxis(bodyYaw, up) * character.forward;
-            Vector3 bodyRight = Vector3.Cross(up, bodyForward);
+            // "Outward" from the lead shoulder: right for a right-handed caster, left for a left-handed one.
+            Vector3 bodyRight = Vector3.Cross(up, bodyForward) * (leftHanded ? -1f : 1f);
             Vector3 shoulder = rightUpper != null ? rightUpper.position : from;
             Vector3 aimDir = aim - shoulder;
             if (aimDir.sqrMagnitude < 0.0001f)
@@ -295,6 +451,9 @@ namespace Waaang
             if (reach < 0.05f)
                 reach = Mathf.Max(0.2f, armLength * 0.9f);
             Vector3 hold = shoulder + aimDir * reach;
+            // Hold it a little under the shoulder line: with the staff slid back through the hands, a grip at eye
+            // level ran the butt through the head when aiming across the body.
+            hold += -up * holdDrop + bodyRight * holdSide;
             AimStaff(aim, hold);
 
             Vector3 axis = staff.up;
@@ -324,8 +483,8 @@ namespace Waaang
         {
             if (rightHand == null || fingerBones == null)
                 return;
-            // A positive turn about index->pinky swings the fingertips toward the palm.
-            Vector3 curlAxis = rightHand.rotation * -acrossLocal;
+            // A positive turn about finger x palm swings the fingertips toward the palm, for either hand.
+            Vector3 curlAxis = rightHand.rotation * Vector3.Cross(fingerLocal, palmLocal);
             for (int i = 0; i < fingerBones.Length; i++)
             {
                 var bone = fingerBones[i];
@@ -338,7 +497,8 @@ namespace Waaang
             if (thumb != null)
             {
                 thumb.localRotation = thumbRest;
-                thumb.rotation = Quaternion.AngleAxis(35f * fingerCurl, rightHand.rotation * fingerLocal) * thumb.rotation;
+                float thumbTurn = 35f * fingerCurl * (leftHanded ? -1f : 1f);
+                thumb.rotation = Quaternion.AngleAxis(thumbTurn, rightHand.rotation * fingerLocal) * thumb.rotation;
             }
         }
 
@@ -389,28 +549,46 @@ namespace Waaang
             return false;
         }
 
-        void UpdateAssetBeam(bool firing, Vector3 tip, Vector3 aimPoint)
+        void UpdateAssetBeam(bool firing, Vector3 start, Vector3 end, bool hit, Vector3 normal)
         {
-            beamInstance.SetActive(firing);
             if (aimLine != null)
                 aimLine.enabled = false;
             if (glowLine != null)
                 glowLine.enabled = false;
+            if (impactRoot != null && impactRoot.gameObject.activeSelf != (firing && hit))
+                impactRoot.gameObject.SetActive(firing && hit);
             if (!firing)
+            {
+                beamInstance.SetActive(false);
                 return;
-            Vector3 along = tip - aimPoint;
+            }
+            Vector3 along = start - end;
             float length = along.magnitude;
             if (length < 0.05f)
                 return;
-            beamInstance.transform.SetPositionAndRotation(
-                aimPoint, Quaternion.FromToRotation(Vector3.up, along / length));
-            beamInstance.transform.localScale = Vector3.one * (length / AssetBeamLength);
-            if (!wasFiring)
+
+            // Impact at the pivot, strokes running AssetBeamLength up local +Y to the staff. The strokes are
+            // stretched billboards: Unity sizes them from the uniform scale only, so scale uniformly to the length
+            // and hand the width back through the start size, keeping the beam equally thick at any distance.
+            float scale = length / AssetBeamLength;
+            beamInstance.transform.SetPositionAndRotation(end, Quaternion.FromToRotation(Vector3.up, along / length));
+            beamInstance.transform.localScale = Vector3.one * scale;
+            float widthFix = Mathf.Clamp(beamThickness / scale, 0.1f, 4f);
+            for (int i = 0; i < strokeSystems.Length; i++)
             {
-                var systems = beamInstance.GetComponentsInChildren<ParticleSystem>(true);
-                for (int i = 0; i < systems.Length; i++)
-                    systems[i].Play(true);
+                var main = strokeSystems[i].main;
+                main.startSizeXMultiplier = strokeBaseWidth[i].x * widthFix;
+                main.startSizeZMultiplier = strokeBaseWidth[i].y * widthFix;
             }
+
+            if (impactRoot != null && hit)
+            {
+                impactRoot.SetPositionAndRotation(end, Quaternion.FromToRotation(Vector3.up, normal));
+                impactRoot.localScale = Vector3.one * impactSize;
+            }
+            // Activating restarts the looping systems (playOnAwake), so each press starts a fresh beam.
+            if (!beamInstance.activeSelf)
+                beamInstance.SetActive(true);
         }
 
         void SetBeamActive(bool active)
@@ -431,6 +609,12 @@ namespace Waaang
             }
             if ((point - lastTrailPoint).sqrMagnitude < 0.0006f)
                 return;
+            // A very long hold would grow one LineRenderer forever; continue it as a new stroke instead.
+            if (trail.positionCount >= MaxTrailPoints)
+            {
+                Vector3 joint = lastTrailPoint;
+                BeginTrail(joint);
+            }
             trail.positionCount++;
             trail.SetPosition(trail.positionCount - 1, point);
             lastTrailPoint = point;
@@ -439,11 +623,12 @@ namespace Waaang
         void BeginTrail(Vector3 point)
         {
             if (trailMaterial == null)
-                trailMaterial = CreateTrailMaterial();
+                trailMaterial = CreateTrailMaterial(trailColor);
             var lineObject = new GameObject("Scorch Line");
             lineObject.transform.SetParent(trailRoot, false);
             trail = lineObject.AddComponent<LineRenderer>();
-            trail.material = trailMaterial;
+            // sharedMaterial: .material would clone a new material for every stroke.
+            trail.sharedMaterial = trailMaterial;
             trail.useWorldSpace = true;
             trail.widthMultiplier = 0.035f;
             trail.numCornerVertices = 4;
@@ -455,15 +640,20 @@ namespace Waaang
             trail.SetPosition(1, point);
             lastTrailPoint = point;
             trailHasPoint = true;
+            // Destroy() only happens at the end of the frame, so childCount does not drop inside this loop.
+            // Detach the old stroke first, otherwise the loop never ends and the game freezes on the 17th stroke.
             while (trailRoot.childCount > MaxTrails)
-                Destroy(trailRoot.GetChild(0).gameObject);
+            {
+                var oldest = trailRoot.GetChild(0);
+                oldest.SetParent(null, false);
+                Destroy(oldest.gameObject);
+            }
         }
 
-        static Material CreateTrailMaterial()
+        static Material CreateTrailMaterial(Color color)
         {
             var shader = Shader.Find("Universal Render Pipeline/Unlit");
             var material = new Material(shader);
-            var color = new Color(1.5f, 0.78f, 0.28f, 1f);
             material.color = color;
             material.SetColor("_BaseColor", color);
             return material;

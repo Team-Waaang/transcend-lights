@@ -2,20 +2,88 @@ using UnityEngine;
 
 namespace Waaang
 {
-    // Spawns a second caster on the right when a second phone is connected.
+    // Brings in the second caster (Nox, built into the Game scene by Waaang > Add Nox 2P) when a second phone
+    // connects, and moves the camera between the solo over-the-shoulder shot and a wider shot behind both players.
     public sealed class SecondCaster : MonoBehaviour
     {
         public WandPointerRig primary;
+        [Tooltip("씬에 미리 만들어 둔 2P 리그 (꺼진 상태). 비어 있으면 1P를 복제합니다.")]
+        public WandPointerRig second;
         public float sideOffset = 2.4f;
-        WandPointerRig copy;
+
+        [Header("Camera")]
+        [Tooltip("2인일 때 카메라 위치/회전. 에디터 메뉴가 두 캐릭터 기준으로 채웁니다.")]
+        public Vector3 duoCameraPosition;
+        public Vector3 duoCameraEuler;
+        public float duoCameraFov = 56f;
+        [Tooltip("카메라가 1인/2인 구도 사이를 옮겨가는 속도.")]
+        public float cameraSharpness = 3f;
+
+        [Header("Testing")]
+        [Tooltip("휴대폰 없이 2P를 켜서 확인할 때 사용합니다.")]
+        public bool forceSecondPlayer;
+
+        Camera viewCamera;
+        Vector3 soloPosition;
+        Quaternion soloRotation;
+        float soloFov;
+        float duoBlend;
+
+        void Start()
+        {
+            viewCamera = primary != null ? primary.viewCamera : null;
+            if (viewCamera == null)
+                viewCamera = Camera.main;
+            if (viewCamera != null)
+            {
+                soloPosition = viewCamera.transform.position;
+                soloRotation = viewCamera.transform.rotation;
+                soloFov = viewCamera.fieldOfView;
+            }
+            if (second != null)
+                SetSecondActive(false);
+        }
 
         void LateUpdate()
         {
-            bool wanted = SecondPhoneConnected();
-            if (wanted && copy == null && primary != null && primary.character != null)
-                Spawn();
-            else if (!wanted && copy != null)
-                Despawn();
+            bool wanted = forceSecondPlayer || SecondPhoneConnected();
+            bool active = second != null && second.gameObject.activeSelf;
+            if (wanted && !active && primary != null && primary.character != null)
+            {
+                if (second == null)
+                    Clone();
+                SetSecondActive(true);
+            }
+            else if (!wanted && active)
+            {
+                SetSecondActive(false);
+            }
+            MoveCamera(wanted && second != null);
+        }
+
+        void MoveCamera(bool duo)
+        {
+            if (viewCamera == null || duoCameraPosition == Vector3.zero)
+                return;
+            float k = 1f - Mathf.Exp(-cameraSharpness * Time.deltaTime);
+            duoBlend = Mathf.Lerp(duoBlend, duo ? 1f : 0f, k);
+            float t = Mathf.SmoothStep(0f, 1f, duoBlend);
+            var cam = viewCamera.transform;
+            cam.SetPositionAndRotation(
+                Vector3.Lerp(soloPosition, duoCameraPosition, t),
+                Quaternion.Slerp(soloRotation, Quaternion.Euler(duoCameraEuler), t));
+            viewCamera.fieldOfView = Mathf.Lerp(soloFov, duoCameraFov, t);
+        }
+
+        void SetSecondActive(bool on)
+        {
+            if (second == null)
+                return;
+            if (second.character != null)
+                second.character.gameObject.SetActive(on);
+            if (second.aimLine != null)
+                second.aimLine.transform.root.gameObject.SetActive(on);
+            second.gameObject.SetActive(on);
         }
 
         static bool SecondPhoneConnected()
@@ -34,7 +102,8 @@ namespace Waaang
             return connected >= 2;
         }
 
-        void Spawn()
+        // Fallback for scenes without a prebuilt second caster: a copy of the first one, to the right.
+        void Clone()
         {
             var character = Instantiate(primary.character.gameObject);
             character.name = primary.character.name + " 2";
@@ -43,12 +112,9 @@ namespace Waaang
             ToonLook.Apply(character);
 
             var staff = character.transform.Find("Staff");
-            var lines = CreateBeam(primary.aimLine, primary.glowLine);
-            var marker = CreateMarker(primary.hitMarker);
-            var light = CreateLight(primary.hitLight);
-
             var rigObject = new GameObject("Wand Pointer 2");
-            copy = rigObject.AddComponent<WandPointerRig>();
+            rigObject.SetActive(false);
+            var copy = rigObject.AddComponent<WandPointerRig>();
             copy.phoneSlot = 1;
             copy.mouseMode = false;
             copy.viewCamera = primary.viewCamera;
@@ -56,66 +122,34 @@ namespace Waaang
             copy.staff = staff;
             copy.rightGrip = staff != null ? staff.Find("Right Grip") : null;
             copy.leftGrip = staff != null ? staff.Find("Left Grip") : null;
-            copy.hitMarker = marker;
-            copy.hitLight = light;
-            copy.aimLine = lines[0];
-            copy.glowLine = lines[1];
+            copy.hitMarker = CreateMarker(primary.hitMarker);
+            copy.hitLight = CreateLight(primary.hitLight);
             copy.roomMask = primary.roomMask;
             copy.lightSurfaceOffset = primary.lightSurfaceOffset;
             copy.beamPrefab = primary.beamPrefab;
-            copy.useLeftHand = true;
-            copy.staffUpright = 0f;
-            copy.holdOffset = primary.holdOffset;
-            copy.holdReach = primary.holdReach;
-            copy.staffUpright = primary.staffUpright;
-            copy.bodyFollow = primary.bodyFollow;
-            copy.headFollow = primary.headFollow;
-            copy.maxYaw = primary.maxYaw;
-            copy.maxPitch = primary.maxPitch;
-            copy.aimSharpness = primary.aimSharpness;
-            copy.useLeftHand = primary.useLeftHand;
-            copy.fingerCurl = primary.fingerCurl;
+            CopySettings(primary, copy);
+            second = copy;
         }
 
-        void Despawn()
+        public static void CopySettings(WandPointerRig from, WandPointerRig to)
         {
-            if (copy.character != null)
-                Destroy(copy.character.gameObject);
-            if (copy.aimLine != null)
-                Destroy(copy.aimLine.transform.root.gameObject);
-            if (copy.hitMarker != null)
-                Destroy(copy.hitMarker.gameObject);
-            if (copy.hitLight != null)
-                Destroy(copy.hitLight.gameObject);
-            Destroy(copy.gameObject);
-            copy = null;
-        }
-
-        static LineRenderer[] CreateBeam(LineRenderer sourceCore, LineRenderer sourceGlow)
-        {
-            var root = new GameObject("Laser 2");
-            var core = root.AddComponent<LineRenderer>();
-            var glowObject = new GameObject("Laser Glow");
-            glowObject.transform.SetParent(root.transform, false);
-            var glow = glowObject.AddComponent<LineRenderer>();
-            CopyLine(sourceCore, core, 0.018f);
-            CopyLine(sourceGlow, glow, 0.09f);
-            core.enabled = false;
-            glow.enabled = false;
-            return new[] { core, glow };
-        }
-
-        static void CopyLine(LineRenderer source, LineRenderer target, float width)
-        {
-            target.useWorldSpace = true;
-            target.positionCount = 2;
-            target.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            target.receiveShadows = false;
-            target.numCapVertices = 4;
-            target.startWidth = width;
-            target.endWidth = width * 0.6f;
-            if (source != null && source.sharedMaterial != null)
-                target.sharedMaterial = source.sharedMaterial;
+            to.holdOffset = from.holdOffset;
+            to.holdReach = from.holdReach;
+            to.staffUpright = from.staffUpright;
+            to.bodyFollow = from.bodyFollow;
+            to.headFollow = from.headFollow;
+            to.maxYaw = from.maxYaw;
+            to.maxPitch = from.maxPitch;
+            to.aimSharpness = from.aimSharpness;
+            to.useLeftHand = from.useLeftHand;
+            to.fingerCurl = from.fingerCurl;
+            to.gripAlongStaff = from.gripAlongStaff;
+            to.holdDrop = from.holdDrop;
+            to.holdSide = from.holdSide;
+            to.beamLoopPeriod = from.beamLoopPeriod;
+            to.beamThickness = from.beamThickness;
+            to.impactSize = from.impactSize;
+            to.beamStartGap = from.beamStartGap;
         }
 
         static Transform CreateMarker(Transform source)
