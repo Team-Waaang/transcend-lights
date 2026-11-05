@@ -18,6 +18,7 @@ namespace Waaang
 
         bool started;
         RegistrationBoard board;
+        readonly int[] audioStates = new int[2];
 
         void Awake()
         {
@@ -36,8 +37,21 @@ namespace Waaang
         void Update()
         {
             var link = PhoneLink.Instance;
-            if (started || link == null || link.Receiver == null)
+            if (link == null || link.Receiver == null)
                 return;
+            for (int i = 0; i < audioStates.Length; i++)
+            {
+                var session = CasterInput.Session(i);
+                int state = session == null ? 0 : !session.Model.Registered ? 1 : !session.Model.Calibrated ? 2 : 3;
+                if (state != audioStates[i])
+                {
+                    if (state == 0) GameAudio.Play("ui_disconnect");
+                    else if (state == 3) GameAudio.Play("ui_ready");
+                    else if (audioStates[i] == 0) GameAudio.Play("ui_connect");
+                    audioStates[i] = state;
+                }
+            }
+            if (started) return;
             var kb = Keyboard.current;
             bool force = kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame);
             if (!link.Receiver.GameStarted && !force)
@@ -45,6 +59,7 @@ namespace Waaang
             if (!link.Receiver.GameStarted)
                 RegistrationBoard.StartedWith = link.Receiver.ConnectedCount;
             started = true;
+            GameAudio.Play("ui_confirm");
             // The flow starts at the first period; an explicit other scene (a test scene) still works.
             bool explicitScene = !string.IsNullOrEmpty(gameSceneName) && gameSceneName != "Period1Cutscene" && gameSceneName != "Game";
             if (explicitScene)

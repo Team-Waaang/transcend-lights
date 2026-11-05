@@ -155,17 +155,27 @@ namespace AiHackathon.Game
             Current = Stage.DefeatCutscene;
             if (playCutscenes) yield return PlayCutscene(defeatScene);
             Current = Stage.Cleared;
+            // The additive cutscene's listener is gone and playRoot stays hidden behind the results.
+            bool hasListener = false;
+            foreach (var listener in FindObjectsByType<AudioListener>())
+                if (listener.isActiveAndEnabled) { hasListener = true; break; }
+            if (!hasListener) gameObject.AddComponent<AudioListener>();
             fade = 1f;
             clearedAt = Time.unscaledTime;
             // The results stay up until Enter / Space / a click, then the next period if there is one (it also moves on
             // by itself after a while); after the last period the same press starts the day again.
             lastPeriod = PeriodFlow.NextIndex() < 0;
+            GameAudio.Play(lastPeriod ? "game_complete" : "period_clear");
             yield return new WaitForSecondsRealtime(2.5f);
             for (float t = 0f; lastPeriod || t < 11.5f; t += Time.unscaledDeltaTime)
             {
                 var k = Keyboard.current;
                 var mouse = Mouse.current;
-                if ((k != null && (k.enterKey.wasPressedThisFrame || k.spaceKey.wasPressedThisFrame)) || (mouse != null && mouse.leftButton.wasPressedThisFrame)) break;
+                if ((k != null && (k.enterKey.wasPressedThisFrame || k.spaceKey.wasPressedThisFrame)) || (mouse != null && mouse.leftButton.wasPressedThisFrame))
+                {
+                    GameAudio.Play("ui_confirm");
+                    break;
+                }
                 yield return null;
             }
             if (lastPeriod) PeriodFlow.Restart();
@@ -234,7 +244,10 @@ namespace AiHackathon.Game
                     var kb = Keyboard.current;
                     // Space / Enter skip a plain cutscene; the QTE cutscene handles its own skipping.
                     if (qte == null && kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame))
+                    {
+                        GameAudio.Play("ui_confirm");
                         director.time = director.duration - 0.05;
+                    }
                     yield return null;
                 }
             }
@@ -287,6 +300,7 @@ namespace AiHackathon.Game
 
         void OnMinionReached(int i)
         {
+            GameAudio.Play("curse_impact");
             boss.Heal(minionHeal);
             shake = Mathf.Max(shake, 0.09f);
             flash = Mathf.Max(flash, 0.3f);
@@ -378,7 +392,9 @@ namespace AiHackathon.Game
                 }
             }
             if (boss.ChainedPlayer >= 0 && Mathf.Repeat(Time.time, 0.9f) < dt) Flinch(boss.ChainedPlayer, 0.35f);
+            bool wasResonating = resonating;
             resonating = onBoss >= 2;
+            if (resonating && !wasResonating) GameAudio.Play("resonance", null, 0.65f);
             if (resonating) resonanceShown = Time.unscaledTime;
             for (int k = 0; k < onBoss; k++)
             {

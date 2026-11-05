@@ -101,6 +101,7 @@ namespace AiHackathon.Game
             if (left <= 0)
             {
                 Cleared = true;
+                GameAudio.Play("period_clear");
                 clearedAt = Time.unscaledTime;
                 onCleared.Invoke();
                 if (advanceAfter >= 0f) StartCoroutine(Advance());

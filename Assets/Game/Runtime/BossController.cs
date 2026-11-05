@@ -234,6 +234,7 @@ namespace AiHackathon.Game
         public float TakeDamage(float amount, Color from)
         {
             if (!Fighting || ShieldUp || amount <= 0f) return 0f;
+            GameAudio.Play("spell_hit", transform);
             float before = Hp;
             Hp = Mathf.Max(0f, Hp - amount * (Weak ? weakMultiplier : 1f));
             hitGlow = 1f;
@@ -339,6 +340,7 @@ namespace AiHackathon.Game
 
         IEnumerator Blink(Vector3 p)
         {
+            GameAudio.Play("teleport", transform);
             FxUtil.Burst(blinkOutFx, transform.position - Vector3.up * hover);
             for (float k = 0f; k < 1f; k += Time.deltaTime / 0.18f) { visible = 1f - k * k; yield return null; }
             visible = 0f;
@@ -352,6 +354,7 @@ namespace AiHackathon.Game
 
         IEnumerator Volley(int count, Tuning t, bool fromAbove)
         {
+            GameAudio.Play("curse_charge", transform);
             Message?.Invoke(fromAbove ? "저주의 비! 전부 쏴서 떨어뜨려!" : "저주 구슬! 레이저로 쏴서 막아!");
             Play(fromAbove ? "Summon" : "Cast", 0.2f, fromAbove ? 0.4f : 0.5f);
             if (castFx != null && wandTip != null)
@@ -444,6 +447,7 @@ namespace AiHackathon.Game
         // Out of the floor in a puff of curse smoke, a beat to get its bearings, then it charges.
         IEnumerator RaiseMinion(Vector3 spot, int target, Tuning t)
         {
+            GameAudio.Play("summon", transform, 0.75f);
             FxUtil.Burst(summonFx, spot);
             var go = Instantiate(minionTemplate, minionTemplate.transform.parent);
             go.transform.SetPositionAndRotation(spot + Vector3.down * 0.8f, Quaternion.LookRotation(Vector3.left));
@@ -483,6 +487,7 @@ namespace AiHackathon.Game
         IEnumerator Clones(Tuning t)
         {
             if (decoyTemplate == null || t.decoys <= 0) yield break;
+            GameAudio.Play("clone_appear", transform);
             Message?.Invoke("분신! 진짜를 찾아 쏴! (가짜는 가끔 일렁여)");
             var spots = new List<Vector3>();
             int count = t.decoys + 1;
@@ -509,6 +514,7 @@ namespace AiHackathon.Game
             while (Time.time < end && Hp > hp0 - 0.01f && decoys.Exists(d => d != null)) yield return null;
             if (Hp <= hp0 - 0.01f)
             {
+                GameAudio.Play("magic_reveal", transform);
                 Message?.Invoke("진짜를 찾았다!");
                 flinch = 1f;
                 weakUntil = Mathf.Max(weakUntil, Time.time + 1.5f);
@@ -526,6 +532,7 @@ namespace AiHackathon.Game
 
         void OnDecoyPopped(BossDecoy decoy, int shooter, Tuning t)
         {
+            GameAudio.Play("clone_break", decoy.transform);
             var at = decoy.transform.position + Vector3.up * 0.9f;
             FxUtil.Burst(orbPopFx, at);
             FxUtil.Burst(blinkOutFx, decoy.transform.position);
@@ -571,6 +578,7 @@ namespace AiHackathon.Game
         IEnumerator Chain(Tuning t)
         {
             if (crystalTemplate == null || targets.Length < 2 || t.chainTime <= 0f) yield break;
+            GameAudio.Play("curse_charge", transform, 0.7f);
             int p = UnityEngine.Random.Range(0, targets.Length);
             Play("Cast", 0.2f, 0.5f);
             yield return new WaitForSeconds(0.7f);
@@ -593,6 +601,7 @@ namespace AiHackathon.Game
             else
             {
                 Message?.Invoke("사슬이 버텼다… 저주가 스며든다");
+                GameAudio.Play("curse_impact", transform);
                 Heal(4f);
                 ChainHeld?.Invoke(p);
             }

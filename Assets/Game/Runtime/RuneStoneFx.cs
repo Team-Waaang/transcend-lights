@@ -131,6 +131,7 @@ namespace AiHackathon.Game
         // rises; then it settles back down still lit.
         IEnumerator Success()
         {
+            GameAudio.Play("rune_success", transform);
             Burst(successFx);
             onSuccess.Invoke();
             const float dur = 1.6f;
@@ -157,6 +158,7 @@ namespace AiHackathon.Game
         // idle glow creeps back so the player can try again.
         IEnumerator Fail()
         {
+            GameAudio.Play("rune_fail", transform);
             onFail.Invoke();
             const float dur = 1.5f;
             bool puffed = false;
@@ -185,6 +187,7 @@ namespace AiHackathon.Game
 
         IEnumerator Change(RuneDefinition next)
         {
+            GameAudio.Play("rune_change", transform);
             float glowFrom = resultGlow;
             for (float t = 0f; t < 0.4f; t += Time.deltaTime)
             {

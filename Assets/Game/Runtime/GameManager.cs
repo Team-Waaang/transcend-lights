@@ -113,6 +113,7 @@ namespace AiHackathon.Game
                     p.rig.mouseButton = i == 0 ? WandPointerRig.MouseFireButton.Left : WandPointerRig.MouseFireButton.Right;
                     p.rig.mouseAimWhileFiring = true;
                     p.rig.gameObject.SetActive(true);
+                    if (p.rig.GetComponent<CasterSpellAudio>() == null) p.rig.gameObject.AddComponent<CasterSpellAudio>();
                     if (p.startAim != null && cam != null)
                     {
                         var v = cam.WorldToViewportPoint(p.startAim.position);

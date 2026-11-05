@@ -44,6 +44,7 @@ namespace AiHackathon.Game
 
         public void Raise()
         {
+            GameAudio.Play("ward_raise", transform);
             gameObject.SetActive(true);
             mode = Mode.Raising;
             modeTime = 0f;
@@ -62,6 +63,7 @@ namespace AiHackathon.Game
             if (Time.time - lastSpark > 0.09f)
             {
                 lastSpark = Time.time;
+                GameAudio.Play("ward_hit", transform);
                 FxUtil.Burst(sparkFx, point, 1.5f);
             }
         }
@@ -69,6 +71,7 @@ namespace AiHackathon.Game
         public void Break()
         {
             if (!Up) return;
+            GameAudio.Play("ward_break", transform);
             Up = false;
             if (hitCollider != null) hitCollider.enabled = false;
             mode = Mode.Breaking;
@@ -80,6 +83,7 @@ namespace AiHackathon.Game
         public void Drop()
         {
             if (!Visible) return;
+            GameAudio.Play("ward_expire", transform);
             Up = false;
             if (hitCollider != null) hitCollider.enabled = false;
             mode = Mode.Dropping;
@@ -96,6 +100,7 @@ namespace AiHackathon.Game
 
         void Update()
         {
+            GameAudio.Loop("ward_loop", transform, Up ? Mathf.Lerp(0.4f, 1f, Strength) : 0f);
             modeTime += Time.deltaTime;
             hit = Mathf.Max(0f, hit - Time.deltaTime * 2.2f);
             float scale = 1f, dissolve = 0f, alpha = 1f;

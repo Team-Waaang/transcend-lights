@@ -93,6 +93,7 @@ namespace AiHackathon.Game
             if (shotLeft > 0f) return;
             Petrify();
             Break(0.35f);
+            GameAudio.Play("orb_break", transform, 0.8f);
             Shattered?.Invoke(this);
         }
 
@@ -198,12 +199,14 @@ namespace AiHackathon.Game
                 Current = State.Startled;
                 startleT = 0f;
                 Play(alertFx);
+                GameAudio.Play("magic_reveal", transform, 0.65f);
             }
             if (Exposure >= 1f) Petrify();
         }
 
         void Petrify()
         {
+            GameAudio.Play("petrify", transform);
             Current = State.Petrified;
             Exposure = 1f;
             petrifiedAt = Time.time;
@@ -222,6 +225,7 @@ namespace AiHackathon.Game
 
         void Update()
         {
+            GameAudio.Loop("petrify_loop", transform, Lit && !Petrified && Exposure > 0f ? Mathf.Lerp(0.35f, 1f, Exposure) : 0f);
             float dt = Time.deltaTime;
             Vector3 move = Vector3.zero;
             float wantSpeed = 0f;

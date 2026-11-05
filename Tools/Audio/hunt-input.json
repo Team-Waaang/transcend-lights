@@ -1,0 +1,15 @@
+{
+  "frame": 13465,
+  "c": "Petrified",
+  "Exposure": 1,
+  "Cleared": false,
+  "PlayedCount": 13,
+  "LastPlayed": "beam_stop",
+  "sources": [
+    {
+      "clip": "dark_hall_ambience",
+      "volume": 0.072,
+      "loop": true
+    }
+  ]
+}

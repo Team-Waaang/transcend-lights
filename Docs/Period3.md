@@ -159,7 +159,7 @@ QTE 규칙(`Assets/Cutscene/Runtime/ResonanceQte.cs`):
 **남은 것.**
 - 실제 폰 두 대로 연타 감각을 확인하고 `tapGain`·`drain`을 조정.
 - 1교시(2교시) → 3교시 연결(`PeriodIntro.nextScene` 또는 씬 로드).
-- 사운드.
+- 비캐릭터 효과음 적용 완료: 마법 발사·구슬·결계·소환·분신·사슬·공명 QTE·컷씬 및 환경음. 파일 목록과 재생·재생성 방법은 `Tools/Audio/README.md` 참고. 캐릭터 보이스는 별도.
 - 보스 전투 애니메이션 다듬기(지금은 Idle·Cast·Summon·Guard·Hit 크로스페이드).
 - Amelia 프로필 빔(Beam_04)이 보스 빔과 같은 프리팹이라 전투 중 색이 헷갈릴 수 있다. 컷씬에서는 Beam_03을 쓴다.
 

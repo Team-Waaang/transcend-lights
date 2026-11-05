@@ -1,0 +1,481 @@
+{
+  "cues": [
+    {
+      "name": "ui_connect",
+      "volume": 0.43,
+      "cooldown": 0.2,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "ui_ready",
+      "volume": 0.43,
+      "cooldown": 0.2,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "ui_disconnect",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "ui_confirm",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "parchment_open",
+      "volume": 0.38,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "parchment_close",
+      "volume": 0.32,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "title_chime",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "transition",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "period_clear",
+      "volume": 0.66,
+      "cooldown": 2.5,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "game_complete",
+      "volume": 0.66,
+      "cooldown": 2.5,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "magic_ignite",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "beam_start",
+      "volume": 0.32,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "beam_loop",
+      "volume": 0.13,
+      "cooldown": 0.1,
+      "priority": 150,
+      "loop": true,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "beam_stop",
+      "volume": 0.2,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "rune_trace_loop",
+      "volume": 0.16,
+      "cooldown": 0.1,
+      "priority": 150,
+      "loop": true,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "rune_success",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "rune_fail",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "rune_change",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "torch_loop",
+      "volume": 0.09,
+      "cooldown": 0.1,
+      "priority": 150,
+      "loop": true,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "magic_reveal",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "petrify",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "petrify_loop",
+      "volume": 0.12,
+      "cooldown": 0.1,
+      "priority": 150,
+      "loop": true,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "curse_charge",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "orb_launch",
+      "volume": 0.32,
+      "cooldown": 0.08,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "orb_break",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "curse_impact",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "spell_hit",
+      "volume": 0.18,
+      "cooldown": 0.16,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "ward_raise",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "ward_loop",
+      "volume": 0.15,
+      "cooldown": 0.1,
+      "priority": 150,
+      "loop": true,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "ward_hit",
+      "volume": 0.24,
+      "cooldown": 0.19,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "ward_break",
+      "volume": 0.66,
+      "cooldown": 0.1,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "ward_expire",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "teleport",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "summon",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "clone_appear",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "clone_break",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "chain_bind",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "chain_loop",
+      "volume": 0.12,
+      "cooldown": 0.1,
+      "priority": 150,
+      "loop": true,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "chain_break",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "qte_start",
+      "volume": 0.66,
+      "cooldown": 0.1,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "qte_tap",
+      "volume": 0.29,
+      "cooldown": 0.045,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "qte_retry",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "resonance",
+      "volume": 0.66,
+      "cooldown": 2.0,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "qte_loop",
+      "volume": 0.19,
+      "cooldown": 0.1,
+      "priority": 150,
+      "loop": true,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "ultimate",
+      "volume": 0.66,
+      "cooldown": 0.1,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "blast",
+      "volume": 0.66,
+      "cooldown": 0.1,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "purify",
+      "volume": 0.66,
+      "cooldown": 0.1,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "ominous_pulse",
+      "volume": 0.38,
+      "cooldown": 0.22,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "blackout",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "cutscene_slam",
+      "volume": 0.43,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "classroom_ambience",
+      "volume": 0.17,
+      "cooldown": 0.1,
+      "priority": 200,
+      "loop": true,
+      "spatial": false,
+      "ambience": true
+    },
+    {
+      "name": "dark_hall_ambience",
+      "volume": 0.2,
+      "cooldown": 0.1,
+      "priority": 200,
+      "loop": true,
+      "spatial": false,
+      "ambience": true
+    },
+    {
+      "name": "arena_ambience",
+      "volume": 0.19,
+      "cooldown": 0.1,
+      "priority": 200,
+      "loop": true,
+      "spatial": false,
+      "ambience": true
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "elapsed": 181.6603132,
+  "outputPeak": 0.4025089,
+  "events": [
+    {
+      "frame": 7113,
+      "scene": "Period2Cutscene",
+      "played": 6,
+      "last": "parchment_close",
+      "loops": 1,
+      "active": [
+        "dark_hall_ambience"
+      ]
+    },
+    {
+      "frame": 11224,
+      "scene": "Period2Cutscene",
+      "played": 7,
+      "last": "magic_ignite",
+      "loops": 2,
+      "active": [
+        "magic_ignite",
+        "dark_hall_ambience",
+        "torch_loop"
+      ]
+    },
+    {
+      "frame": 11227,
+      "scene": "Period2Cutscene",
+      "played": 10,
+      "last": "magic_reveal",
+      "loops": 2,
+      "active": [
+        "magic_reveal",
+        "magic_reveal",
+        "magic_ignite",
+        "dark_hall_ambience",
+        "torch_loop",
+        "magic_reveal"
+      ]
+    },
+    {
+      "frame": 11704,
+      "scene": "Period2Cutscene",
+      "played": 11,
+      "last": "petrify",
+      "loops": 5,
+      "active": [
+        "petrify_loop",
+        "dark_hall_ambience",
+        "torch_loop",
+        "petrify",
+        "petrify_loop",
+        "petrify_loop"
+      ]
+    },
+    {
+      "frame": 11780,
+      "scene": "Period2Cutscene",
+      "played": 12,
+      "last": "petrify",
+      "loops": 4,
+      "active": [
+        "petrify_loop",
+        "dark_hall_ambience",
+        "torch_loop",
+        "petrify",
+        "petrify",
+        "petrify_loop"
+      ]
+    },
+    {
+      "frame": 11781,
+      "scene": "Period2Cutscene",
+      "played": 13,
+      "last": "beam_stop",
+      "loops": 4,
+      "active": [
+        "petrify_loop",
+        "dark_hall_ambience",
+        "torch_loop",
+        "beam_stop",
+        "petrify",
+        "petrify",
+        "petrify_loop"
+      ]
+    },
+    {
+      "frame": 17320,
+      "scene": "Period2Cutscene",
+      "played": 16,
+      "last": "magic_reveal",
+      "loops": 4,
+      "active": [
+        "petrify_loop",
+        "magic_reveal",
+        "magic_reveal",
+        "petrify_loop",
+        "magic_reveal",
+        "dark_hall_ambience",
+        "petrify_loop"
+      ]
+    },
+    {
+      "frame": 17602,
+      "scene": "Period2Cutscene",
+      "played": 20,
+      "last": "period_clear",
+      "loops": 4,
+      "active": [
+        "petrify_loop",
+        "period_clear",
+        "petrify",
+        "petrify",
+        "petrify_loop",
+        "petrify",
+        "dark_hall_ambience",
+        "petrify_loop"
+      ]
+    }
+  ]
+}

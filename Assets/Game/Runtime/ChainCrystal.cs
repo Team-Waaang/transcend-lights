@@ -35,6 +35,7 @@ namespace AiHackathon.Game
 
         public void Bind(Transform target, float seconds)
         {
+            GameAudio.Play("chain_bind", transform);
             Target = target;
             hp = maxHp = Mathf.Max(0.1f, seconds);
             home = transform.position;
@@ -47,12 +48,14 @@ namespace AiHackathon.Game
             hp -= seconds;
             hitFlash = 1f;
             if (hp > 0f) return;
+            GameAudio.Play("chain_break", transform);
             Done = true;
             Broken?.Invoke(this);
         }
 
         void Update()
         {
+            GameAudio.Loop("chain_loop", transform, Target != null && !Done ? 1f : 0f);
             float t = Time.time;
             appear = Mathf.Min(1f, appear + Time.deltaTime / 0.3f);
             hitFlash = Mathf.Max(0f, hitFlash - Time.deltaTime * 5f);

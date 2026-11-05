@@ -47,6 +47,7 @@ namespace AiHackathon.Cutscene
             double t = director.time;
             if (allowSkip && !ended && t < skipTo - 0.3 && SkipPressed())
             {
+                AiHackathon.Game.GameAudio.Play("ui_confirm");
                 director.time = skipTo;
                 director.Evaluate();
                 t = skipTo;

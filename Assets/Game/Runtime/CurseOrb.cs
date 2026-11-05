@@ -43,6 +43,7 @@ namespace AiHackathon.Game
             var end = to.position + offset;
             control = Vector3.Lerp(start, end, 0.45f) + arc;
             transform.position = start;
+            GameAudio.Play("orb_launch", transform);
             baseScale = transform.localScale;
             t = 0f;
         }
@@ -62,6 +63,7 @@ namespace AiHackathon.Game
             transform.localScale = baseScale * (1f + 0.35f * hitFlash);
             if (t >= 1f)
             {
+                GameAudio.Play("curse_impact", transform);
                 done = true;
                 Reached?.Invoke(this);
             }
@@ -74,6 +76,7 @@ namespace AiHackathon.Game
             hp -= seconds;
             hitFlash = 1f;
             if (hp > 0f) return false;
+            GameAudio.Play("orb_break", transform);
             done = true;
             Popped?.Invoke(this);
             return true;
