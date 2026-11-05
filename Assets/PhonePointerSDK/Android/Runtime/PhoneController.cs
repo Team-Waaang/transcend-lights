@@ -98,7 +98,8 @@ namespace PhonePointer
         DiagnosticLog log;
         [SerializeField] ARCameraBackground cameraBackground;
         bool rigReady;
-        bool cameraVisible, authenticated, recovering;
+        bool cameraVisible, authenticated, recovering, cameraPermissionSettled;
+        void MarkCameraPermission(string _) { cameraPermissionSettled = true; }
         string resumeToken;
         int connectionGeneration, retry;
         ConnectionOptions options = new ConnectionOptions();
@@ -168,9 +169,14 @@ namespace PhonePointer
 #if UNITY_ANDROID && !UNITY_EDITOR
             if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera))
             {
-                UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.Camera);
+                cameraPermissionSettled = false;
+                var callbacks = new UnityEngine.Android.PermissionCallbacks();
+                callbacks.PermissionGranted += MarkCameraPermission;
+                callbacks.PermissionDenied += MarkCameraPermission;
+                callbacks.PermissionDeniedAndDontAskAgain += MarkCameraPermission;
+                UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.Camera, callbacks);
                 float deadline = Time.realtimeSinceStartup + 30;
-                while (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera) && Time.realtimeSinceStartup < deadline) yield return null;
+                while (!cameraPermissionSettled && !UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera) && Time.realtimeSinceStartup < deadline) yield return null;
                 if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera))
                 { Message = "Camera permission required. Enable it in Android Settings, then restart."; yield break; }
             }

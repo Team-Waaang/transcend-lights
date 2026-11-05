@@ -23,21 +23,39 @@ namespace PhonePointer.Editor
 
             const string androidNs = "http://schemas.android.com/apk/res/android";
             const string permission = "android.permission.VIBRATE";
+            bool changed = false;
 
-            // Skip if already present (e.g. added by another plugin).
+            bool hasVibrate = false;
             foreach (XmlNode node in manifest.SelectNodes("uses-permission"))
             {
                 var attr = node.Attributes?["android:name"];
-                if (attr != null && attr.Value == permission) return;
+                if (attr != null && attr.Value == permission) { hasVibrate = true; break; }
+            }
+            if (!hasVibrate)
+            {
+                var element = doc.CreateElement("uses-permission");
+                var nameAttr = doc.CreateAttribute("android", "name", androidNs);
+                nameAttr.Value = permission;
+                element.Attributes.Append(nameAttr);
+                manifest.AppendChild(element);
+                changed = true;
             }
 
-            var element = doc.CreateElement("uses-permission");
-            var nameAttr = doc.CreateAttribute("android", "name", androidNs);
-            nameAttr.Value = permission;
-            element.Attributes.Append(nameAttr);
-            manifest.AppendChild(element);
+            // ARCore refuses to open the camera when the activity disables hardware acceleration.
+            foreach (XmlElement activity in doc.GetElementsByTagName("activity"))
+            {
+                var accel = activity.GetAttributeNode("hardwareAccelerated", androidNs);
+                if (accel == null)
+                {
+                    accel = doc.CreateAttribute("android", "hardwareAccelerated", androidNs);
+                    activity.Attributes.Append(accel);
+                }
+                if (accel.Value == "true") continue;
+                accel.Value = "true";
+                changed = true;
+            }
 
-            doc.Save(manifestPath);
+            if (changed) doc.Save(manifestPath);
         }
     }
 }
