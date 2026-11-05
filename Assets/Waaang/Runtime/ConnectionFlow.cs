@@ -37,6 +37,9 @@ namespace Waaang
 
         void OnGUI()
         {
+            var board = GetComponent<RegistrationBoard>();
+            if (board != null && board.enabled && GetComponent<PhonePointer.PhonePointerReceiver>().Listening)
+                return;
             var link = PhoneLink.Instance;
             if (link == null || link.Receiver == null)
                 return;

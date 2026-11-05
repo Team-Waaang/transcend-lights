@@ -2,132 +2,102 @@ using UnityEngine;
 
 namespace Waaang
 {
-    // Production pairing/recovery overlay. Uses the same slab layout as the recognition test.
+    // Connect every required phone, reveal the stone, then calibrate.
     public sealed class RegistrationBoard : MonoBehaviour
     {
         public PhonePointer.PhonePointerReceiver Receiver;
-        Texture2D qr, marker;
-        Font font;
+        RegistrationStage stage;
+        Texture2D qr, surround;
         string pairingToken;
-        // Players in the running game: the phones it required, or more if more joined during play.
         int expectedPlayers;
-        GUIStyle label;
+        bool visible, showQr;
 
         void Awake()
         {
-            if (Receiver == null)
-                Receiver = GetComponent<PhonePointer.PhonePointerReceiver>();
+            if (!Receiver) Receiver = GetComponent<PhonePointer.PhonePointerReceiver>();
             var combined = GetComponent<PhonePointer.PhonePointerRegistrationView>();
-            if (combined != null)
-                combined.enabled = false;
-            marker = Resources.Load<Texture2D>("ScreenMarker");
-            font = Resources.Load<Font>("RuneSlabFont");
+            if (combined) combined.enabled = false;
+            var asset = Resources.Load<RegistrationStage>("RunicRegistrationStage");
+            if (asset) stage = Instantiate(asset, transform, false);
+            else Debug.LogError("RunicRegistrationStage prefab is missing.", this);
+        }
+
+        void Update()
+        {
+            visible = Receiver && Receiver.Listening && Receiver.Pairing != null;
+            if (visible)
+            {
+                showQr = !Receiver.GameStarted ? !Receiver.ExpectedPlayersConnected : AnyConnectionLost();
+                visible = !Receiver.GameStarted || showQr || AnyTrackingLost();
+            }
+            if (stage) stage.Present(visible, !showQr);
         }
 
         void OnGUI()
         {
-            if (Receiver == null || !Receiver.Listening || Receiver.Pairing == null)
-                return;
+            if (!visible) return;
             if (pairingToken != Receiver.Pairing.token)
             {
-                if (qr != null)
-                    Destroy(qr);
+                if (qr) Destroy(qr);
                 qr = PhonePointer.QrUtility.Encode(JsonUtility.ToJson(Receiver.Pairing));
                 pairingToken = Receiver.Pairing.token;
             }
-
-            bool initial = !Receiver.GameStarted;
-            bool showMarker, showQr;
-            if (initial)
-            {
-                // Registration may lose tracking before all players are ready to enter the game.
-                showMarker = !Receiver.ExpectedPlayersRegistered || AnyTrackingLost();
-                showQr = !Receiver.ExpectedPlayersConnected;
-            }
-            else
-            {
-                // In the game: a phone that lost its AR tracking (or its anchor) needs to see the registration image
-                // again; a phone whose connection dropped needs to rescan the QR.
-                showMarker = AnyTrackingLost();
-                showQr = AnyConnectionLost();
-            }
-            if (!showMarker && !showQr)
-                return;
-
-            float margin = Screen.width * 0.06f;
-            float side = Mathf.Min(Screen.height * 0.62f, Screen.width * 0.36f);
-            float y = (Screen.height - side) * 0.5f;
-            // Same places as on the connection screen, so a phone finds the marker where it first registered it.
-            var markerRect = new Rect(margin, y, side, side);
-            var qrRect = new Rect(Screen.width - margin - side, y, side, side);
-            if (PhonePointer.ScreenMarkerLayout.TryGetRects(Screen.width, Screen.height, out var slab, out _))
-            {
-                markerRect = slab;
-                qrRect = PhonePointer.ScreenMarkerLayout.QrRect(Screen.width, Screen.height);
-            }
-
-            if (label == null)
-                label = new GUIStyle(GUI.skin.label)
-                {
-                    font = font != null ? font : GUI.skin.font,
-                    fontSize = 22,
-                    alignment = TextAnchor.UpperCenter,
-                    wordWrap = true
-                };
-            if (showMarker)
-            {
-                if (marker != null)
-                    GUI.DrawTexture(markerRect, marker, ScaleMode.StretchToFill);
-                else
-                    GUI.Label(markerRect, "등록 이미지가 없습니다.");
-                GUI.Label(new Rect(markerRect.x, markerRect.yMax + 8f, markerRect.width, 36f),
-                    initial ? "룬 석판을 휴대폰으로 비춰 주세요" : "룬 석판 - 휴대폰으로 다시 비춰 주세요", label);
-            }
-            if (showQr)
-            {
-                GUI.DrawTexture(qrRect, qr, ScaleMode.StretchToFill);
-                GUI.Label(new Rect(qrRect.x, qrRect.yMax + 8f, qrRect.width, 36f),
-                    initial ? "QR을 먼저 스캔해 주세요" : "연결이 끊겼습니다. QR을 다시 스캔해 주세요", label);
-            }
+            if (stage && stage.View) GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), stage.View, ScaleMode.StretchToFill);
+            else Fill(new Rect(0, 0, Screen.width, Screen.height), new Color(.008f, .015f, .025f));
+            if (!showQr || !qr) return;
+            EnsureSurround();
+            float side = Mathf.Min(Screen.height * .46f, Screen.width * .46f, 510f);
+            var rect = new Rect((Screen.width - side) * .5f, (Screen.height - side) * .5f, side, side);
+            // The soft light is outside the white plate; all QR modules and its quiet zone stay intact.
+            float plateSide = side + Mathf.Clamp(Screen.height / 900f, .55f, 1.6f) * 24f;
+            float glowSide = plateSide * (512f / 384f);
+            GUI.DrawTexture(new Rect(rect.center.x - glowSide * .5f, rect.center.y - glowSide * .5f, glowSide, glowSide), surround);
+            GUI.DrawTexture(rect, qr, ScaleMode.StretchToFill);
         }
 
+        void Fill(Rect rect, Color color)
+        {
+            var previous = GUI.color; GUI.color = color; GUI.DrawTexture(rect, Texture2D.whiteTexture); GUI.color = previous;
+        }
+        void EnsureSurround()
+        {
+            if (surround) return;
+            surround = new Texture2D(512, 512, TextureFormat.RGBA32, false)
+                { name = "QR Soft Edge Glow", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            var pixels = new Color[512 * 512];
+            for (int y = 0; y < 512; y++) for (int x = 0; x < 512; x++)
+            {
+                var q = new Vector2(Mathf.Abs(x - 255.5f) - 178f, Mathf.Abs(y - 255.5f) - 178f);
+                float distance = new Vector2(Mathf.Max(q.x, 0), Mathf.Max(q.y, 0)).magnitude + Mathf.Min(Mathf.Max(q.x, q.y), 0) - 14f;
+                float plate = 1f - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-.75f, .75f, distance));
+                float outside = Mathf.Max(distance, 0);
+                float glow = .35f * Mathf.Exp(-outside * outside / (2f * 18f * 18f)) * (1f - plate);
+                float alpha = plate + glow;
+                Color rgb = alpha > 0 ? (Color.white * plate + new Color(.64f, .78f, 1f) * glow) / alpha : Color.clear;
+                pixels[y * 512 + x] = new Color(rgb.r, rgb.g, rgb.b, alpha);
+            }
+            surround.SetPixels(pixels); surround.Apply();
+        }
         bool AnyTrackingLost()
         {
-            var sessions = Receiver.Sessions;
-            for (int i = 0; i < sessions.Count; i++)
+            foreach (var s in Receiver.Sessions)
             {
-                var s = sessions[i];
-                if (s.ConnectionStatus != PhonePointer.ConnectionStatus.Connected)
-                    continue;
-                if (!s.Model.Registered)
-                    return true;
-                // Air-mouse phones have no registration image to look at; they only need CENTER again.
-                if (s.TrackingMode == PhonePointer.PhoneTrackingMode.AR && s.Status == PhonePointer.PointerStatus.TrackingLost)
-                    return true;
+                if (s.ConnectionStatus != PhonePointer.ConnectionStatus.Connected) continue;
+                if (!s.Model.Registered || s.TrackingMode == PhonePointer.PhoneTrackingMode.AR && s.Status == PhonePointer.PointerStatus.TrackingLost) return true;
             }
             return false;
         }
-
         bool AnyConnectionLost()
         {
-            var sessions = Receiver.Sessions;
             int connected = 0;
-            for (int i = 0; i < sessions.Count; i++)
+            foreach (var s in Receiver.Sessions)
             {
-                if (sessions[i].ConnectionStatus == PhonePointer.ConnectionStatus.Reconnecting)
-                    return true;
-                if (sessions[i].ConnectionStatus == PhonePointer.ConnectionStatus.Connected)
-                    connected++;
+                if (s.ConnectionStatus == PhonePointer.ConnectionStatus.Reconnecting) return true;
+                if (s.ConnectionStatus == PhonePointer.ConnectionStatus.Connected) connected++;
             }
-            // A phone whose recovery window ran out is dropped from the list, so also count who is missing.
             expectedPlayers = Mathf.Max(expectedPlayers, Mathf.Max(Receiver.MaxPhones, connected));
             return connected < expectedPlayers;
         }
-
-        void OnDestroy()
-        {
-            if (qr != null)
-                Destroy(qr);
-        }
+        void OnDestroy() { if (qr) Destroy(qr); if (surround) Destroy(surround); }
     }
 }

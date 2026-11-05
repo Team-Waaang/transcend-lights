@@ -760,16 +760,14 @@ namespace Waaang
             var receiver = link != null ? link.Receiver : null;
             if (receiver == null)
                 return null;
-            int index = 0;
             var sessions = receiver.Sessions;
             for (int i = 0; i < sessions.Count; i++)
             {
                 var session = sessions[i];
                 if (session.ConnectionStatus != PhonePointer.ConnectionStatus.Connected)
                     continue;
-                if (index == slot)
+                if (session.PlayerSlot == slot)
                     return session;
-                index++;
             }
             return null;
         }
