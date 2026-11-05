@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f8ae2472778e4a359c051b675eb8c26, type: 3}
+  m_Name: Nox
+  m_EditorClassIdentifier: Assembly-CSharp::AiHackathon.Game.CasterProfile
+  displayName: Nox
+  characterModel: {fileID: 919132149155446097, guid: 7980b783bedf9495b9e33402e00deac3, type: 3}
+  bodyMaterial: {fileID: 2100000, guid: 8c8ddf72c62aa4246a633ea51c168f03, type: 2}
+  wandModel: {fileID: 919132149155446097, guid: bca9017cdfe574d59987b961e63d81d3, type: 3}
+  wandMaterial: {fileID: 2100000, guid: 8d23cc29a68829f4ab080086863be134, type: 2}
+  staffScale: 0.85
+  leftHanded: 1
+  playerColor: {r: 0.45, g: 0.75, b: 1, a: 1}
+  beamTint: {r: 0, g: 0, b: 0, a: 0}
+  trailColor: {r: 0.45, g: 0.85, b: 1.6, a: 1}
+  tipLightColor: {r: 0.615, g: 0.825, b: 1, a: 1}
+  beamPrefab: {fileID: 9143228144095690687, guid: 667ffe04c69cc2543943b55c6cdf7bdf, type: 3}
+  beamThickness: 0.09
+  tipLightIntensity: 0
+  hitLightIntensity: 0.9
+  idle: {fileID: 7400000, guid: e64909f894adb4c579eae585e0260ff5, type: 2}

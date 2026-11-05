@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f8ae2472778e4a359c051b675eb8c26, type: 3}
+  m_Name: Amelia
+  m_EditorClassIdentifier: Assembly-CSharp::AiHackathon.Game.CasterProfile
+  displayName: Amelia
+  characterModel: {fileID: 919132149155446097, guid: 469274c062c364df39fc580b98206cf8, type: 3}
+  bodyMaterial: {fileID: 2100000, guid: 0d074c549fb6be8419aa46580de0c101, type: 2}
+  wandModel: {fileID: 919132149155446097, guid: 2104360eda6f0430fbe3b7657d9d2ced, type: 3}
+  wandMaterial: {fileID: 2100000, guid: 7b3bdf463a213484d96e224fe6da96d9, type: 2}
+  staffScale: 1
+  leftHanded: 0
+  playerColor: {r: 1, g: 0.78, b: 0.38, a: 1}
+  beamTint: {r: 0, g: 0, b: 0, a: 0}
+  trailColor: {r: 1.5, g: 0.78, b: 0.28, a: 1}
+  tipLightColor: {r: 1, g: 0.78, b: 0.45, a: 1}
+  beamPrefab: {fileID: 1139077376442928571, guid: 5ef1b0be44e8e8e409e2e622a1fbfe27, type: 3}
+  beamThickness: 0.09
+  tipLightIntensity: 0
+  hitLightIntensity: 0.9
+  idle: {fileID: 7400000, guid: e64909f894adb4c579eae585e0260ff5, type: 2}
