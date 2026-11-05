@@ -3518,13 +3518,14 @@ MonoBehaviour:
   mouseMode: 1
   holdOffset: {x: 0.32, y: 0, z: 0.12}
   holdReach: 0.04
-  staffUpright: 0.4
+  staffUpright: 0
   bodyFollow: 0.55
   headFollow: 0.6
   maxYaw: 60
   maxPitch: 35
   aimSharpness: 12
-  useLeftHand: 0
+  useLeftHand: 1
+  beamPrefab: {fileID: 2172804743408484048, guid: 8a81cda4f2252b841a8ed72e0c454672, type: 3}
   fingerCurl: 1
 --- !u!4 &1563448111
 Transform:
