@@ -55,9 +55,8 @@ namespace Waaang.EditorTools
             CreateRoom();
             var character = CreateCharacter();
             var staff = CreateStaff(character.transform);
-            var camera = CreateCamera("Main Camera", Vector3.zero, Quaternion.identity, new Color(0.07f, 0.07f, 0.09f));
-            FrameUpperBody(camera, character.transform);
-            CreateSun();
+            var camera = CreateCamera("Main Camera", Vector3.zero, Quaternion.identity, FogColor);
+            StyleKeyLight(CreateSun());
             CreateCutsceneVolume();
 
             var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -85,8 +84,153 @@ namespace Waaang.EditorTools
             rig.hitMarker = marker.transform;
             rig.aimLine = beam[0];
             rig.glowLine = beam[1];
+            rigObject.AddComponent<SecondCaster>().primary = rig;
 
+            ApplyCutsceneLook(character.transform, camera, rig);
             return Save(scene, "Assets/Scenes/Game.unity");
+        }
+
+        // ---------- Cutscene look (Assets/Cutscene/Editor/CutsceneKit.cs) ----------
+
+        const string MageFbx = "Assets/TripoModels/fantasy_character_3d_model_1/fantasy_character_3d_model_1.fbx";
+        static readonly Color FogColor = new Color(0.12f, 0.1f, 0.15f);
+
+        [MenuItem("Waaang/Apply Cutscene Look To Open Game Scene")]
+        public static void ApplyCutsceneLookToOpenScene()
+        {
+            var character = GameObject.Find("Amelia");
+            var cameraObject = GameObject.Find("Main Camera");
+            var rig = Object.FindAnyObjectByType<WandPointerRig>();
+            if (character == null || cameraObject == null || rig == null)
+            {
+                Debug.LogError("Open Assets/Scenes/Game.unity first (needs Amelia, Main Camera and a WandPointerRig).");
+                return;
+            }
+            var sun = GameObject.Find("Directional Light");
+            if (sun != null)
+                StyleKeyLight(sun.GetComponent<Light>());
+            ApplyCutsceneLook(character.transform, cameraObject.GetComponent<Camera>(), rig);
+            EditorSceneManager.MarkSceneDirty(character.scene);
+        }
+
+        static void ApplyCutsceneLook(Transform character, Camera camera, WandPointerRig rig)
+        {
+            // Same grade as the cutscenes: purple fog that the camera clears to, brighter cool ambient.
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.Exponential;
+            RenderSettings.fogDensity = 0.045f;
+            RenderSettings.fogColor = FogColor;
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.42f, 0.4f, 0.5f);
+            RenderSettings.skybox = null;
+
+            // The cutscene mage idles with a wand in the right hand; same Tripo skeleton, so it drives Amelia too.
+            var pose = character.GetComponent<CasterPose>();
+            if (pose == null)
+                pose = character.gameObject.AddComponent<CasterPose>();
+            pose.idle = FindClip(MageFbx, "Idle stance");
+
+            var body = character.GetComponentInChildren<SkinnedMeshRenderer>();
+            if (body != null)
+                body.sharedMaterial = RimToon("Amelia_Rim.mat", body.sharedMaterial);
+            CreateRimLight(character);
+
+            // Grip a quarter of the way up the wand, like the mage's fist, not at its very end.
+            var staff = rig.staff;
+            var tip = staff != null ? staff.Find("Staff Tip") : null;
+            if (tip != null && rig.rightGrip != null)
+                rig.rightGrip.localPosition = tip.localPosition * 0.2f;
+            rig.useLeftHand = false;
+            rig.holdOffset = new Vector3(0.32f, 0f, 0.12f);
+            rig.holdReach = 0.04f;
+            rig.fingerCurl = 1f;
+            rig.staffUpright = 0.4f;
+
+            FrameOverShoulder(camera, character);
+            EditorUtility.SetDirty(rig);
+            EditorUtility.SetDirty(pose);
+        }
+
+        static AnimationClip FindClip(string fbx, string prefix)
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath(fbx);
+            for (int i = 0; i < assets.Length; i++)
+            {
+                var clip = assets[i] as AnimationClip;
+                if (clip != null && clip.name.StartsWith(prefix))
+                    return clip;
+            }
+            Debug.LogWarning("No clip starting with '" + prefix + "' in " + fbx);
+            return null;
+        }
+
+        // lilToon copy of the body material with the cutscene rim (CutsceneKit.RimMaterial), so her back reads
+        // against the room from the over-the-shoulder camera.
+        static Material RimToon(string file, Material source)
+        {
+            string path = MaterialDir + "/" + file;
+            var shader = Shader.Find("lilToon");
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = shader != null ? new Material(shader) : new Material(source);
+                AssetDatabase.CreateAsset(material, path);
+            }
+            Texture texture = null;
+            if (source != null)
+            {
+                texture = source.mainTexture;
+                if (texture == null && source.HasProperty("_BaseMap"))
+                    texture = source.GetTexture("_BaseMap");
+            }
+            if (texture != null)
+            {
+                material.mainTexture = texture;
+                if (material.HasProperty("_MainTex"))
+                    material.SetTexture("_MainTex", texture);
+            }
+            material.SetFloat("_UseRim", 1f);
+            material.SetColor("_RimColor", new Color(0.85f, 0.75f, 1f, 1f));
+            material.SetFloat("_RimBorder", 0.6f);
+            material.SetFloat("_RimBlur", 0.25f);
+            material.SetFloat("_RimFresnelPower", 2.5f);
+            material.SetFloat("_RimMainStrength", 0f);
+            material.SetFloat("_RimShadowMask", 0.3f);
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        static void StyleKeyLight(Light light)
+        {
+            if (light == null)
+                return;
+            // CutsceneKit.StandardLights key: cool, soft shadows; here from behind the camera so it lights her back
+            // and the walls she is aiming at.
+            light.color = new Color(0.72f, 0.72f, 0.9f);
+            light.intensity = 1.15f;
+            light.shadows = LightShadows.Soft;
+            light.transform.rotation = Quaternion.Euler(38f, 25f, 0f);
+        }
+
+        // Purple rim spot from in front of her, aimed back at her shoulders, like the cutscene rim on the boss.
+        static void CreateRimLight(Transform character)
+        {
+            var old = GameObject.Find("Rim Light");
+            if (old != null)
+                Object.DestroyImmediate(old);
+            var head = Find(character, "Head");
+            Vector3 focus = head != null ? head.position - Vector3.up * 0.25f : character.position + Vector3.up * 1.2f;
+            var go = new GameObject("Rim Light");
+            var light = go.AddComponent<Light>();
+            light.type = LightType.Spot;
+            light.color = new Color(0.65f, 0.3f, 1f);
+            light.intensity = 7f;
+            light.range = 6f;
+            light.spotAngle = 55f;
+            light.shadows = LightShadows.None;
+            go.transform.position = focus + character.forward * 1.6f - character.right * 0.9f + Vector3.up * 0.7f;
+            go.transform.LookAt(focus);
+            AddLightData(go);
         }
 
         static void CreateRoom()
@@ -255,22 +399,28 @@ namespace Waaang.EditorTools
             line.numCapVertices = 4;
         }
 
-        static void FrameUpperBody(Camera camera, Transform character)
+        // Behind her and off to the right: her back and head fill the lower-left corner, the staff rises
+        // through the lower middle and the rest of the frame is the room she is aiming into.
+        public static Vector3 ShoulderCamBack = new Vector3(0.6f, 0.3f, -1.45f);
+        public static float ShoulderCamPitch = -4f;
+        public static float ShoulderCamYaw = 2f;
+        public static float ShoulderCamFov = 50f;
+
+        static void FrameOverShoulder(Camera camera, Transform character)
         {
-            var chest = Find(character, "Chest");
-            var hips = Find(character, "Hips");
             var head = Find(character, "Head");
-            Vector3 chestPosition = chest != null ? chest.position : character.position + Vector3.up;
-            Vector3 hipsPosition = hips != null ? hips.position : chestPosition;
-            Vector3 headPosition = head != null ? head.position : chestPosition + Vector3.up * 0.3f;
-            Vector3 back = -character.forward;
-            camera.fieldOfView = 38f;
-            camera.nearClipPlane = 0.05f;
+            Vector3 headPosition = head != null ? head.position : character.position + Vector3.up * 1.4f;
+            camera.fieldOfView = ShoulderCamFov;
+            camera.nearClipPlane = 0.02f;
             camera.allowHDR = true;
-            camera.backgroundColor = new Color(0.07f, 0.07f, 0.09f);
-            camera.transform.position = hipsPosition + back * 1.35f + character.right * 0.42f + Vector3.up * 0.15f;
-            Vector3 look = headPosition + character.forward * 4f + character.right * 1.15f + Vector3.up * 1.1f;
-            camera.transform.rotation = Quaternion.LookRotation(look - camera.transform.position);
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = FogColor;
+            camera.transform.position = headPosition
+                + character.right * ShoulderCamBack.x
+                + Vector3.up * ShoulderCamBack.y
+                + character.forward * ShoulderCamBack.z;
+            camera.transform.rotation = Quaternion.LookRotation(character.forward)
+                * Quaternion.Euler(ShoulderCamPitch, ShoulderCamYaw, 0f);
             EnablePost(camera);
         }
 
@@ -321,7 +471,7 @@ namespace Waaang.EditorTools
             return camera;
         }
 
-        static void CreateSun()
+        static Light CreateSun()
         {
             var go = new GameObject("Directional Light");
             var light = go.AddComponent<Light>();
@@ -334,6 +484,7 @@ namespace Waaang.EditorTools
                 "UnityEngine.Rendering.Universal.UniversalAdditionalLightData, Unity.RenderPipelines.Universal.Runtime");
             if (data != null)
                 go.AddComponent(data);
+            return light;
         }
 
         static GameObject Box(string name, Vector3 position, Vector3 scale, Material material)

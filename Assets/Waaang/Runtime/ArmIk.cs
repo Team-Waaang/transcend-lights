@@ -33,6 +33,24 @@ namespace Waaang
             AimChild(lower, hand, clampedTarget);
         }
 
+        // Two-bone IK plus a hand that closes on a staff: the staff runs across the palm (gripAxisLocal, hand space)
+        // through gripOffsetLocal (hand space, world metres). Solved twice because the wrist goal depends on the hand
+        // rotation, which depends on where the forearm ended up.
+        public static void SolveGrip(Transform upper, Transform lower, Transform hand, Vector3 grip, Vector3 staffAxis,
+            Vector3 pole, Vector3 gripAxisLocal, Vector3 gripOffsetLocal)
+        {
+            if (upper == null || lower == null || hand == null)
+                return;
+            Vector3 wrist = grip;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                Solve(upper, lower, hand, wrist, pole);
+                Vector3 current = hand.rotation * gripAxisLocal;
+                hand.rotation = Quaternion.FromToRotation(current, staffAxis) * hand.rotation;
+                wrist = grip - hand.rotation * gripOffsetLocal;
+            }
+        }
+
         static void AimChild(Transform bone, Transform child, Vector3 worldTarget)
         {
             Vector3 current = child.position - bone.position;

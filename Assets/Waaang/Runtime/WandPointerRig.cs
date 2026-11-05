@@ -19,29 +19,69 @@ namespace Waaang
         public LayerMask roomMask = ~0;
         [Tooltip("맞은 표면에서 광원을 얼마나 앞으로 띄울지. 면 안에 들어가면 그 면이 밝아지지 않습니다.")]
         public float lightSurfaceOffset = 0.28f;
+        [Tooltip("이 리그가 따라갈 휴대폰 순서. 0이 왼쪽, 1이 오른쪽 플레이어입니다.")]
+        public int phoneSlot;
         [FormerlySerializedAs("useMouseWhenPhoneNotReady")]
-        [Tooltip("켜면 휴대폰 연결 없이 마우스 위치로 포인터와 지팡이를 조작합니다.")]
+        [Tooltip("이 슬롯에 휴대폰이 없을 때 마우스로 조작합니다. 휴대폰이 붙으면 그 휴대폰이 우선합니다.")]
         public bool mouseMode = true;
+
+        [Header("Pose / IK")]
+        [Tooltip("오른쪽 어깨 기준 지팡이를 쥐는 위치(m). x=오른쪽, y=위, z=앞.")]
+        public Vector3 holdOffset = new Vector3(0.32f, 0f, 0.12f);
+        [Tooltip("조준 방향으로 쥔 손이 얼마나 따라 나가는지(m).")]
+        public float holdReach = 0.04f;
+        [Tooltip("지팡이를 조준 방향 대신 위로 세우는 비율. 0이면 조준점을 정확히 가리킵니다.")]
+        [Range(0f, 0.9f)] public float staffUpright = 0.4f;
+        [Tooltip("몸통(척추~윗가슴)이 조준 방향으로 돌아가는 비율.")]
+        [Range(0f, 1f)] public float bodyFollow = 0.55f;
+        [Tooltip("머리가 나머지 조준 각도를 따라가는 비율.")]
+        [Range(0f, 1f)] public float headFollow = 0.6f;
+        public float maxYaw = 60f;
+        public float maxPitch = 35f;
+        [Tooltip("조준 흔들림을 줄이는 속도. 클수록 빠르게 따라갑니다.")]
+        public float aimSharpness = 12f;
+        [Tooltip("켜면 왼손도 지팡이를 잡습니다. 끄면 왼팔은 대기 애니메이션을 따릅니다.")]
+        public bool useLeftHand;
+        [Tooltip("오른손 손가락을 지팡이에 감는 정도.")]
+        [Range(0f, 1.5f)] public float fingerCurl = 1f;
+
+        static readonly string[] FingerNames = { "Index", "Middle", "Ring", "Pinky" };
+        static readonly string[] JointNames = { "Proximal", "Intermediate", "Distal" };
+        static readonly float[] JointCurl = { 55f, 80f, 55f };
 
         Transform rightUpper, rightLower, rightHand;
         Transform leftUpper, leftLower, leftHand;
+        Transform spine, chest, upperChest, head;
+        Quaternion[] restRotations;
+        Transform[] twistBones;
+        CasterPose pose;
+        Transform boundCharacter;
+        // Right-hand grip frame in hand space, from the finger bones: fingers, across the knuckles (pinky -> index,
+        // where the staff runs), and the palm normal.
+        Vector3 fingerLocal = Vector3.up, acrossLocal = Vector3.forward, palmLocal = Vector3.right;
+        Transform[] fingerBones;
+        Quaternion[] fingerRest;
+        Transform thumb;
+        Quaternion thumbRest;
+        float handLength = 0.07f;
+        float armLength;
+        Vector3 smoothedAim;
+        bool hasSmoothedAim;
         Vector2 pointerUv = new Vector2(0.5f, 0.5f);
         bool hasPointerSample;
         bool pointerVisible;
         bool wasFiring;
         string hitName = "";
-        Material scorchMaterial;
-        Transform scorchRoot;
-        const int MaxScorches = 48;
+        Material trailMaterial;
+        Transform trailRoot;
+        LineRenderer trail;
+        Vector3 lastTrailPoint;
+        bool trailHasPoint;
+        const int MaxTrails = 16;
 
         void Awake()
         {
-            rightUpper = FindBone("Right_UpperArm");
-            rightLower = FindBone("Right_LowerArm");
-            rightHand = FindBone("Right_Hand");
-            leftUpper = FindBone("Left_UpperArm");
-            leftLower = FindBone("Left_LowerArm");
-            leftHand = FindBone("Left_Hand");
+            BindBones();
             if (viewCamera == null)
                 viewCamera = Camera.main;
             if (hitLight == null && hitMarker != null)
@@ -59,9 +99,55 @@ namespace Waaang
                 hitLight.enabled = false;
                 hitLight = copy;
             }
-            scorchRoot = new GameObject("Scorch Marks").transform;
-            scorchRoot.SetParent(transform, false);
+            trailRoot = new GameObject("Laser Trails").transform;
+            trailRoot.SetParent(transform, false);
             SetBeamActive(false);
+            ToonLook.ApplyScene();
+        }
+
+        // Also called later when character is assigned after AddComponent (SecondCaster).
+        void BindBones()
+        {
+            boundCharacter = character;
+            rightUpper = FindBone("Right_UpperArm");
+            rightLower = FindBone("Right_LowerArm");
+            rightHand = FindBone("Right_Hand");
+            leftUpper = FindBone("Left_UpperArm");
+            leftLower = FindBone("Left_LowerArm");
+            leftHand = FindBone("Left_Hand");
+            spine = FindBone("Spine");
+            chest = FindBone("Chest");
+            upperChest = FindBone("UpperChest");
+            head = FindBone("Head");
+            var middle = FindBone("Right_MiddleProximal");
+            var index = FindBone("Right_IndexProximal");
+            var pinky = FindBone("Right_PinkyProximal");
+            if (rightHand != null && middle != null)
+                handLength = Vector3.Distance(rightHand.position, middle.position);
+            if (rightUpper != null && rightLower != null && rightHand != null)
+                armLength = Vector3.Distance(rightUpper.position, rightLower.position)
+                    + Vector3.Distance(rightLower.position, rightHand.position);
+            if (rightHand != null && middle != null && index != null && pinky != null)
+            {
+                Quaternion toLocal = Quaternion.Inverse(rightHand.rotation);
+                fingerLocal = (toLocal * (middle.position - rightHand.position)).normalized;
+                acrossLocal = Vector3.ProjectOnPlane(toLocal * (index.position - pinky.position), fingerLocal).normalized;
+                palmLocal = Vector3.Cross(fingerLocal, acrossLocal);
+            }
+            fingerBones = new Transform[FingerNames.Length * JointNames.Length];
+            for (int f = 0; f < FingerNames.Length; f++)
+                for (int j = 0; j < JointNames.Length; j++)
+                    fingerBones[f * JointNames.Length + j] = FindBone("Right_" + FingerNames[f] + JointNames[j]);
+            fingerRest = new Quaternion[fingerBones.Length];
+            for (int i = 0; i < fingerBones.Length; i++)
+                fingerRest[i] = fingerBones[i] != null ? fingerBones[i].localRotation : Quaternion.identity;
+            thumb = FindBone("Right_ThumbProximal");
+            thumbRest = thumb != null ? thumb.localRotation : Quaternion.identity;
+            twistBones = new[] { spine, chest, upperChest, head, rightUpper, rightLower, rightHand, leftUpper, leftLower, leftHand };
+            restRotations = new Quaternion[twistBones.Length];
+            for (int i = 0; i < twistBones.Length; i++)
+                restRotations[i] = twistBones[i] != null ? twistBones[i].localRotation : Quaternion.identity;
+            pose = character != null ? character.GetComponent<CasterPose>() : null;
         }
 
         Transform FindBone(string boneName)
@@ -79,6 +165,8 @@ namespace Waaang
 
         void LateUpdate()
         {
+            if (boundCharacter != character)
+                BindBones();
             UpdatePointer();
             if (viewCamera == null || staff == null)
                 return;
@@ -101,18 +189,28 @@ namespace Waaang
             }
 
             bool firing = IsFiring();
-            if (firing && !wasFiring && hit)
-                LeaveScorch(info);
+            if (firing && hit)
+                ExtendTrail(info);
+            else
+                trail = null;
             wasFiring = firing;
 
-            Vector3 aimDirection = aimPoint - staff.position;
-            if (aimDirection.sqrMagnitude > 0.0001f)
+            // The body and staff follow a damped aim so phone jitter does not shake the whole caster;
+            // the beam itself still lands exactly on the pointer.
+            if (!hasSmoothedAim)
             {
-                Vector3 side = Vector3.Cross(character != null ? character.right : Vector3.right, aimDirection);
-                if (side.sqrMagnitude < 0.0001f)
-                    side = Vector3.Cross(Vector3.up, aimDirection);
-                staff.rotation = Quaternion.LookRotation(side, aimDirection);
+                smoothedAim = aimPoint;
+                hasSmoothedAim = true;
             }
+            else
+            {
+                smoothedAim = Vector3.Lerp(smoothedAim, aimPoint, 1f - Mathf.Exp(-aimSharpness * Time.deltaTime));
+            }
+
+            if (character != null)
+                PoseCaster(smoothedAim);
+            else
+                AimStaff(smoothedAim);
 
             if (hitMarker != null)
             {
@@ -132,28 +230,140 @@ namespace Waaang
             SetBeamActive(firing);
             SetBeam(aimLine, tipPosition, aimPoint);
             SetBeam(glowLine, tipPosition, aimPoint);
+        }
 
-            if (character != null)
+        void PoseCaster(Vector3 aim)
+        {
+            // Without an animation driving the bones every frame, start from the rest pose so twists do not pile up.
+            if (pose == null || !pose.isActiveAndEnabled || pose.idle == null)
             {
-                Vector3 rightPole = rightUpper != null
-                    ? rightUpper.position + character.right * 0.45f - character.forward * 0.2f
-                    : staff.position;
-                Vector3 leftPole = leftUpper != null
-                    ? leftUpper.position - character.right * 0.45f - character.forward * 0.2f
-                    : staff.position;
-                if (rightGrip != null)
-                    ArmIk.Solve(rightUpper, rightLower, rightHand, rightGrip.position, rightPole);
-                if (leftGrip != null)
-                    ArmIk.Solve(leftUpper, leftLower, leftHand, leftGrip.position, leftPole);
+                for (int i = 0; i < twistBones.Length; i++)
+                {
+                    if (twistBones[i] != null)
+                        twistBones[i].localRotation = restRotations[i];
+                }
             }
+
+            Vector3 up = Vector3.up;
+            Vector3 from = chest != null ? chest.position : character.position + up;
+            Vector3 toAim = aim - from;
+            Vector3 flat = Vector3.ProjectOnPlane(toAim, up);
+            if (flat.sqrMagnitude < 0.0001f)
+                flat = character.forward;
+            float yaw = Mathf.Clamp(Vector3.SignedAngle(character.forward, flat, up), -maxYaw, maxYaw);
+            float pitch = Mathf.Clamp(Mathf.Atan2(toAim.y, flat.magnitude) * Mathf.Rad2Deg, -maxPitch, maxPitch);
+
+            // Spread the turn up the spine like the cutscene breathing rig: the chest carries most of it.
+            float bodyYaw = yaw * bodyFollow;
+            float bodyPitch = pitch * bodyFollow * 0.5f;
+            Twist(spine, 0.25f, bodyYaw, bodyPitch);
+            Twist(chest, 0.35f, bodyYaw, bodyPitch);
+            Twist(upperChest, 0.4f, bodyYaw, bodyPitch);
+            Twist(head, 1f, (yaw - bodyYaw) * headFollow, (pitch - bodyPitch) * headFollow);
+
+            // Staff held out at the right side, scepter style, leaning a little toward where it points.
+            Vector3 bodyForward = Quaternion.AngleAxis(bodyYaw, up) * character.forward;
+            Vector3 bodyRight = Vector3.Cross(up, bodyForward);
+            Vector3 shoulder = rightUpper != null ? rightUpper.position : from;
+            Vector3 hold = shoulder + bodyRight * holdOffset.x + up * holdOffset.y + bodyForward * holdOffset.z;
+            Vector3 lean = aim - hold;
+            if (lean.sqrMagnitude > 0.0001f)
+                hold += lean.normalized * holdReach;
+            // Keep the grip where the arm can actually close on it, with the elbow a little bent.
+            float reach = armLength * 0.97f - FistOffset().magnitude;
+            if (reach > 0f && (hold - shoulder).sqrMagnitude > reach * reach)
+                hold = shoulder + (hold - shoulder).normalized * reach;
+            AimStaff(aim, hold);
+
+            Vector3 axis = staff.up;
+            Vector3 rightPole = shoulder + bodyRight * 0.35f - up * 0.5f - bodyForward * 0.15f;
+            if (rightGrip != null)
+            {
+                ArmIk.SolveGrip(rightUpper, rightLower, rightHand, rightGrip.position, axis, rightPole, acrossLocal, FistOffset());
+                CurlFingers();
+            }
+
+            if (useLeftHand && leftGrip != null && leftUpper != null)
+            {
+                Vector3 leftPole = leftUpper.position - bodyRight * 0.35f - up * 0.5f - bodyForward * 0.15f;
+                ArmIk.Solve(leftUpper, leftLower, leftHand, leftGrip.position, leftPole);
+            }
+        }
+
+        // Where the staff passes through the closed fist, in hand space: past the knuckles, off the palm.
+        Vector3 FistOffset()
+        {
+            return (fingerLocal * 0.85f + palmLocal * 0.35f) * handLength;
+        }
+
+        // Close the right hand around the staff. Starts from the rest pose every frame so it never accumulates.
+        void CurlFingers()
+        {
+            if (rightHand == null || fingerBones == null)
+                return;
+            // A positive turn about index->pinky swings the fingertips toward the palm.
+            Vector3 curlAxis = rightHand.rotation * -acrossLocal;
+            for (int i = 0; i < fingerBones.Length; i++)
+            {
+                var bone = fingerBones[i];
+                if (bone == null)
+                    continue;
+                bone.localRotation = fingerRest[i];
+                float angle = JointCurl[i % JointNames.Length] * fingerCurl;
+                bone.rotation = Quaternion.AngleAxis(angle, curlAxis) * bone.rotation;
+            }
+            if (thumb != null)
+            {
+                thumb.localRotation = thumbRest;
+                thumb.rotation = Quaternion.AngleAxis(35f * fingerCurl, rightHand.rotation * fingerLocal) * thumb.rotation;
+            }
+        }
+
+        void Twist(Transform bone, float share, float yaw, float pitch)
+        {
+            if (bone == null)
+                return;
+            Vector3 right = Quaternion.AngleAxis(yaw, Vector3.up) * character.right;
+            bone.rotation = Quaternion.AngleAxis(yaw * share, Vector3.up)
+                * Quaternion.AngleAxis(-pitch * share, right)
+                * bone.rotation;
+        }
+
+        void AimStaff(Vector3 aim)
+        {
+            AimStaff(aim, staff.position, false);
+        }
+
+        void AimStaff(Vector3 aim, Vector3 hold)
+        {
+            AimStaff(aim, hold, true);
+        }
+
+        // Points the staff at aim and, when place is set, slides it so the right grip sits on hold.
+        void AimStaff(Vector3 aim, Vector3 hold, bool place)
+        {
+            Vector3 direction = aim - hold;
+            if (place && direction.sqrMagnitude > 0.0001f)
+                direction = Vector3.Slerp(direction.normalized, Vector3.up, staffUpright);
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                Vector3 side = Vector3.Cross(character != null ? character.right : Vector3.right, direction);
+                if (side.sqrMagnitude < 0.0001f)
+                    side = Vector3.Cross(Vector3.up, direction);
+                staff.rotation = Quaternion.LookRotation(side, direction);
+            }
+            if (place && rightGrip != null)
+                staff.position += hold - rightGrip.position;
         }
 
         bool IsFiring()
         {
-            if (mouseMode)
+            var session = FindSession(phoneSlot);
+            if (session != null)
+                return session.Model.Pressed;
+            if (phoneSlot == 0 && mouseMode)
                 return Mouse.current != null && Mouse.current.leftButton.isPressed;
-            var link = PhoneLink.Instance;
-            return link != null && link.Receiver != null && link.Receiver.Model.Pressed;
+            return false;
         }
 
         void SetBeamActive(bool active)
@@ -164,41 +374,51 @@ namespace Waaang
                 glowLine.enabled = active;
         }
 
-        void LeaveScorch(RaycastHit info)
+        void ExtendTrail(RaycastHit info)
         {
-            if (scorchMaterial == null)
-                scorchMaterial = CreateScorchMaterial();
-            var mark = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            mark.name = "Scorch";
-            var collider = mark.GetComponent<Collider>();
-            if (collider != null)
-                Destroy(collider);
-            mark.transform.SetParent(scorchRoot, true);
-            mark.transform.position = info.point + info.normal * 0.012f;
-            mark.transform.rotation = Quaternion.LookRotation(-info.normal);
-            mark.transform.localScale = Vector3.one * 0.16f;
-            var renderer = mark.GetComponent<Renderer>();
-            renderer.sharedMaterial = scorchMaterial;
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            if (scorchRoot.childCount > MaxScorches)
-                Destroy(scorchRoot.GetChild(0).gameObject);
+            Vector3 point = info.point + info.normal * 0.015f;
+            if (trail == null || !trailHasPoint)
+            {
+                BeginTrail(point);
+                return;
+            }
+            if ((point - lastTrailPoint).sqrMagnitude < 0.0006f)
+                return;
+            trail.positionCount++;
+            trail.SetPosition(trail.positionCount - 1, point);
+            lastTrailPoint = point;
         }
 
-        static Material CreateScorchMaterial()
+        void BeginTrail(Vector3 point)
+        {
+            if (trailMaterial == null)
+                trailMaterial = CreateTrailMaterial();
+            var lineObject = new GameObject("Scorch Line");
+            lineObject.transform.SetParent(trailRoot, false);
+            trail = lineObject.AddComponent<LineRenderer>();
+            trail.material = trailMaterial;
+            trail.useWorldSpace = true;
+            trail.widthMultiplier = 0.035f;
+            trail.numCornerVertices = 4;
+            trail.numCapVertices = 4;
+            trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            trail.receiveShadows = false;
+            trail.positionCount = 2;
+            trail.SetPosition(0, point);
+            trail.SetPosition(1, point);
+            lastTrailPoint = point;
+            trailHasPoint = true;
+            while (trailRoot.childCount > MaxTrails)
+                Destroy(trailRoot.GetChild(0).gameObject);
+        }
+
+        static Material CreateTrailMaterial()
         {
             var shader = Shader.Find("Universal Render Pipeline/Unlit");
             var material = new Material(shader);
-            var color = new Color(1.4f, 0.72f, 0.25f, 0.9f);
+            var color = new Color(1.5f, 0.78f, 0.28f, 1f);
             material.color = color;
             material.SetColor("_BaseColor", color);
-            material.SetFloat("_Surface", 1f);
-            material.SetFloat("_Blend", 1f);
-            material.SetOverrideTag("RenderType", "Transparent");
-            material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
-            material.SetInt("_ZWrite", 0);
-            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
             return material;
         }
 
@@ -211,18 +431,31 @@ namespace Waaang
             line.SetPosition(1, to);
         }
 
-        void UpdatePointer()
+        PhonePointer.PhoneSession FindSession(int slot)
         {
-            if (mouseMode)
-            {
-                ApplyMouse();
-                return;
-            }
-
             var link = PhoneLink.Instance;
             var receiver = link != null ? link.Receiver : null;
+            if (receiver == null)
+                return null;
+            int index = 0;
+            var sessions = receiver.Sessions;
+            for (int i = 0; i < sessions.Count; i++)
+            {
+                var session = sessions[i];
+                if (session.ConnectionStatus != PhonePointer.ConnectionStatus.Connected)
+                    continue;
+                if (index == slot)
+                    return session;
+                index++;
+            }
+            return null;
+        }
+
+        void UpdatePointer()
+        {
+            var session = FindSession(phoneSlot);
             Vector2 phoneUv;
-            if (receiver != null && receiver.TryGetPointerNormalized(out phoneUv))
+            if (session != null && session.TryGetPointerNormalized(out phoneUv))
             {
                 pointerUv = phoneUv;
                 hasPointerSample = true;
@@ -230,11 +463,16 @@ namespace Waaang
                 return;
             }
 
-            // The phone ray left the screen. Keep the last point that was still on it.
-            if (receiver != null && hasPointerSample &&
-                receiver.Status == PhonePointer.PointerStatus.OutsideScreen)
+            if (session != null && hasPointerSample &&
+                session.Status == PhonePointer.PointerStatus.OutsideScreen)
             {
                 pointerVisible = true;
+                return;
+            }
+
+            if (phoneSlot == 0 && mouseMode && session == null)
+            {
+                ApplyMouse();
                 return;
             }
 
@@ -264,7 +502,9 @@ namespace Waaang
             float x = pointerUv.x * Screen.width;
             float y = (1f - pointerUv.y) * Screen.height;
             Color previous = GUI.color;
-            GUI.color = new Color(1f, 0.82f, 0.2f, 1f);
+            GUI.color = phoneSlot == 0
+                ? new Color(1f, 0.82f, 0.2f, 1f)
+                : new Color(0.45f, 0.75f, 1f, 1f);
             GUI.DrawTexture(new Rect(x - 14f, y - 1.5f, 28f, 3f), Texture2D.whiteTexture);
             GUI.DrawTexture(new Rect(x - 1.5f, y - 14f, 3f, 28f), Texture2D.whiteTexture);
             GUI.DrawTexture(new Rect(x - 3f, y - 3f, 6f, 6f), Texture2D.whiteTexture);
