@@ -323,6 +323,10 @@ namespace AiHackathon.Cutscene.Editor
             var dark = LitMaterial("DarkWood", new Color(0.22f, 0.14f, 0.09f), 0.25f);
             var navy = LitMaterial("Navy", new Color(0.12f, 0.13f, 0.3f), 0.1f);
             var gold = LitMaterial("GoldTrim", new Color(0.85f, 0.65f, 0.28f), 0.6f);
+            // Painted grain instead of flat colour: oak planks underfoot, warm plaster on the walls.
+            Textured(wood, PaintTexture(textureDir + "/WoodPlanks.png", 512, WoodPlanks), new Vector2(5f, 6f));
+            Textured(dark, PaintTexture(textureDir + "/WoodGrain.png", 256, WoodGrain), new Vector2(2f, 2f));
+            Textured(wall, PaintTexture(textureDir + "/Plaster.png", 512, Plaster), new Vector2(3f, 2f));
 
             Block(env, "Floor", PrimitiveType.Cube, new Vector3(0f, -0.05f, 0.6f), new Vector3(10f, 0.1f, 12f), wood);
             Block(env, "Wall Back", PrimitiveType.Cube, new Vector3(0f, 2.4f, 5.3f), new Vector3(10f, 4.8f, 0.2f), wall);
@@ -421,12 +425,149 @@ namespace AiHackathon.Cutscene.Editor
                 q.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
             }
 
+            FloatingCandles(env, textureDir);
+
             // Lasers hit the room (strokes on walls and floor), but not the light shafts, and a flat cylinder's
             // capsule collider would balloon into a sphere: drop those.
             foreach (var col in env.GetComponentsInChildren<Collider>())
                 if (col.name == "Shaft" || (col is CapsuleCollider && col.transform.localScale.y < 0.2f))
                     Object.DestroyImmediate(col);
             return new Classroom { root = env, windows = windows, shafts = shafts, fog = fog };
+        }
+
+        /// <summary>
+        /// The magic-school touch: candles floating high over the classroom, each bobbing on its own, with a warm
+        /// flame glow and a few flickering lights among them. No colliders (lasers pass under them).
+        /// </summary>
+        static void FloatingCandles(Transform env, string textureDir)
+        {
+            var root = new GameObject("Floating Candles").transform;
+            root.SetParent(env);
+            var wax = LitMaterial("CandleWax", new Color(0.95f, 0.9f, 0.8f), 0.3f);
+            wax.EnableKeyword("_EMISSION");
+            wax.SetColor("_EmissionColor", new Color(0.35f, 0.22f, 0.1f));
+            var glowTex = PaintTexture(textureDir + "/CandleGlow.png", 64, (u, v) =>
+            {
+                float x = u * 2f - 1f, y = v * 2f - 1f;
+                float r = Mathf.Sqrt(x * x + y * y);
+                return new Color(1f, 1f, 1f, Mathf.Clamp01(Mathf.Pow(Mathf.Clamp01(1f - r), 2.2f) * 0.8f + Mathf.Exp(-r * r * 40f) * 0.4f));
+            });
+            var halo = Additive("CandleHalo", glowTex, new Color(2.4f, 1.4f, 0.6f, 0.55f));
+            var flame = Additive("CandleFlame", glowTex, new Color(4f, 2.6f, 1.3f, 1f));
+            var rng = new System.Random(12);
+            float R(float a, float b) => a + (float)rng.NextDouble() * (b - a);
+            const int count = 22;
+            for (int i = 0; i < count; i++)
+            {
+                // Spread in a loose grid so they fill the ceiling space without clumping.
+                float gx = (i % 6) / 5f, gz = (i / 6) / 3f;
+                // Low enough to float into the play camera's view over the stones, never down at head height.
+                var p = new Vector3(Mathf.Lerp(-3.9f, 3.9f, gx) + R(-0.35f, 0.35f), R(2.15f, 3.0f), Mathf.Lerp(-2.4f, 4.6f, gz) + R(-0.4f, 0.4f));
+                var candle = new GameObject("Candle").transform;
+                candle.SetParent(root);
+                candle.position = p;
+                float h = R(0.12f, 0.22f);
+                var body = Block(candle, "Wax", PrimitiveType.Cylinder, p, new Vector3(0.05f, h * 0.5f, 0.05f), wax);
+                Object.DestroyImmediate(body.GetComponent<Collider>());
+                body.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+                var tip = p + Vector3.up * (h * 0.5f + 0.035f);
+                foreach (var (name, size, mat) in new[] { ("Halo", 0.32f, halo), ("Flame", 0.06f, flame) })
+                {
+                    var q = Block(candle, name, PrimitiveType.Quad, tip, Vector3.one * size, mat);
+                    Object.DestroyImmediate(q.GetComponent<Collider>());
+                    q.GetComponent<Renderer>().shadowCastingMode = ShadowCastingMode.Off;
+                    var g = q.AddComponent<GlowSprite>();
+                    g.pulse = name == "Flame" ? 0.18f : 0.08f;
+                    g.period = R(0.35f, 0.7f);
+                }
+                var bob = candle.gameObject.AddComponent<Levitate>();
+                bob.amplitude = R(0.03f, 0.07f);
+                bob.period = R(3.5f, 6f);
+                bob.spin = 0f;
+                bob.phase = R(0f, 1f);
+            }
+            // A few warm lights among them, flickering like flames.
+            foreach (var p in new[] { new Vector3(-2.4f, 2.7f, 0.8f), new Vector3(2.4f, 2.7f, 1.2f), new Vector3(0f, 2.8f, 3.6f) })
+            {
+                var l = Light(root, "Candle Light", LightType.Point, new Color(1f, 0.7f, 0.42f), 0.9f, 4.5f);
+                l.transform.position = p;
+                l.shadows = LightShadows.None;
+                l.gameObject.AddComponent<LightFlicker>().amount = 0.12f;
+            }
+        }
+
+        static void Textured(Material m, Texture2D texture, Vector2 tiling)
+        {
+            m.SetTexture("_BaseMap", texture);
+            m.SetTextureScale("_BaseMap", tiling);
+            EditorUtility.SetDirty(m);
+        }
+
+        /// <summary>Paints a tiling texture from <paramref name="paint"/>(u, v) and imports it (repeat wrap).</summary>
+        static Texture2D PaintTexture(string path, int size, System.Func<float, float, Color> paint)
+        {
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, true);
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+                tex.SetPixel(x, y, paint((x + 0.5f) / size, (y + 0.5f) / size));
+            tex.Apply();
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.wrapMode = TextureWrapMode.Repeat;
+            importer.alphaIsTransparency = true;
+            importer.anisoLevel = 4;
+            importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        static float TileNoise(float u, float v, float scale, int octaves)
+        {
+            float N(float x, float y)
+            {
+                float sum = 0f, amp = 0.5f, f = 1f, norm = 0f;
+                for (int i = 0; i < octaves; i++) { sum += amp * Mathf.PerlinNoise(x * f + i * 13.7f, y * f + i * 7.3f); norm += amp; amp *= 0.5f; f *= 2f; }
+                return sum / norm;
+            }
+            // Blend four shifted copies so the noise wraps at the texture edge.
+            float sx = u * scale, sy = v * scale;
+            return Mathf.Lerp(Mathf.Lerp(N(sx, sy), N(sx - scale, sy), u), Mathf.Lerp(N(sx, sy - scale), N(sx - scale, sy - scale), u), v);
+        }
+
+        // Oak planks: six boards across, staggered butt joints, long grain, per-board tone. Multiplied by the
+        // material colour, so the values sit around 1.
+        static Color WoodPlanks(float u, float v)
+        {
+            const int boards = 6;
+            int b = Mathf.Min(boards - 1, (int)(u * boards));
+            float fu = u * boards - b;
+            float shift = Mathf.Repeat(b * 0.37f, 1f);
+            float fv = Mathf.Repeat(v + shift, 1f);
+            float tone = 0.82f + 0.3f * Mathf.Repeat(Mathf.Sin(b * 12.9898f) * 43758.55f, 1f);
+            float grain = TileNoise(u * 0.25f, v, 8f, 3);
+            float streak = 0.5f + 0.5f * Mathf.Sin((fu * 22f + grain * 6f) * Mathf.PI);
+            float seam = Mathf.SmoothStep(0f, 1f, Mathf.Min(fu, 1f - fu) / 0.03f);
+            float butt = Mathf.SmoothStep(0f, 1f, Mathf.Min(fv, 1f - fv) / 0.006f);
+            float val = tone * (0.86f + 0.14f * streak) * (0.9f + 0.2f * grain) * Mathf.Lerp(0.45f, 1f, seam * butt);
+            return new Color(val, val * 0.97f, val * 0.92f, 1f);
+        }
+
+        static Color WoodGrain(float u, float v)
+        {
+            float grain = TileNoise(u, v * 0.2f, 6f, 3);
+            float streak = 0.5f + 0.5f * Mathf.Sin((v * 30f + grain * 8f) * Mathf.PI);
+            float val = 0.85f + 0.12f * streak + 0.15f * (grain - 0.5f);
+            return new Color(val, val, val, 1f);
+        }
+
+        // Soft lime plaster: low cloudy variation and a little fine grit, around 1.
+        static Color Plaster(float u, float v)
+        {
+            float cloud = TileNoise(u, v, 4f, 4);
+            float grit = TileNoise(u, v, 40f, 2);
+            float val = 0.9f + 0.16f * (cloud - 0.5f) + 0.07f * (grit - 0.5f);
+            return new Color(val, val * 0.99f, val * 0.96f, 1f);
         }
 
         internal static GameObject Block(Transform parent, string name, PrimitiveType type, Vector3 position, Vector3 scale, Material material, Quaternion? rotation = null)
