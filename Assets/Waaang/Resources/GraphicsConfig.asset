@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f5a9582076aca040bd99e64e3dd3dcc, type: 3}
   m_Name: GraphicsConfig
   m_EditorClassIdentifier: Assembly-CSharp::Waaang.GraphicsConfig
-  tier: 0
+  tier: 1
   upgradeShadowedLights: 1
   extraShadowedLights: 0
   cameraDithering: 1
