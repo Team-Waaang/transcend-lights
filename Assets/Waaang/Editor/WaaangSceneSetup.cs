@@ -419,6 +419,7 @@ namespace Waaang.EditorTools
             public float border;
             public float blur;
             public float fresnel;
+            public bool nox;      // weaker toon rim shade (ApplyToonShading)
         }
 
         static readonly RimSettings DefaultRim = new RimSettings
@@ -430,7 +431,7 @@ namespace Waaang.EditorTools
         // Weaker, tighter and less purple keeps only a soft outline.
         static readonly RimSettings NoxRim = new RimSettings
         {
-            color = new Color(0.85f, 0.8f, 0.95f, 0.48f), border = 0.72f, blur = 0.18f, fresnel = 3.75f,
+            color = new Color(0.85f, 0.8f, 0.95f, 0.48f), border = 0.72f, blur = 0.18f, fresnel = 3.75f, nox = true,
         };
 
         static Material RimToon(string file, Material source, RimSettings rim)
@@ -463,8 +464,52 @@ namespace Waaang.EditorTools
             material.SetFloat("_RimFresnelPower", rim.fresnel);
             material.SetFloat("_RimMainStrength", 0f);
             material.SetFloat("_RimShadowMask", 0.3f);
+            ApplyToonShading(material, rim.nox);
             EditorUtility.SetDirty(material);
             return material;
+        }
+
+        /// <summary>
+        /// Caster toon shading (look D of Waaang/Toon Lookbook): a soft lavender cel shadow, rim shade darkening the
+        /// edges toward purple for volume, the rim light following the light direction and a cool indirect rim on
+        /// the shadow side. Nox's rim shade and indirect rim are weaker, like her rim (thin hair strands).
+        /// </summary>
+        internal static void ApplyToonShading(Material m, bool nox)
+        {
+            m.SetFloat("_UseShadow", 1f);
+            m.SetFloat("_ShadowStrength", 0.75f);
+            m.SetFloat("_ShadowBorder", 0.45f);
+            m.SetFloat("_ShadowBlur", 0.25f);
+            m.SetColor("_ShadowColor", new Color(0.78f, 0.72f, 0.92f, 1f));
+            m.SetFloat("_ShadowMainStrength", 0f);
+            m.SetColor("_Shadow2ndColor", new Color(0.68f, 0.66f, 0.79f, 0f)); // alpha 0 = no second tone
+            m.SetFloat("_ShadowReceive", 0.5f);
+            m.SetFloat("_UseRimShade", 1f);
+            m.SetColor("_RimShadeColor", new Color(0.45f, 0.36f, 0.72f, nox ? 0.85f : 1f));
+            m.SetFloat("_RimShadeBorder", 0.6f);
+            m.SetFloat("_RimShadeBlur", 0.4f);
+            m.SetFloat("_RimShadeFresnelPower", 1.5f);
+            m.SetFloat("_RimDirStrength", 0.6f);
+            m.SetFloat("_RimDirRange", 0f);
+            m.SetColor("_RimIndirColor", new Color(0.6f, 0.65f, 1f, nox ? 0.5f : 0.8f));
+            m.SetFloat("_RimIndirBorder", 0.55f);
+            m.SetFloat("_RimIndirBlur", 0.15f);
+        }
+
+        /// <summary>Applies <see cref="ApplyToonShading"/> to Amelia_Rim / Nox_Rim without rebuilding the scenes.</summary>
+        [MenuItem("Waaang/Apply Toon Shading To Caster Materials")]
+        public static string ApplyToonShadingToCasterMaterials()
+        {
+            var amelia = AssetDatabase.LoadAssetAtPath<Material>(MaterialDir + "/Amelia_Rim.mat");
+            var nox = AssetDatabase.LoadAssetAtPath<Material>(MaterialDir + "/Nox_Rim.mat");
+            if (amelia == null || nox == null)
+                throw new System.Exception("Build the Game scene first (Amelia_Rim.mat / Nox_Rim.mat missing).");
+            ApplyToonShading(amelia, false);
+            ApplyToonShading(nox, true);
+            EditorUtility.SetDirty(amelia);
+            EditorUtility.SetDirty(nox);
+            AssetDatabase.SaveAssets();
+            return "applied";
         }
 
         static void StyleKeyLight(Light light)
