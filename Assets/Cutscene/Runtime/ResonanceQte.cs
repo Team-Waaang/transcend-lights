@@ -25,6 +25,8 @@ namespace AiHackathon.Cutscene
         public float loopStart = 7.1f;
         public float loopEnd = 15.1f;
         public float ultimateAt = 15.1f;
+        /// <summary>The call-out when the ultimate beam fires (☆ and ∀ are in the GowunBatang title font).</summary>
+        public const string UltimateCall = "ULTIM@TE☆BE∀M!!";
         [Tooltip("Seconds between the resonance landing and the ultimate beam, so its call starts just ahead of it.")]
         public float ultimateDelay = 0.6f;
 
@@ -301,7 +303,11 @@ namespace AiHackathon.Cutscene
                 float punch = 1f + 0.45f * Mathf.Exp(-k * 14f);
                 float y = Screen.height * 0.14f;
                 GameGui.BannerBack(new Rect(0f, y - 20f * s, Screen.width, 200f * s), new Color(1f, 0.9f, 0.7f, 0.18f * a));
-                GameGui.GlowLabel(new Rect(0f, y, Screen.width, 160f * s), "얼티메이트 빔!!", GameGui.Style(Mathf.RoundToInt(128 * punch), TextAnchor.MiddleCenter), new Color(1f, 0.97f, 0.88f), Color.Lerp(colors[0], colors[1], 0.5f + 0.5f * Mathf.Sin(now * 20f)), a);
+                // Fit the call-out (and its punch-in) to the screen width: the Latin line runs wider than the old Hangul one.
+                var style = GameGui.Style(Mathf.RoundToInt(120 * punch), TextAnchor.MiddleCenter);
+                float wide = style.CalcSize(new GUIContent(UltimateCall)).x;
+                if (wide > Screen.width * 0.9f) style.fontSize = Mathf.FloorToInt(style.fontSize * Screen.width * 0.9f / wide);
+                GameGui.GlowLabel(new Rect(0f, y, Screen.width, 160f * s), UltimateCall, style, new Color(1f, 0.97f, 0.88f), Color.Lerp(colors[0], colors[1], 0.5f + 0.5f * Mathf.Sin(now * 20f)), a);
             }
         }
     }

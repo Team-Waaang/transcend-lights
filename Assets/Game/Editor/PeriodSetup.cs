@@ -7,7 +7,7 @@ namespace AiHackathon.Game.Editor
 {
     /// <summary>
     /// Wires the school day: the HUD font and voice bank assets in Resources, and Build Settings in play order
-    /// (Connection → 1교시 → 2교시 → 3교시, then the boss cutscenes and the Game test scene).
+    /// (Title → Connection → 1교시 → 2교시 → 3교시, then the boss cutscenes and the Game test scene).
     /// </summary>
     public static class PeriodSetup
     {
@@ -65,7 +65,7 @@ namespace AiHackathon.Game.Editor
         {
             EnsureFonts();
             EnsureVoices();
-            var order = new List<string> { PeriodFlow.ConnectionScene };
+            var order = new List<string> { PeriodFlow.TitleScene, PeriodFlow.ConnectionScene };
             order.AddRange(PeriodFlow.Periods.Select(p => p.scene));
             order.AddRange(Cutscenes);
             order.Add(GameScene);

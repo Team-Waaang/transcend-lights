@@ -68,8 +68,6 @@ namespace AiHackathon.Game
         [Header("Voice cues (cutscene seconds)")]
         [Tooltip("Phase 2 cutscene: the villain's awakening line, just before the eruption (9.05).")]
         public float phase2RoarAt = 8.6f;
-        [Tooltip("Defeat cutscene: the villain shouts as he pushes the clash back.")]
-        public float bossPushAt = 3.8f;
         [Tooltip("Defeat cutscene: the blast that beats him; his defeat line, then Amelia's.")]
         public float bossBlastAt = 17.65f;
         [Tooltip("Shared resonance at which Kaela calls the ultimate.")]
@@ -184,7 +182,6 @@ namespace AiHackathon.Game
             Current = Stage.DefeatCutscene;
             if (playCutscenes)
                 yield return PlayCutscene(defeatScene,
-                    new Cue(bossPushAt, 0.5f, () => Voice.Say(VoiceLine.VillainPush, 0.5f)),
                     new Cue(bossBlastAt, float.MaxValue, () =>
                     {
                         Voice.Say(VoiceLine.VillainDefeat, 6f);

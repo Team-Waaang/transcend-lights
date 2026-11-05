@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 namespace AiHackathon.Game
 {
     /// <summary>
-    /// The school day: connection screen → 1교시 → 2교시 → 3교시. Each period calls <see cref="Next"/> when it is
+    /// The school day: main screen → connection screen → 1교시 → 2교시 → 3교시. Each period calls <see cref="Next"/> when it is
     /// cleared; the flow fades to black, shows which period is next, and loads it. A period that is not in Build
     /// Settings is skipped.
     /// </summary>
@@ -18,6 +18,8 @@ namespace AiHackathon.Game
         }
 
         public const string ConnectionScene = "Assets/Scenes/Connection.unity";
+        /// <summary>The main screen; it hands over to <see cref="ConnectionScene"/>.</summary>
+        public const string TitleScene = "Assets/Game/Title/Title.unity";
 
         /// <summary>The periods in order.</summary>
         public static readonly Period[] Periods =
@@ -66,9 +68,10 @@ namespace AiHackathon.Game
             return true;
         }
 
-        /// <summary>Back to the first period (after the last one is cleared).</summary>
+        /// <summary>Back to the main screen after the last period is cleared (or to the first period without one).</summary>
         public static void Restart()
         {
+            if (Available(TitleScene)) { Go(TitleScene, "", ""); return; }
             var first = First();
             if (first == null) return;
             var p = System.Array.Find(Periods, x => x.scene == first);
