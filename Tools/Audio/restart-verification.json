@@ -1,0 +1,9 @@
+{
+  "scene": "Assets/Cutscene/Period1/Period1Cutscene.unity",
+  "listeners": 1,
+  "services": 1,
+  "loops": [
+    "classroom_ambience"
+  ],
+  "frame": 12614
+}

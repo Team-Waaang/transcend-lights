@@ -18,6 +18,7 @@ namespace PhonePointer.Editor
         static string Sentinel => Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library", "PhoneBuildExcluded.txt");
         static readonly string[] UnusedInPhoneBuild =
         {
+            "Assets/Game/Resources/Audio",
             "Assets/Waaang/Resources/RunicRegistrationStage.prefab",
             "Assets/PhonePointerSDK/Resources/RuneSlabFont.ttf",
             "Assets/PhonePointerSDK/Resources/RuneSlabFont-OFL.txt",

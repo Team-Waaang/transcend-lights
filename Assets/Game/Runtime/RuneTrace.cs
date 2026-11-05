@@ -31,6 +31,7 @@ namespace AiHackathon.Game
         bool[] cells;
         bool[] drawn;
         int runeCells, onRune;
+        float audioUntil = -10f;
         readonly List<Vector2> points = new List<Vector2>();
 
         void Awake()
@@ -54,6 +55,7 @@ namespace AiHackathon.Game
 
         public void Clear()
         {
+            audioUntil = -10f;
             points.Clear();
             onRune = 0;
             drawn = cells != null ? new bool[cells.Length] : null;
@@ -66,6 +68,7 @@ namespace AiHackathon.Game
         public void AddPoint(Vector3 world)
         {
             if (cells == null || cells.Length == 0 || drawn == null) return;
+            audioUntil = Time.unscaledTime + 0.12f;
             var local = transform.InverseTransformPoint(world);
             var p = new Vector2(local.x, local.y);
             points.Add(p);
@@ -94,6 +97,7 @@ namespace AiHackathon.Game
         /// <summary>Plays the stone's success or failure for the trace so far. Returns whether it passed.</summary>
         public bool Finish()
         {
+            audioUntil = -10f;
             bool ok = Passed;
             if (stone != null)
             {
@@ -101,6 +105,8 @@ namespace AiHackathon.Game
             }
             return ok;
         }
+
+        void Update() => GameAudio.Loop("rune_trace_loop", transform, Time.unscaledTime < audioUntil ? 1f : 0f);
 
         void OnDrawGizmosSelected()
         {

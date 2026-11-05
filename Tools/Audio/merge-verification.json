@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "voiceAtSuccess": true,
+  "voiceWithEffect": true,
+  "configuredDelay": 0.6,
+  "measuredEffectDelay": 0.606063843,
+  "peak": 0.820964754,
+  "frame": 3178
+}

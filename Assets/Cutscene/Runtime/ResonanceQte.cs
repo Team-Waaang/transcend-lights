@@ -108,14 +108,15 @@ namespace AiHackathon.Cutscene
             var kb = Keyboard.current;
             if (kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame))
             {
-                if (t < introAt - 0.3) director.time = introAt;
-                else if (Current == State.Success && t < director.duration - 1.0) director.time = director.duration - 0.1;
+                if (t < introAt - 0.3) { GameAudio.Play("ui_confirm"); director.time = introAt; }
+                else if (Current == State.Success && t < director.duration - 1.0) { GameAudio.Play("ui_confirm"); director.time = director.duration - 0.1; }
             }
 
             UpdateTarget();
             if (ultimateJumpAt >= 0f && Time.unscaledTime >= ultimateJumpAt)
             {
                 ultimateJumpAt = -1f;
+                GameAudio.Play("ultimate");
                 if (director.time < ultimateAt) director.time = ultimateAt;
             }
             if (Current == State.Waiting && t >= loopStart && t < loopEnd) Begin();
@@ -142,6 +143,7 @@ namespace AiHackathon.Cutscene
                 {
                     gauge[i] = Mathf.Min(1f, gauge[i] + tapGain);
                     lastTap[i] = Time.unscaledTime;
+                    GameAudio.Play("qte_tap", null, 0.8f, 0.9f + gauge[i] * 0.3f);
                     shake = Mathf.Min(2.5f, shake + tapShake);
                     flare = 1f;
                 }
@@ -163,6 +165,7 @@ namespace AiHackathon.Cutscene
                 director.time = loopStart;
                 retryMessage = Time.unscaledTime;
                 retries++;
+                GameAudio.Play("qte_retry");
                 for (int i = 0; i < 2; i++) gauge[i] *= 0.5f;
                 onRetry.Invoke();
             }
@@ -170,6 +173,7 @@ namespace AiHackathon.Cutscene
 
         void Begin()
         {
+            GameAudio.Play("qte_start");
             Current = State.Live;
             for (int i = 0; i < 2; i++) { gauge[i] = 0f; wasPressed[i] = CasterInput.Pressed(i, mouseTest); }
         }

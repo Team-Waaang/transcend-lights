@@ -92,6 +92,7 @@ namespace AiHackathon.Game
 
         IEnumerator Load(string scene, string title, string subject)
         {
+            GameAudio.Play("transition");
             busy = true;
             card = title;
             cardSub = subject;

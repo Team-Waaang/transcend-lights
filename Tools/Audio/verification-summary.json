@@ -1,0 +1,68 @@
+{
+  "provider": "ElevenLabs",
+  "model": "eleven_text_to_sound_v2",
+  "asset_count": 53,
+  "sfx_wav_count": 50,
+  "environment_mp3_count": 3,
+  "asset_audit_passed": 53,
+  "bytes": 6953814,
+  "unity_compilation_errors": 0,
+  "unity_runtime_errors_at_end": 0,
+  "verified_gameplay": [
+    "Period 1 live laser input, inscription loop, release, failure, success and next rune",
+    "Period 2 live torch input, discovery, mineral transformation, clear and loop cleanup",
+    "Boss projectile launch, actual two-player interception and curse impact",
+    "Boss ward raising, loop, actual two-player break and intact expiration",
+    "Phase-2 cutscene and VFX cues",
+    "Clone appearance, actual false-target destruction and counterattack",
+    "Curse-chain bind, loop and release by the unbound player",
+    "Curse rain",
+    "QTE start, timeout/retry, actual frame-spaced input taps and success",
+    "Ultimate, blast and purification",
+    "Defeat-cutscene unload into audible final results",
+    "Results-to-Period-1 restart: exactly one listener/service; only the new classroom environment loop remains"
+  ],
+  "results": {
+    "passed": true,
+    "listeners": 1,
+    "completionSource": true,
+    "outputPeakDuringResults": 0.3844902,
+    "samplesTaken": 502,
+    "playRootActive": false,
+    "frame": 4617
+  },
+  "limitations": [
+    "Subjective listening approval is pending.",
+    "Real two-phone pairing, calibration and reconnection were not exercised.",
+    "Android APK packaging was not built; desktop audio exclusion uses the existing phone build filter."
+  ],
+  "voice_assets_modified": false,
+  "reports": [
+    "audio-audit.json",
+    "period2-playback.json",
+    "playback-report.json",
+    "results-verification.json",
+    "restart-verification.json",
+    "merge-verification.json"
+  ],
+  "restart": {
+    "scene": "Assets/Cutscene/Period1/Period1Cutscene.unity",
+    "listeners": 1,
+    "services": 1,
+    "loops": [
+      "classroom_ambience"
+    ],
+    "frame": 12614
+  },
+  "main_voice_integration": {
+    "voice_bank_entries": 36,
+    "assigned_clips": 36,
+    "passed": true,
+    "voiceAtSuccess": true,
+    "voiceWithEffect": true,
+    "configuredDelay": 0.6,
+    "measuredEffectDelay": 0.606063843,
+    "peak": 0.820964754,
+    "frame": 3178
+  }
+}

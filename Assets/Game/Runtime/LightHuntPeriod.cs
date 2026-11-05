@@ -133,6 +133,7 @@ namespace AiHackathon.Game
             if (left <= 0)
             {
                 Cleared = true;
+                GameAudio.Play("period_clear");
                 clearedAt = Time.unscaledTime;
                 Voice.Say(VoiceLine.KaelaPowerUp2, 10f);
                 onCleared.Invoke();

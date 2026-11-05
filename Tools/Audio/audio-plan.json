@@ -1,0 +1,432 @@
+{
+  "provider": "elevenlabs",
+  "model": "eleven_text_to_sound_v2",
+  "output_dir": "../../Assets/Game/Resources/Audio/SFX",
+  "scope": "Non-character SFX and environmental sound beds; no dialogue, exertions, footsteps, breathing, creature calls or BGM.",
+  "assets": [
+    {
+      "kind": "sfx",
+      "file": "ui_connect.wav",
+      "seconds": 0.55,
+      "category": "connection",
+      "loop": false,
+      "prompt": "Phone paired: a soft wooden tick followed by a tiny bright glass sparkle. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ui_ready.wav",
+      "seconds": 0.8,
+      "category": "connection",
+      "loop": false,
+      "prompt": "Wand registration complete: two ascending gentle crystal pings with a small magical shimmer. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ui_disconnect.wav",
+      "seconds": 0.65,
+      "category": "connection",
+      "loop": false,
+      "prompt": "Phone connection lost: two quiet descending hollow wooden tones, informative and gentle. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ui_confirm.wav",
+      "seconds": 0.25,
+      "category": "ui",
+      "loop": false,
+      "prompt": "A single tiny muted wooden click with a soft glass tick, dry short positive button confirmation. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "parchment_open.wav",
+      "seconds": 0.9,
+      "category": "ui",
+      "loop": false,
+      "prompt": "A thick parchment scroll quickly unfurls between two wooden rollers, textured paper flutter with a soft wood stop. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "parchment_close.wav",
+      "seconds": 0.7,
+      "category": "ui",
+      "loop": false,
+      "prompt": "A parchment scroll neatly rolls closed, crisp dry paper rustle into a small wooden tap. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "title_chime.wav",
+      "seconds": 1.3,
+      "category": "ui",
+      "loop": false,
+      "prompt": "A magical lesson title appears: one warm glass bell bloom with a very light sparkling tail. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "transition.wav",
+      "seconds": 1.1,
+      "category": "ui",
+      "loop": false,
+      "prompt": "A soft airy magical page sweep travels forward and gently settles, short scene transition. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "period_clear.wav",
+      "seconds": 2.3,
+      "category": "ui",
+      "loop": false,
+      "prompt": "Lesson completion reward: a warm uplifting cluster of crystal sparkles and a soft resonant magical bloom, no tune. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "game_complete.wav",
+      "seconds": 3.2,
+      "category": "ui",
+      "loop": false,
+      "prompt": "Final cooperative victory: expansive luminous glass and warm shimmering magic swell, decisive rewarding release, no tune. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "magic_ignite.wav",
+      "seconds": 0.5,
+      "category": "magic",
+      "loop": false,
+      "prompt": "A wand tip lights up with a small airy ignition and warm crystal spark, gentle clean attack. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "beam_start.wav",
+      "seconds": 0.4,
+      "category": "magic",
+      "loop": false,
+      "prompt": "A magical wand beam fires: compact airy electrical snap into a soft glowing energy whoosh, no gunshot. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "beam_loop.wav",
+      "seconds": 4,
+      "category": "magic",
+      "loop": true,
+      "prompt": "Seamless steady sustained wand laser energy, soft glassy electrical shimmer and warm airy buzz, stable volume, no attacks or beats. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "beam_stop.wav",
+      "seconds": 0.35,
+      "category": "magic",
+      "loop": false,
+      "prompt": "A magical energy beam switches off: short downward airy fizz and tiny glass tail. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "rune_trace_loop.wav",
+      "seconds": 4,
+      "category": "rune",
+      "loop": true,
+      "prompt": "Seamless steady magical inscription on stone: delicate dry granular scratching underneath soft sparkling energy, stable gentle texture, no beats. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "rune_success.wav",
+      "seconds": 1.6,
+      "category": "rune",
+      "loop": false,
+      "prompt": "A carved stone rune awakens: bright glass harmonic bloom rising from a gentle stone resonance, tiny sparkling release. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "rune_fail.wav",
+      "seconds": 0.95,
+      "category": "rune",
+      "loop": false,
+      "prompt": "A magic rune fizzles: soft descending wooden hollow plinks into dusty airy sputter, kind and subdued, no buzzer. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "rune_change.wav",
+      "seconds": 1,
+      "category": "rune",
+      "loop": false,
+      "prompt": "A floating rune slab disappears and rematerializes: dry sandstone crumble, short airy swirl, soft stone settle. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "torch_loop.wav",
+      "seconds": 4,
+      "category": "magic",
+      "loop": true,
+      "prompt": "Seamless continuous wand flashlight magic: extremely soft warm airy shimmer and quiet glowing glass texture, stable and subtle, no pulsing. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "magic_reveal.wav",
+      "seconds": 0.65,
+      "category": "hunt",
+      "loop": false,
+      "prompt": "Light discovers a hidden magical object: a small clean rising crystal glint and airy sparkle, friendly informational cue. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "petrify.wav",
+      "seconds": 1.3,
+      "category": "hunt",
+      "loop": false,
+      "prompt": "A magical object crystallizes into stone: fine mineral crackles spread then a rounded stone locking clunk, tiny dust tail, no creature voice. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "petrify_loop.wav",
+      "seconds": 4,
+      "category": "hunt",
+      "loop": true,
+      "prompt": "Seamless sustained mineral crystallization spell: soft tiny crystalline crackles and fine sand settling, even quiet texture, no large impacts. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "curse_charge.wav",
+      "seconds": 1.2,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A dark spell gathers at a wand: low airy vortex draws inward with restrained violet electrical crackles, builds then cuts cleanly, no vocal. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "orb_launch.wav",
+      "seconds": 0.55,
+      "category": "boss",
+      "loop": false,
+      "prompt": "One small dark magic orb is launched: rounded hollow energy pop and short airy whizz, readable soft attack. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "orb_break.wav",
+      "seconds": 0.65,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A floating curse projectile is intercepted: tight glassy energy pop, tiny shards dissolve into magical fizz, no gore. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "curse_impact.wav",
+      "seconds": 0.95,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A curse projectile strikes a magical barrier: rounded low energy thump, soft crackle and fading airy hiss, no bodily impact. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "spell_hit.wav",
+      "seconds": 0.3,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A very short magical laser contact on an enchanted surface: dry soft glass tick and tiny energy crackle, gentle repeatable hit marker. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ward_raise.wav",
+      "seconds": 1.1,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A spherical rune force field forms: rounded glass resonance swells outward with a soft crystalline locking shimmer. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ward_loop.wav",
+      "seconds": 4,
+      "category": "boss",
+      "loop": true,
+      "prompt": "Seamless sustained magical force field: quiet low glass resonance and slowly moving airy energy, stable constant power, no beats. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ward_hit.wav",
+      "seconds": 0.4,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A laser ripples against a glass-like magical shield: short rounded resonant glass ping and fine energy crackles. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ward_break.wav",
+      "seconds": 1.7,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A large magical glass force field shatters: deep rounded snap, many crystalline fragments, warm airy magical release, no harsh piercing shrapnel. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ward_expire.wav",
+      "seconds": 0.85,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A magical shield fades intact: low glass resonance gently falls into an airy downward dissolve. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "teleport.wav",
+      "seconds": 0.8,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A portal folds through a cloud of enchanted smoke: quick inward airy suction, low magical pop and outward mist puff. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "summon.wav",
+      "seconds": 1.35,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A stone floor summoning seal activates: low mineral rumble, short sandstone cracking and a contained dark magic puff, no character sounds. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "clone_appear.wav",
+      "seconds": 0.85,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A magical illusion duplicates into view: layered soft glassy swirls, airy spectral shimmer and short mysterious sparkle. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "clone_break.wav",
+      "seconds": 0.75,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A false magical image collapses: hollow papery energy pop with glassy reverse swirl and a short dark fizz. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "chain_bind.wav",
+      "seconds": 1.05,
+      "category": "boss",
+      "loop": false,
+      "prompt": "An enchanted chain materializes and locks around a magical anchor: fast small metallic links, low violet energy clasp and resonant crystal ping. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "chain_loop.wav",
+      "seconds": 4,
+      "category": "boss",
+      "loop": true,
+      "prompt": "Seamless cursed crystal restraint: low soft crystalline tension and very gentle magical chain rattles, steady subtle sustained texture, no rhythm. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "chain_break.wav",
+      "seconds": 1.2,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A cursed crystal anchor breaks and releases its chains: clean crystal snap, light metallic link scatter, uplifting airy release. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "qte_start.wav",
+      "seconds": 1.15,
+      "category": "qte",
+      "loop": false,
+      "prompt": "Cooperative timed challenge begins: a clear bright double glass pulse with a gently swelling magical charge, alert but friendly. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "qte_tap.wav",
+      "seconds": 0.22,
+      "category": "qte",
+      "loop": false,
+      "prompt": "One tiny successful magical charge input: compact soft wooden tick with a bright crystal pip, very short repeatable and gentle. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "qte_retry.wav",
+      "seconds": 0.8,
+      "category": "qte",
+      "loop": false,
+      "prompt": "A magical charge loses momentum: brief soft descending airy crystal flutter, encouraging retry, no alarm or buzzer. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "resonance.wav",
+      "seconds": 1.4,
+      "category": "qte",
+      "loop": false,
+      "prompt": "Two magical energies synchronize: two glassy energy textures converge into one warm bright resonant bloom, magical cooperative reward. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "qte_loop.wav",
+      "seconds": 4,
+      "category": "qte",
+      "loop": true,
+      "prompt": "Seamless magical beam collision: sustained rounded energy pressure and fine electrical crackles, stable rising-tension texture without rhythm, no voices. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ultimate.wav",
+      "seconds": 2.8,
+      "category": "qte",
+      "loop": false,
+      "prompt": "A huge cooperative ultimate magic beam releases: short inward charge, powerful warm energy launch, bright glass sparkle and sustained rushing magical tail. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "blast.wav",
+      "seconds": 2.5,
+      "category": "cutscene",
+      "loop": false,
+      "prompt": "A large dark curse explodes into magical fragments: rounded cinematic low impact, airy expanding shockwave, stone dust and glassy energy debris, no gunshot. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "purify.wav",
+      "seconds": 3,
+      "category": "cutscene",
+      "loop": false,
+      "prompt": "A curse is purified by warm light: dark airy residue dissolves into a delicate expanding shower of bright crystal sparkles, peaceful clean resolution. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "ominous_pulse.wav",
+      "seconds": 0.75,
+      "category": "cutscene",
+      "loop": false,
+      "prompt": "One low restrained magical seal pulse: rounded bass thump with distant mineral resonance and dark airy crackle, no heartbeat or organic sound. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "blackout.wav",
+      "seconds": 1,
+      "category": "cutscene",
+      "loop": false,
+      "prompt": "Enchanted classroom lights flicker out: three tiny irregular electric sputters into a short airy low hush, no horror sting. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "cutscene_slam.wav",
+      "seconds": 0.9,
+      "category": "cutscene",
+      "loop": false,
+      "prompt": "A magical cinematic shutter closes: concise low rounded whoosh impact with a glassy tail, controlled dramatic punctuation. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "ambience",
+      "file": "classroom_ambience.mp3",
+      "seconds": 12,
+      "category": "environment",
+      "loop": true,
+      "prompt": "Seamless quiet sunlit stone magic classroom, very gentle room air through tall windows and faint diffuse enchanted glass shimmer, no people or movement. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "ambience",
+      "file": "dark_hall_ambience.mp3",
+      "seconds": 12,
+      "category": "environment",
+      "loop": true,
+      "prompt": "Seamless quiet dark stone school gallery, cool faint air moving through distant arches and extremely subtle suspended magical dust resonance, mysterious but safe, no people or creature noises. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "ambience",
+      "file": "arena_ambience.mp3",
+      "seconds": 12,
+      "category": "environment",
+      "loop": true,
+      "prompt": "Seamless ruined magic academy courtyard at night, restrained soft wind around stone pillars and diffuse low enchanted crystal resonance, spacious and tense, no people or monsters. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    }
+  ]
+}

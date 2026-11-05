@@ -1,0 +1,11 @@
+{
+  "stage": "Phase1",
+  "ShieldUp": false,
+  "Weak": false,
+  "Hp": 99.9496,
+  "LastPlayed": "beam_stop",
+  "ActiveLoops": 1,
+  "active": [
+    "arena_ambience"
+  ]
+}

@@ -1,0 +1,2195 @@
+{
+  "elapsed": 454.6151517,
+  "outputPeak": 0.317108542,
+  "events": [
+    {
+      "frame": 2538,
+      "scene": "Period3",
+      "played": 6,
+      "last": "cutscene_slam",
+      "loops": 1,
+      "active": [
+        "cutscene_slam",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 2911,
+      "scene": "Period3",
+      "played": 7,
+      "last": "parchment_open",
+      "loops": 1,
+      "active": [
+        "parchment_open",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 3083,
+      "scene": "Period3",
+      "played": 8,
+      "last": "title_chime",
+      "loops": 1,
+      "active": [
+        "title_chime",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 3542,
+      "scene": "Period3",
+      "played": 9,
+      "last": "parchment_close",
+      "loops": 1,
+      "active": [
+        "parchment_close",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 3957,
+      "scene": "Period3",
+      "played": 10,
+      "last": "teleport",
+      "loops": 1,
+      "active": [
+        "teleport",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 4408,
+      "scene": "Period3",
+      "played": 11,
+      "last": "curse_charge",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 4476,
+      "scene": "Period3",
+      "played": 12,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 4511,
+      "scene": "Period3",
+      "played": 13,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "orb_launch",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 4544,
+      "scene": "Period3",
+      "played": 14,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "orb_launch",
+        "orb_launch",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 5432,
+      "scene": "Period3",
+      "played": 15,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 5498,
+      "scene": "Period3",
+      "played": 16,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 5513,
+      "scene": "Period3",
+      "played": 17,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact",
+        "curse_impact",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 6093,
+      "scene": "Period3",
+      "played": 18,
+      "last": "summon",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "summon"
+      ]
+    },
+    {
+      "frame": 6142,
+      "scene": "Period3",
+      "played": 19,
+      "last": "summon",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "summon",
+        "summon"
+      ]
+    },
+    {
+      "frame": 6191,
+      "scene": "Period3",
+      "played": 20,
+      "last": "summon",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "summon",
+        "summon",
+        "summon"
+      ]
+    },
+    {
+      "frame": 7262,
+      "scene": "Period3",
+      "played": 21,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 7333,
+      "scene": "Period3",
+      "played": 22,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 7812,
+      "scene": "Period3",
+      "played": 23,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 8424,
+      "scene": "Period3",
+      "played": 24,
+      "last": "ward_raise",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "ward_raise"
+      ]
+    },
+    {
+      "frame": 9677,
+      "scene": "Period3",
+      "played": 25,
+      "last": "ward_expire",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "ward_expire",
+        "ward_loop"
+      ]
+    },
+    {
+      "frame": 9798,
+      "scene": "Period3",
+      "played": 26,
+      "last": "teleport",
+      "loops": 1,
+      "active": [
+        "teleport",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10282,
+      "scene": "Period3",
+      "played": 27,
+      "last": "curse_charge",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10419,
+      "scene": "Period3",
+      "played": 28,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10420,
+      "scene": "Period3",
+      "played": 30,
+      "last": "beam_start",
+      "loops": 3,
+      "active": [
+        "beam_start",
+        "curse_charge",
+        "beam_loop",
+        "orb_launch",
+        "beam_loop",
+        "beam_start",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10442,
+      "scene": "Period3",
+      "played": 31,
+      "last": "spell_hit",
+      "loops": 3,
+      "active": [
+        "beam_start",
+        "curse_charge",
+        "beam_loop",
+        "orb_launch",
+        "spell_hit",
+        "beam_loop",
+        "beam_start",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10455,
+      "scene": "Period3",
+      "played": 32,
+      "last": "orb_launch",
+      "loops": 3,
+      "active": [
+        "beam_start",
+        "curse_charge",
+        "beam_loop",
+        "orb_launch",
+        "orb_launch",
+        "spell_hit",
+        "beam_loop",
+        "beam_start",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10484,
+      "scene": "Period3",
+      "played": 33,
+      "last": "orb_break",
+      "loops": 3,
+      "active": [
+        "beam_start",
+        "curse_charge",
+        "beam_loop",
+        "orb_launch",
+        "orb_launch",
+        "spell_hit",
+        "orb_break",
+        "beam_loop",
+        "beam_start",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10493,
+      "scene": "Period3",
+      "played": 35,
+      "last": "orb_launch",
+      "loops": 3,
+      "active": [
+        "orb_launch",
+        "curse_charge",
+        "beam_loop",
+        "orb_launch",
+        "orb_launch",
+        "orb_break",
+        "beam_loop",
+        "orb_break",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10520,
+      "scene": "Period3",
+      "played": 36,
+      "last": "orb_break",
+      "loops": 3,
+      "active": [
+        "orb_launch",
+        "orb_break",
+        "beam_loop",
+        "orb_launch",
+        "orb_break",
+        "beam_loop",
+        "orb_break",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10527,
+      "scene": "Period3",
+      "played": 37,
+      "last": "spell_hit",
+      "loops": 3,
+      "active": [
+        "orb_launch",
+        "orb_break",
+        "beam_loop",
+        "orb_launch",
+        "spell_hit",
+        "orb_break",
+        "beam_loop",
+        "orb_break",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10528,
+      "scene": "Period3",
+      "played": 38,
+      "last": "resonance",
+      "loops": 3,
+      "active": [
+        "orb_launch",
+        "orb_break",
+        "beam_loop",
+        "orb_launch",
+        "spell_hit",
+        "resonance",
+        "orb_break",
+        "beam_loop",
+        "orb_break",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10552,
+      "scene": "Period3",
+      "played": 39,
+      "last": "spell_hit",
+      "loops": 3,
+      "active": [
+        "orb_launch",
+        "orb_break",
+        "beam_loop",
+        "spell_hit",
+        "spell_hit",
+        "resonance",
+        "orb_break",
+        "beam_loop",
+        "orb_break",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10578,
+      "scene": "Period3",
+      "played": 40,
+      "last": "spell_hit",
+      "loops": 3,
+      "active": [
+        "orb_break",
+        "beam_loop",
+        "spell_hit",
+        "spell_hit",
+        "resonance",
+        "orb_break",
+        "beam_loop",
+        "orb_break",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10607,
+      "scene": "Period3",
+      "played": 41,
+      "last": "spell_hit",
+      "loops": 3,
+      "active": [
+        "orb_break",
+        "beam_loop",
+        "spell_hit",
+        "resonance",
+        "beam_loop",
+        "spell_hit",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10636,
+      "scene": "Period3",
+      "played": 42,
+      "last": "spell_hit",
+      "loops": 3,
+      "active": [
+        "spell_hit",
+        "beam_loop",
+        "resonance",
+        "beam_loop",
+        "spell_hit",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10664,
+      "scene": "Period3",
+      "played": 43,
+      "last": "spell_hit",
+      "loops": 3,
+      "active": [
+        "spell_hit",
+        "beam_loop",
+        "spell_hit",
+        "resonance",
+        "beam_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10693,
+      "scene": "Period3",
+      "played": 44,
+      "last": "spell_hit",
+      "loops": 3,
+      "active": [
+        "spell_hit",
+        "beam_loop",
+        "spell_hit",
+        "resonance",
+        "beam_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 10786,
+      "scene": "Period3",
+      "played": 45,
+      "last": "teleport",
+      "loops": 3,
+      "active": [
+        "teleport",
+        "beam_loop",
+        "beam_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 11393,
+      "scene": "Period3",
+      "played": 46,
+      "last": "summon",
+      "loops": 3,
+      "active": [
+        "summon",
+        "beam_loop",
+        "beam_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 11444,
+      "scene": "Period3",
+      "played": 47,
+      "last": "summon",
+      "loops": 3,
+      "active": [
+        "summon",
+        "beam_loop",
+        "summon",
+        "beam_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 11496,
+      "scene": "Period3",
+      "played": 48,
+      "last": "summon",
+      "loops": 3,
+      "active": [
+        "summon",
+        "beam_loop",
+        "summon",
+        "beam_loop",
+        "summon",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 11956,
+      "scene": "Period3",
+      "played": 50,
+      "last": "beam_stop",
+      "loops": 3,
+      "active": [
+        "beam_stop",
+        "beam_loop",
+        "beam_stop",
+        "beam_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 12186,
+      "scene": "Period3",
+      "played": 51,
+      "last": "curse_charge",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 12258,
+      "scene": "Period3",
+      "played": 52,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 12296,
+      "scene": "Period3",
+      "played": 53,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "orb_launch",
+        "arena_ambience",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 12331,
+      "scene": "Period3",
+      "played": 54,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "curse_charge",
+        "orb_launch",
+        "arena_ambience",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 12552,
+      "scene": "Period3",
+      "played": 55,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 12746,
+      "scene": "Period3",
+      "played": 56,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 12947,
+      "scene": "Period3",
+      "played": 57,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 13165,
+      "scene": "Period3",
+      "played": 58,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 13226,
+      "scene": "Period3",
+      "played": 59,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 13311,
+      "scene": "Period3",
+      "played": 60,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "curse_impact",
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 17171,
+      "scene": "Period3",
+      "played": 62,
+      "last": "beam_start",
+      "loops": 3,
+      "active": [
+        "beam_loop",
+        "beam_start",
+        "beam_loop",
+        "beam_start",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 17173,
+      "scene": "Period3",
+      "played": 63,
+      "last": "ward_raise",
+      "loops": 3,
+      "active": [
+        "beam_loop",
+        "beam_start",
+        "beam_loop",
+        "beam_start",
+        "arena_ambience",
+        "ward_raise"
+      ]
+    },
+    {
+      "frame": 17184,
+      "scene": "Period3",
+      "played": 64,
+      "last": "ward_hit",
+      "loops": 4,
+      "active": [
+        "beam_loop",
+        "ward_hit",
+        "beam_start",
+        "beam_loop",
+        "beam_start",
+        "arena_ambience",
+        "ward_loop",
+        "ward_raise"
+      ]
+    },
+    {
+      "frame": 17222,
+      "scene": "Period3",
+      "played": 65,
+      "last": "ward_hit",
+      "loops": 4,
+      "active": [
+        "beam_loop",
+        "ward_hit",
+        "beam_start",
+        "beam_loop",
+        "beam_start",
+        "ward_hit",
+        "arena_ambience",
+        "ward_loop",
+        "ward_raise"
+      ]
+    },
+    {
+      "frame": 17262,
+      "scene": "Period3",
+      "played": 66,
+      "last": "ward_hit",
+      "loops": 4,
+      "active": [
+        "beam_loop",
+        "ward_hit",
+        "beam_loop",
+        "ward_hit",
+        "arena_ambience",
+        "ward_loop",
+        "ward_raise"
+      ]
+    },
+    {
+      "frame": 17299,
+      "scene": "Period3",
+      "played": 67,
+      "last": "ward_hit",
+      "loops": 4,
+      "active": [
+        "beam_loop",
+        "ward_hit",
+        "beam_loop",
+        "ward_hit",
+        "arena_ambience",
+        "ward_loop",
+        "ward_raise"
+      ]
+    },
+    {
+      "frame": 17335,
+      "scene": "Period3",
+      "played": 68,
+      "last": "ward_hit",
+      "loops": 4,
+      "active": [
+        "beam_loop",
+        "ward_hit",
+        "beam_loop",
+        "ward_hit",
+        "arena_ambience",
+        "ward_loop"
+      ]
+    },
+    {
+      "frame": 17374,
+      "scene": "Period3",
+      "played": 69,
+      "last": "ward_hit",
+      "loops": 4,
+      "active": [
+        "beam_loop",
+        "ward_hit",
+        "beam_loop",
+        "ward_hit",
+        "arena_ambience",
+        "ward_loop"
+      ]
+    },
+    {
+      "frame": 17408,
+      "scene": "Period3",
+      "played": 70,
+      "last": "ward_break",
+      "loops": 4,
+      "active": [
+        "beam_loop",
+        "ward_break",
+        "beam_loop",
+        "ward_hit",
+        "arena_ambience",
+        "ward_loop"
+      ]
+    },
+    {
+      "frame": 17409,
+      "scene": "Period3",
+      "played": 74,
+      "last": "beam_stop",
+      "loops": 4,
+      "active": [
+        "beam_loop",
+        "spell_hit",
+        "ward_break",
+        "beam_stop",
+        "beam_loop",
+        "ward_hit",
+        "beam_stop",
+        "arena_ambience",
+        "ward_loop",
+        "resonance"
+      ]
+    },
+    {
+      "frame": 23355,
+      "scene": "Period3",
+      "played": 75,
+      "last": "ward_raise",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "ward_raise"
+      ]
+    },
+    {
+      "frame": 23461,
+      "scene": "Period3",
+      "played": 76,
+      "last": "ward_expire",
+      "loops": 2,
+      "active": [
+        "ward_raise",
+        "ward_loop",
+        "ward_expire",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 24037,
+      "scene": "Period3",
+      "played": 77,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 24492,
+      "scene": "Period3",
+      "played": 78,
+      "last": "ominous_pulse",
+      "loops": 1,
+      "active": [
+        "ominous_pulse",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 24663,
+      "scene": "Period3",
+      "played": 79,
+      "last": "ominous_pulse",
+      "loops": 1,
+      "active": [
+        "ominous_pulse",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 24795,
+      "scene": "Period3",
+      "played": 80,
+      "last": "ominous_pulse",
+      "loops": 1,
+      "active": [
+        "ominous_pulse",
+        "ominous_pulse",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 24898,
+      "scene": "Period3",
+      "played": 81,
+      "last": "ominous_pulse",
+      "loops": 1,
+      "active": [
+        "ominous_pulse",
+        "ominous_pulse",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 25388,
+      "scene": "Period3",
+      "played": 82,
+      "last": "curse_charge",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 25652,
+      "scene": "Period3",
+      "played": 83,
+      "last": "blast",
+      "loops": 1,
+      "active": [
+        "blast",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 26404,
+      "scene": "Period3",
+      "played": 84,
+      "last": "cutscene_slam",
+      "loops": 1,
+      "active": [
+        "cutscene_slam",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 27034,
+      "scene": "Period3",
+      "played": 85,
+      "last": "teleport",
+      "loops": 1,
+      "active": [
+        "teleport",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 27329,
+      "scene": "Period3",
+      "played": 86,
+      "last": "curse_charge",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 27444,
+      "scene": "Period3",
+      "played": 87,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 27478,
+      "scene": "Period3",
+      "played": 88,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "orb_launch",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 27511,
+      "scene": "Period3",
+      "played": 89,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "curse_charge",
+        "orb_launch",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 27549,
+      "scene": "Period3",
+      "played": 90,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "orb_launch",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 27586,
+      "scene": "Period3",
+      "played": 91,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "orb_launch",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 28072,
+      "scene": "Period3",
+      "played": 92,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 28217,
+      "scene": "Period3",
+      "played": 93,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 28225,
+      "scene": "Period3",
+      "played": 94,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 28243,
+      "scene": "Period3",
+      "played": 95,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact",
+        "curse_impact",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 28408,
+      "scene": "Period3",
+      "played": 96,
+      "last": "teleport",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "teleport",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 28898,
+      "scene": "Period3",
+      "played": 97,
+      "last": "summon",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "summon"
+      ]
+    },
+    {
+      "frame": 28948,
+      "scene": "Period3",
+      "played": 98,
+      "last": "summon",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "summon",
+        "summon"
+      ]
+    },
+    {
+      "frame": 28998,
+      "scene": "Period3",
+      "played": 99,
+      "last": "summon",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "summon",
+        "summon",
+        "summon"
+      ]
+    },
+    {
+      "frame": 29866,
+      "scene": "Period3",
+      "played": 100,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 29926,
+      "scene": "Period3",
+      "played": 101,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 30090,
+      "scene": "Period3",
+      "played": 102,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 30181,
+      "scene": "Period3",
+      "played": 103,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 30395,
+      "scene": "Period3",
+      "played": 104,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 30735,
+      "scene": "Period3",
+      "played": 106,
+      "last": "teleport",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "clone_appear",
+        "teleport"
+      ]
+    },
+    {
+      "frame": 32113,
+      "scene": "Period3",
+      "played": 108,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "orb_launch",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 32306,
+      "scene": "Period3",
+      "played": 109,
+      "last": "teleport",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "teleport"
+      ]
+    },
+    {
+      "frame": 32546,
+      "scene": "Period3",
+      "played": 111,
+      "last": "teleport",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "clone_appear",
+        "teleport"
+      ]
+    },
+    {
+      "frame": 32635,
+      "scene": "Period3",
+      "played": 113,
+      "last": "beam_start",
+      "loops": 3,
+      "active": [
+        "beam_start",
+        "clone_appear",
+        "beam_loop",
+        "teleport",
+        "beam_loop",
+        "arena_ambience",
+        "beam_start"
+      ]
+    },
+    {
+      "frame": 32674,
+      "scene": "Period3",
+      "played": 116,
+      "last": "orb_launch",
+      "loops": 3,
+      "active": [
+        "beam_start",
+        "clone_appear",
+        "beam_loop",
+        "orb_launch",
+        "teleport",
+        "beam_loop",
+        "arena_ambience",
+        "clone_break",
+        "orb_launch",
+        "beam_start"
+      ]
+    },
+    {
+      "frame": 32675,
+      "scene": "Period3",
+      "played": 118,
+      "last": "beam_stop",
+      "loops": 3,
+      "active": [
+        "beam_stop",
+        "beam_start",
+        "clone_appear",
+        "beam_stop",
+        "beam_loop",
+        "orb_launch",
+        "teleport",
+        "beam_loop",
+        "arena_ambience",
+        "clone_break",
+        "orb_launch",
+        "beam_start"
+      ]
+    },
+    {
+      "frame": 33403,
+      "scene": "Period3",
+      "played": 119,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 33447,
+      "scene": "Period3",
+      "played": 120,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 33848,
+      "scene": "Period3",
+      "played": 121,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 34588,
+      "scene": "Period3",
+      "played": 122,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 38857,
+      "scene": "Period3",
+      "played": 123,
+      "last": "curse_charge",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_charge"
+      ]
+    },
+    {
+      "frame": 38934,
+      "scene": "Period3",
+      "played": 124,
+      "last": "chain_bind",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_charge",
+        "chain_bind"
+      ]
+    },
+    {
+      "frame": 38935,
+      "scene": "Period3",
+      "played": 125,
+      "last": "beam_start",
+      "loops": 3,
+      "active": [
+        "arena_ambience",
+        "chain_loop",
+        "beam_loop",
+        "curse_charge",
+        "chain_bind",
+        "beam_start"
+      ]
+    },
+    {
+      "frame": 39152,
+      "scene": "Period3",
+      "played": 126,
+      "last": "chain_break",
+      "loops": 3,
+      "active": [
+        "arena_ambience",
+        "chain_loop",
+        "beam_loop",
+        "chain_break"
+      ]
+    },
+    {
+      "frame": 39153,
+      "scene": "Period3",
+      "played": 127,
+      "last": "beam_stop",
+      "loops": 3,
+      "active": [
+        "arena_ambience",
+        "chain_loop",
+        "beam_loop",
+        "chain_break",
+        "beam_stop"
+      ]
+    },
+    {
+      "frame": 44736,
+      "scene": "Period3",
+      "played": 128,
+      "last": "curse_charge",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "curse_charge"
+      ]
+    },
+    {
+      "frame": 44885,
+      "scene": "Period3",
+      "played": 129,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 44920,
+      "scene": "Period3",
+      "played": 130,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "curse_charge",
+        "orb_launch",
+        "arena_ambience",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 44952,
+      "scene": "Period3",
+      "played": 131,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "curse_charge",
+        "orb_launch",
+        "arena_ambience",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 44982,
+      "scene": "Period3",
+      "played": 132,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "orb_launch",
+        "arena_ambience",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 45012,
+      "scene": "Period3",
+      "played": 133,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "orb_launch",
+        "orb_launch",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 45045,
+      "scene": "Period3",
+      "played": 134,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "orb_launch",
+        "arena_ambience",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 45079,
+      "scene": "Period3",
+      "played": 135,
+      "last": "orb_launch",
+      "loops": 1,
+      "active": [
+        "orb_launch",
+        "orb_launch",
+        "arena_ambience",
+        "orb_launch"
+      ]
+    },
+    {
+      "frame": 45702,
+      "scene": "Period3",
+      "played": 136,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 45709,
+      "scene": "Period3",
+      "played": 137,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 45732,
+      "scene": "Period3",
+      "played": 138,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "curse_impact",
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 45883,
+      "scene": "Period3",
+      "played": 139,
+      "last": "curse_impact",
+      "loops": 1,
+      "active": [
+        "curse_impact",
+        "arena_ambience",
+        "curse_impact"
+      ]
+    },
+    {
+      "frame": 46374,
+      "scene": "Period3",
+      "played": 140,
+      "last": "beam_start",
+      "loops": 1,
+      "active": [
+        "beam_start",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 46443,
+      "scene": "Period3",
+      "played": 141,
+      "last": "curse_impact",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "curse_impact",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 46914,
+      "scene": "Period3",
+      "played": 142,
+      "last": "ominous_pulse",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "ominous_pulse",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 47087,
+      "scene": "Period3",
+      "played": 143,
+      "last": "resonance",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "resonance",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 47424,
+      "scene": "Period3",
+      "played": 144,
+      "last": "qte_start",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "qte_start",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 48330,
+      "scene": "Period3",
+      "played": 145,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "qte_retry",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 49282,
+      "scene": "Period3",
+      "played": 146,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_retry",
+        "arena_ambience",
+        "qte_loop"
+      ]
+    },
+    {
+      "frame": 50247,
+      "scene": "Period3",
+      "played": 147,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_retry",
+        "arena_ambience",
+        "qte_loop"
+      ]
+    },
+    {
+      "frame": 51067,
+      "scene": "Period3",
+      "played": 148,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_retry",
+        "arena_ambience",
+        "qte_loop"
+      ]
+    },
+    {
+      "frame": 51934,
+      "scene": "Period3",
+      "played": 149,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_retry",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 52908,
+      "scene": "Period3",
+      "played": 150,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_retry",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 53820,
+      "scene": "Period3",
+      "played": 151,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_retry",
+        "qte_loop"
+      ]
+    },
+    {
+      "frame": 54807,
+      "scene": "Period3",
+      "played": 152,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "qte_retry",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 55757,
+      "scene": "Period3",
+      "played": 153,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "qte_retry",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 56805,
+      "scene": "Period3",
+      "played": 154,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "qte_retry",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 57803,
+      "scene": "Period3",
+      "played": 155,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "qte_tap",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 57827,
+      "scene": "Period3",
+      "played": 156,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_loop",
+        "qte_tap",
+        "arena_ambience",
+        "qte_retry"
+      ]
+    },
+    {
+      "frame": 58743,
+      "scene": "Period3",
+      "played": 157,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_retry",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 59765,
+      "scene": "Period3",
+      "played": 158,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "qte_retry",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60167,
+      "scene": "Period3",
+      "played": 159,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60239,
+      "scene": "Period3",
+      "played": 160,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60298,
+      "scene": "Period3",
+      "played": 161,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60342,
+      "scene": "Period3",
+      "played": 162,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60372,
+      "scene": "Period3",
+      "played": 163,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "qte_tap",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60428,
+      "scene": "Period3",
+      "played": 164,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60458,
+      "scene": "Period3",
+      "played": 165,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60493,
+      "scene": "Period3",
+      "played": 166,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60594,
+      "scene": "Period3",
+      "played": 167,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60636,
+      "scene": "Period3",
+      "played": 168,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "qte_tap",
+        "qte_loop",
+        "arena_ambience"
+      ]
+    },
+    {
+      "frame": 60648,
+      "scene": "Period3",
+      "played": 169,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop"
+      ]
+    },
+    {
+      "frame": 60669,
+      "scene": "Period3",
+      "played": 170,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60690,
+      "scene": "Period3",
+      "played": 171,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60715,
+      "scene": "Period3",
+      "played": 172,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60739,
+      "scene": "Period3",
+      "played": 173,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60762,
+      "scene": "Period3",
+      "played": 174,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60768,
+      "scene": "Period3",
+      "played": 175,
+      "last": "qte_retry",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_retry",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60781,
+      "scene": "Period3",
+      "played": 176,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_retry",
+        "qte_loop",
+        "qte_tap",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60804,
+      "scene": "Period3",
+      "played": 177,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_retry",
+        "qte_loop",
+        "qte_tap",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60826,
+      "scene": "Period3",
+      "played": 178,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_retry",
+        "qte_loop",
+        "qte_tap",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60848,
+      "scene": "Period3",
+      "played": 179,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_retry",
+        "qte_loop",
+        "qte_tap",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60870,
+      "scene": "Period3",
+      "played": 180,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_retry",
+        "qte_loop",
+        "qte_tap",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60892,
+      "scene": "Period3",
+      "played": 181,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60914,
+      "scene": "Period3",
+      "played": 182,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60936,
+      "scene": "Period3",
+      "played": 183,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop",
+        "qte_tap"
+      ]
+    },
+    {
+      "frame": 60958,
+      "scene": "Period3",
+      "played": 184,
+      "last": "qte_tap",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_tap",
+        "qte_loop"
+      ]
+    },
+    {
+      "frame": 60980,
+      "scene": "Period3",
+      "played": 186,
+      "last": "ultimate",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "qte_loop",
+        "qte_tap",
+        "ultimate"
+      ]
+    },
+    {
+      "frame": 61357,
+      "scene": "Period3",
+      "played": 187,
+      "last": "blast",
+      "loops": 2,
+      "active": [
+        "arena_ambience",
+        "blast",
+        "qte_loop",
+        "ultimate"
+      ]
+    },
+    {
+      "frame": 62439,
+      "scene": "Period3",
+      "played": 188,
+      "last": "magic_reveal",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "magic_reveal"
+      ]
+    },
+    {
+      "frame": 63408,
+      "scene": "Period3",
+      "played": 189,
+      "last": "purify",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "purify"
+      ]
+    },
+    {
+      "frame": 64933,
+      "scene": "Period3",
+      "played": 190,
+      "last": "game_complete",
+      "loops": 1,
+      "active": [
+        "arena_ambience",
+        "game_complete"
+      ]
+    }
+  ]
+}

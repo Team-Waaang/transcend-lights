@@ -236,10 +236,12 @@ namespace AiHackathon.Parchment
 
             if (P < 0.02f) yield return Wait(riseDelay);   // rise in rolled up first
             PlayClip(unrollClip);
+            if (unrollClip == null) AiHackathon.Game.GameAudio.Play("parchment_open");
             yield return Tween(1f, openDuration, k => EaseOutBack(k, 1.25f));   // overshoot a little and settle
 
             glintK = 0f;
             onOpened.Invoke();
+            if (cueClip == null) AiHackathon.Game.GameAudio.Play("title_chime");
             if (cueClip) StartCoroutine(CueAfterDelay());
 
             yield return Wait(0.12f, true);
@@ -273,6 +275,7 @@ namespace AiHackathon.Parchment
             // Mirror of opening: there the card starts appearing riseDelay before the unroll, so here it starts
             // disappearing as many seconds before the roll-up ends as the two overlapped when opening.
             PlayClip(rollUpClip);
+            if (rollUpClip == null) AiHackathon.Game.GameAudio.Play("parchment_close");
             float overlap = Mathf.Clamp(appearDuration - riseDelay, 0f, closeDuration);
             yield return Tween(0f, closeDuration, EaseInOutCubic, closeDuration - overlap, () => shown = false);
             shown = false;

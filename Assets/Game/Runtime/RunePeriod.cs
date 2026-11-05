@@ -159,6 +159,7 @@ namespace AiHackathon.Game
             s.revealGlow = 0f;
             s.shade = darkShade;
             lane.message = "그려요!";
+            GameAudio.Play("magic_reveal", lane.stone.transform, 0.65f);
             lane.messageTime = Time.time;
             lane.showing = false;
         }
@@ -175,6 +176,7 @@ namespace AiHackathon.Game
         {
             foreach (var lane in lanes) if (!lane.done) return;
             Cleared = true;
+            GameAudio.Play("period_clear");
             clearedAt = Time.unscaledTime;
             Voice.Say(memory ? VoiceLine.KaelaPowerUp2 : VoiceLine.KaelaPowerUp1, 10f);
             onCleared.Invoke();
