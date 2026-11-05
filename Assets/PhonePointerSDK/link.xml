@@ -1,0 +1,4 @@
+<linker>
+  <assembly fullname="zxing" preserve="all" />
+  <assembly fullname="PhonePointer.Core" preserve="all" />
+</linker>
