@@ -407,7 +407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69455ff2c91312647b0b5b26c3930bbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Waaang.ConnectionFlow
-  gameSceneName: Game
+  gameSceneName: Period1Cutscene
 --- !u!114 &1677414576
 MonoBehaviour:
   m_ObjectHideFlags: 0

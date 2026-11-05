@@ -35,7 +35,7 @@ namespace PhonePointer
 
         public static Rect QrRect(float width, float height)
         {
-            float side = Mathf.Clamp(Mathf.Min(height * .24f, width * .18f), 96f, 260f);
+            float side = Mathf.Clamp(Mathf.Min(height * .36f, width * .27f), 144f, 390f);
             return new Rect(width - side - 28f, (height - side) * .5f, side, side);
         }
 
