@@ -44,6 +44,12 @@ namespace AiHackathon.Game
         [Tooltip("Seconds the clear screen stays before the next period loads (PeriodFlow). Negative: stay.")]
         public float advanceAfter = 4f;
 
+        [Header("Voice")]
+        [Tooltip("Chance a judged rune gets a success / failure line (only when no one else is talking).")]
+        [Range(0f, 1f)] public float runeLineChance = 0.4f;
+        [Tooltip("The same rune line does not come back within this many seconds.")]
+        public float runeLineCooldown = 20f;
+
         [Header("Memory (draw in the dark)")]
         public bool memory;
         public float showSeconds = 3f;
@@ -73,6 +79,11 @@ namespace AiHackathon.Game
                 started = true;
                 if (memory)
                     for (int i = 0; i < lanes.Length; i++) StartCoroutine(Show(i, showSeconds, false));
+                else
+                {
+                    Voice.Say(VoiceLine.AmeliaCalm, 10f);
+                    Voice.Say(VoiceLine.KaelaRuneStart, 16f);
+                }
             }
             for (int i = 0; i < lanes.Length && i < game.players.Length; i++)
             {
@@ -102,6 +113,10 @@ namespace AiHackathon.Game
             var trace = lane.stone.trace;
             bool ok = trace.Finish();
             if (memory && ok) lane.stone.shade = 1f;
+            // Now and then, not every rune; Amelia's two failure lines take turns.
+            if (UnityEngine.Random.value < runeLineChance)
+                Voice.Bark(ok ? Voice.ForPlayer(i, VoiceLine.AmeliaRuneSuccess, VoiceLine.KaelaRuneSuccess)
+                              : Voice.ForPlayer(i, lane.failed % 2 == 0 ? VoiceLine.AmeliaRuneFail : VoiceLine.AmeliaRuneFail2, VoiceLine.KaelaRuneFail), runeLineCooldown);
             lane.message = ok ? "성공!" : "실패…";
             lane.messageTime = Time.time;
             yield return new WaitForSeconds(0.35f);
@@ -163,6 +178,7 @@ namespace AiHackathon.Game
             Cleared = true;
             GameAudio.Play("period_clear");
             clearedAt = Time.unscaledTime;
+            Voice.Say(memory ? VoiceLine.KaelaPowerUp2 : VoiceLine.KaelaPowerUp1, 10f);
             onCleared.Invoke();
             if (advanceAfter >= 0f) StartCoroutine(Advance());
         }

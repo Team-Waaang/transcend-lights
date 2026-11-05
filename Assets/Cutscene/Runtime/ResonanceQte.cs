@@ -12,7 +12,7 @@ namespace AiHackathon.Cutscene
     /// a short resonance intro (<see cref="introAt"/>..<see cref="loopStart"/>), then a live stretch
     /// (<see cref="loopStart"/>..<see cref="loopEnd"/>) where both players aim at the clash point and mash their
     /// phone button. Each tap inside the target ring fills that player's gauge, which drains on its own; when both
-    /// gauges are full at once the timeline jumps to <see cref="ultimateAt"/>: the ultimate beam. If the live stretch
+    /// gauges are full at once the timeline jumps (after <see cref="ultimateDelay"/>) to <see cref="ultimateAt"/>: the ultimate beam. If the live stretch
     /// runs out first, it plays again from <see cref="loopStart"/>.
     /// Space / Enter skip the parts around the QTE, never the QTE itself.
     /// </summary>
@@ -25,6 +25,8 @@ namespace AiHackathon.Cutscene
         public float loopStart = 7.1f;
         public float loopEnd = 15.1f;
         public float ultimateAt = 15.1f;
+        [Tooltip("Seconds between the resonance landing and the ultimate beam, so its call starts just ahead of it.")]
+        public float ultimateDelay = 0.6f;
 
         [Header("Target")]
         [Tooltip("The beam clash point; the target ring sits on it.")]
@@ -57,6 +59,8 @@ namespace AiHackathon.Cutscene
         public Font bodyFont;
 
         public UnityEvent onSuccess = new UnityEvent();
+        [Tooltip("The live stretch ran out and starts again.")]
+        public UnityEvent onRetry = new UnityEvent();
 
         /// <summary>Gauge level that counts as full.</summary>
         public const float FullZone = 0.95f;
@@ -64,6 +68,9 @@ namespace AiHackathon.Cutscene
         public enum State { Waiting, Live, Success }
         public State Current { get; private set; }
         public bool Succeeded => Current == State.Success;
+        /// <summary>How full the shared resonance is (0..1, the lower of the two gauges).</summary>
+        public float Shared => Mathf.Clamp01(Mathf.Min(gauge[0], gauge[1]) / FullZone);
+        public int Retries => retries;
         public static ResonanceQte Active { get; private set; }
 
         PlayableDirector director;
@@ -78,6 +85,7 @@ namespace AiHackathon.Cutscene
         float retryMessage = -10f;
         bool soloWasPressed;
         int retries;
+        float ultimateJumpAt = -1f;
 
         float push, shake, flare;
         CinemachineBasicMultiChannelPerlin shakeNoise;
@@ -103,6 +111,12 @@ namespace AiHackathon.Cutscene
             }
 
             UpdateTarget();
+            if (ultimateJumpAt >= 0f && Time.unscaledTime >= ultimateJumpAt)
+            {
+                ultimateJumpAt = -1f;
+                GameAudio.Play("ultimate");
+                if (director.time < ultimateAt) director.time = ultimateAt;
+            }
             if (Current == State.Waiting && t >= loopStart && t < loopEnd) Begin();
             if (Current != State.Live) return;
 
@@ -139,8 +153,7 @@ namespace AiHackathon.Cutscene
             if (gauge[0] >= FullZone && gauge[1] >= FullZone)
             {
                 Current = State.Success;
-                GameAudio.Play("ultimate");
-                director.time = ultimateAt;
+                ultimateJumpAt = Time.unscaledTime + ultimateDelay;
                 onSuccess.Invoke();
                 return;
             }
@@ -152,6 +165,7 @@ namespace AiHackathon.Cutscene
                 retries++;
                 GameAudio.Play("qte_retry");
                 for (int i = 0; i < 2; i++) gauge[i] *= 0.5f;
+                onRetry.Invoke();
             }
         }
 
@@ -180,7 +194,8 @@ namespace AiHackathon.Cutscene
         {
             float dt = Time.unscaledDeltaTime;
             float shared = Mathf.Clamp01(Mathf.Min(gauge[0], gauge[1]) / FullZone);
-            bool live = Current == State.Live;
+            // Keep the clash pushed toward the boss while the ultimate is about to fire.
+            bool live = Current == State.Live || ultimateJumpAt >= 0f;
             float want = live ? Mathf.Lerp(pushRange.x, pushRange.y, shared) : 0f;
             push = Mathf.Lerp(push, want, 1f - Mathf.Exp(-(live ? 6f : 3f) * dt));
             if (Mathf.Abs(push) > 1e-4f)

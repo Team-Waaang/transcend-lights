@@ -26,6 +26,8 @@ namespace AiHackathon.Game
         bool done;
 
         public bool Done => done;
+        /// <summary>What it flies at (a player's chest).</summary>
+        public Transform Target => target;
 
         void Awake()
         {

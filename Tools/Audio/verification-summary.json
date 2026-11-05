@@ -42,7 +42,8 @@
     "period2-playback.json",
     "playback-report.json",
     "results-verification.json",
-    "restart-verification.json"
+    "restart-verification.json",
+    "merge-verification.json"
   ],
   "restart": {
     "scene": "Assets/Cutscene/Period1/Period1Cutscene.unity",
@@ -52,5 +53,16 @@
       "classroom_ambience"
     ],
     "frame": 12614
+  },
+  "main_voice_integration": {
+    "voice_bank_entries": 36,
+    "assigned_clips": 36,
+    "passed": true,
+    "voiceAtSuccess": true,
+    "voiceWithEffect": true,
+    "configuredDelay": 0.6,
+    "measuredEffectDelay": 0.606063843,
+    "peak": 0.820964754,
+    "frame": 3178
   }
 }
