@@ -152,7 +152,9 @@ namespace AiHackathon.Game.Editor
             // rune unlit whatever RuneStoneFx sets. Keep a barely visible base; RuneStoneFx drives the real glow.
             mat.SetColor("_EmissionColor", new Color(0.02f, 0.02f, 0.02f));
             mat.EnableKeyword("_EMISSION");
-            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            // Marked emissive for realtime GI: URP's material validation keeps _EMISSION only on a material
+            // flagged emissive, and stripped it from these when they were inspected or re-imported.
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             EditorUtility.SetDirty(mat);
             def.material = mat;
             EditorUtility.SetDirty(def);
