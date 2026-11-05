@@ -59,8 +59,10 @@ namespace Waaang
         [Range(0.05f, 0.7f)] public float gripAlongStaff = 0.32f;
         [Tooltip("손을 어깨 높이에서 얼마나 내려 쥘지(m). 지팡이 뒤끝이 머리에 걸리지 않게 합니다.")]
         public float holdDrop = 0.16f;
-        [Tooltip("손을 몸 바깥(오른쪽)으로 얼마나 빼서 쥘지(m).")]
+        [Tooltip("손을 몸 바깥으로 얼마나 빼서 쥘지(m).")]
         public float holdSide = 0.06f;
+        [Tooltip("켜면 왼손이 앞손이 되어 지팡이를 몸 왼쪽에서 잡습니다.")]
+        public bool leftHanded;
         [Tooltip("오른손 손가락을 지팡이에 감는 정도.")]
         [Range(0f, 1.5f)] public float fingerCurl = 1f;
 
@@ -259,23 +261,28 @@ namespace Waaang
         }
 
         // Also called later when character is assigned after AddComponent (SecondCaster).
+        //
+        // "right*" bones and rightGrip are the lead arm (the hand nearer the tip, fingers curled round the shaft) and
+        // "left*" the support arm. For a left-handed caster those are the left and right arms respectively.
         void BindBones()
         {
             boundCharacter = character;
             PlaceGrip();
-            rightUpper = FindBone("Right_UpperArm");
-            rightLower = FindBone("Right_LowerArm");
-            rightHand = FindBone("Right_Hand");
-            leftUpper = FindBone("Left_UpperArm");
-            leftLower = FindBone("Left_LowerArm");
-            leftHand = FindBone("Left_Hand");
+            string lead = leftHanded ? "Left_" : "Right_";
+            string support = leftHanded ? "Right_" : "Left_";
+            rightUpper = FindBone(lead + "UpperArm");
+            rightLower = FindBone(lead + "LowerArm");
+            rightHand = FindBone(lead + "Hand");
+            leftUpper = FindBone(support + "UpperArm");
+            leftLower = FindBone(support + "LowerArm");
+            leftHand = FindBone(support + "Hand");
             spine = FindBone("Spine");
             chest = FindBone("Chest");
             upperChest = FindBone("UpperChest");
             head = FindBone("Head");
-            var middle = FindBone("Right_MiddleProximal");
-            var index = FindBone("Right_IndexProximal");
-            var pinky = FindBone("Right_PinkyProximal");
+            var middle = FindBone(lead + "MiddleProximal");
+            var index = FindBone(lead + "IndexProximal");
+            var pinky = FindBone(lead + "PinkyProximal");
             if (rightHand != null && middle != null)
                 handLength = Vector3.Distance(rightHand.position, middle.position);
             if (rightUpper != null && rightLower != null && rightHand != null)
@@ -286,16 +293,17 @@ namespace Waaang
                 Quaternion toLocal = Quaternion.Inverse(rightHand.rotation);
                 fingerLocal = (toLocal * (middle.position - rightHand.position)).normalized;
                 acrossLocal = Vector3.ProjectOnPlane(toLocal * (index.position - pinky.position), fingerLocal).normalized;
-                palmLocal = Vector3.Cross(fingerLocal, acrossLocal);
+                // A left hand is a mirror image, so the same cross product points out of its back instead.
+                palmLocal = Vector3.Cross(fingerLocal, acrossLocal) * (leftHanded ? -1f : 1f);
             }
             fingerBones = new Transform[FingerNames.Length * JointNames.Length];
             for (int f = 0; f < FingerNames.Length; f++)
                 for (int j = 0; j < JointNames.Length; j++)
-                    fingerBones[f * JointNames.Length + j] = FindBone("Right_" + FingerNames[f] + JointNames[j]);
+                    fingerBones[f * JointNames.Length + j] = FindBone(lead + FingerNames[f] + JointNames[j]);
             fingerRest = new Quaternion[fingerBones.Length];
             for (int i = 0; i < fingerBones.Length; i++)
                 fingerRest[i] = fingerBones[i] != null ? fingerBones[i].localRotation : Quaternion.identity;
-            thumb = FindBone("Right_ThumbProximal");
+            thumb = FindBone(lead + "ThumbProximal");
             thumbRest = thumb != null ? thumb.localRotation : Quaternion.identity;
             twistBones = new[] { spine, chest, upperChest, head, rightUpper, rightLower, rightHand, leftUpper, leftLower, leftHand };
             restRotations = new Quaternion[twistBones.Length];
@@ -432,7 +440,8 @@ namespace Waaang
 
             // Both arms reach straight toward the pointer. The right hand is nearer the tip, the left hand behind it on the shaft.
             Vector3 bodyForward = Quaternion.AngleAxis(bodyYaw, up) * character.forward;
-            Vector3 bodyRight = Vector3.Cross(up, bodyForward);
+            // "Outward" from the lead shoulder: right for a right-handed caster, left for a left-handed one.
+            Vector3 bodyRight = Vector3.Cross(up, bodyForward) * (leftHanded ? -1f : 1f);
             Vector3 shoulder = rightUpper != null ? rightUpper.position : from;
             Vector3 aimDir = aim - shoulder;
             if (aimDir.sqrMagnitude < 0.0001f)
@@ -474,8 +483,8 @@ namespace Waaang
         {
             if (rightHand == null || fingerBones == null)
                 return;
-            // A positive turn about index->pinky swings the fingertips toward the palm.
-            Vector3 curlAxis = rightHand.rotation * -acrossLocal;
+            // A positive turn about finger x palm swings the fingertips toward the palm, for either hand.
+            Vector3 curlAxis = rightHand.rotation * Vector3.Cross(fingerLocal, palmLocal);
             for (int i = 0; i < fingerBones.Length; i++)
             {
                 var bone = fingerBones[i];
@@ -488,7 +497,8 @@ namespace Waaang
             if (thumb != null)
             {
                 thumb.localRotation = thumbRest;
-                thumb.rotation = Quaternion.AngleAxis(35f * fingerCurl, rightHand.rotation * fingerLocal) * thumb.rotation;
+                float thumbTurn = 35f * fingerCurl * (leftHanded ? -1f : 1f);
+                thumb.rotation = Quaternion.AngleAxis(thumbTurn, rightHand.rotation * fingerLocal) * thumb.rotation;
             }
         }
 

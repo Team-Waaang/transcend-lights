@@ -95,6 +95,7 @@ namespace Waaang.EditorTools
         // ---------- 2P: Nox ----------
 
         static readonly Color NoxColor = new Color(0.45f, 0.75f, 1f); // matches the 2P crosshair
+        public static float NoxStaffScale = 0.85f;
 
         [MenuItem("Waaang/Add Nox 2P To Open Game Scene")]
         public static void AddNoxToOpenScene()
@@ -133,6 +134,8 @@ namespace Waaang.EditorTools
             Vector3 place = amelia.position + amelia.right * caster.sideOffset;
             nox.transform.position = new Vector3(place.x, floorY, place.z);
             var staff = CreateStaff(nox.transform, NoxWandFbx, NoxWandMat, "NoxWand.mat");
+            // Her twisted wand reads a little long next to Amelia's; scale the whole staff (wand, tip, grips).
+            staff.transform.localScale = Vector3.one * NoxStaffScale;
             var tipLight = staff.transform.Find("Staff Tip").GetComponent<Light>();
             if (tipLight != null)
                 tipLight.color = Color.Lerp(NoxColor, Color.white, 0.3f);
@@ -179,6 +182,8 @@ namespace Waaang.EditorTools
             rig.lightSurfaceOffset = primary.lightSurfaceOffset;
             rig.beamPrefab = primary.beamPrefab;
             SecondCaster.CopySettings(primary, rig);
+            // Nox stands on the right, so she holds the staff on her left side, toward the middle of the screen.
+            rig.leftHanded = true;
             rig.beamTint = new Color(0.55f, 0.65f, 1f, 1f);
             rig.trailColor = new Color(0.45f, 0.85f, 1.6f, 1f);
 
@@ -196,8 +201,8 @@ namespace Waaang.EditorTools
 
         // Duo shot: centred behind both players and a little higher, so Amelia's back sits lower-left, Nox's
         // lower-right and the room they aim into fills the middle.
-        public static Vector3 DuoCamBack = new Vector3(0f, 0.3f, -1.45f);
-        public static float DuoCamPitch = 5f;
+        public static Vector3 DuoCamBack = new Vector3(0f, 0.55f, -1.45f);
+        public static float DuoCamPitch = 9f;
         public static float DuoCamFov = 62f;
 
         static void FrameBoth(SecondCaster caster, Camera camera, Transform first, Transform second)
