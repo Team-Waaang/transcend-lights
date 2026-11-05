@@ -143,7 +143,7 @@ namespace Waaang.Phone
                 else registrationCard.Show(new TitleCardInfo(instruction,
                     !controller.Connected ? "같은 Wi-Fi에서 PC의 QR을 비추세요" :
                     !controller.Registered ? "등록 이미지를 화면 안에 담아 주세요" :
-                    !controller.Tracking ? "카메라를 가리지 말고 천천히 움직이세요" : "설정에서 중앙 보정을 눌러 주세요"));
+                    !controller.Tracking ? "카메라를 가리지 말고 천천히 움직이세요" : "왼쪽 아래 중앙 버튼을 눌러 주세요"));
             }
             stateLabel.gameObject.SetActive(registered);
             hintLabel.gameObject.SetActive(registered);
@@ -209,7 +209,8 @@ namespace Waaang.Phone
         }
         void OpenSettings() { EndCast(); settingsPanel.SetActive(true); }
         void CloseSettings() { settingsPanel.SetActive(false); controller.SaveSensitivity(); }
-        void Center() { EndCast(); controller.Center(); CloseSettings(); }
+        // Bottom-left button on the play screen, outside the settings panel.
+        void Center() { EndCast(); controller.Center(); }
         void Register() { EndCast(); controller.RequestRegistration(); CloseSettings(); }
         void ToggleCamera() { EndCast(); recoveryCamera = false; controller.ToggleCamera(); CloseSettings(); }
         void ToggleMode() { EndCast(); controller.ToggleTrackingMode(); }
