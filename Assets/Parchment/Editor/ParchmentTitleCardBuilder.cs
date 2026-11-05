@@ -28,8 +28,8 @@ namespace AiHackathon.Parchment.Editor
         const float W = 1120f, H = 260f, Margin = 16f, RollD = 68f;
         const float S = 2f;   // texture pixels per canvas unit
 
-        static readonly Color Ink = Hex("3a2410"), InkSoft = Hex("6b4a26"), PlateInk = Hex("3b2108");
-        static readonly Color GoldHi = Hex("fbe6a2"), Gold = Hex("d9a646"), GoldLo = Hex("8a5a1c"), GoldDeep = Hex("b98330");
+        static readonly Color Ink = Hex("3a2410"), InkSoft = Hex("6b4a26");
+        static readonly Color GoldHi = Hex("fbe6a2"), Gold = Hex("d9a646"), GoldLo = Hex("8a5a1c");
         static readonly Color Night = Hex("0d0b1a"), Night2 = Hex("1d1736");
 
         [MenuItem("Tools/Parchment/Build Title Card")]
@@ -139,29 +139,7 @@ namespace AiHackathon.Parchment.Editor
             card.rollR = Roll("RollR", root, t, out card.capR, out card.rollTexR, out card.rollMaskR);
             card.rollTile = new Vector2(t.RollTex.width / S, t.RollTex.height / S);
 
-            // Gold ribbon with the period name, sized to its text.
-            var plate = Rect("Nameplate", root, new Vector2(220f, 54f));
-            Anchor(plate, new Vector2(0.5f, 1f));
-            plate.anchoredPosition = new Vector2(0f, card.nameplateY);
-            var plateImg = Img(plate, t.Nameplate, Color.white);
-            plateImg.type = Image.Type.Sliced;
-            var drop = plate.gameObject.AddComponent<Shadow>();
-            drop.effectColor = new Color(0f, 0f, 0f, 0.35f);
-            drop.effectDistance = new Vector2(0f, -3f);
-            card.nameplateGroup = plate.gameObject.AddComponent<CanvasGroup>();
-            var layout = plate.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.padding = new RectOffset(40, 40, 4, 6);
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = layout.childControlHeight = true;
-            layout.childForceExpandWidth = layout.childForceExpandHeight = true;
-            var fitter = plate.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            var label = Rect("Label", plate, new Vector2(140f, 44f));
-            card.labelText = Text(label, bold, 28f, PlateInk, 8f);
-            card.labelText.text = "제1교시";
-            card.nameplate = plate;
-
-            card.PreviewOpen(new TitleCardInfo("제1교시", "룬", "손끝이 떨리면, 룬도 떨린다."));
+            card.PreviewOpen(new TitleCardInfo("룬", "손끝이 떨리면, 룬도 떨린다."));
             return canvasGo;
         }
 
@@ -299,7 +277,7 @@ namespace AiHackathon.Parchment.Editor
 
         sealed class Textures
         {
-            public Sprite Sheet, RollMask, RollShade, RollCap, Glint, Shadow, Nameplate, OrnamentLine, Diamond;
+            public Sprite Sheet, RollMask, RollShade, RollCap, Glint, Shadow, OrnamentLine, Diamond;
             public Texture2D RollTex, Backdrop;
         }
 
@@ -313,7 +291,6 @@ namespace AiHackathon.Parchment.Editor
             t.RollCap = SaveSprite("parchment_roll_cap", 128, 128, RollCapPixel, 100f);
             t.Glint = SaveSprite("parchment_glint", 64, 256, GlintPixel, 100f);
             t.Shadow = SaveSprite("parchment_shadow", 128, 64, ShadowPixel, 100f);
-            t.Nameplate = SaveSprite("parchment_nameplate", 160, 108, NameplatePixel, 200f, new Vector4(44f, 0f, 44f, 0f));
             t.OrnamentLine = SaveSprite("parchment_ornament_line", 512, 8, OrnamentLinePixel, 200f);
             t.Diamond = SaveSprite("parchment_diamond", 64, 64, DiamondPixel, 200f);
             t.Backdrop = SaveTexture("parchment_demo_backdrop", 960, 540, BackdropPixel, TextureWrapMode.Clamp);
@@ -448,32 +425,6 @@ namespace AiHackathon.Parchment.Editor
             float r = Mathf.Sqrt(nx * nx + ny * ny);
             float a = 1f - Smooth(0f, 1f, r);
             return new Color(0f, 0f, 0f, 0.55f * a * a);
-        }
-
-        // Gold ribbon with pointed ends; the 44 px borders are the ends, the middle stretches.
-        static Color NameplatePixel(int x, int y, int w, int h)
-        {
-            const float point = 32f;
-            bool Inside(float px, float py, float inset)
-            {
-                float hh = h * 0.5f - inset;
-                float dy = Mathf.Abs(py - h * 0.5f);
-                if (dy > hh) return false;
-                float lx = px - inset * 1.4f, rx = w - inset * 1.4f - px;
-                float reach = Mathf.Min(lx, rx);
-                return reach >= 0f && dy <= hh * Mathf.Min(1f, reach / point);
-            }
-            float cov = Coverage((px, py) => Inside(px, py, 0f), x, y);
-            if (cov <= 0f) return new Color(Gold.r, Gold.g, Gold.b, 0f);
-            float inner = Coverage((px, py) => Inside(px, py, 2.5f), x, y);
-
-            float tTop = 1f - (y + 0.5f) / h;
-            var c = tTop < 0.55f ? Color.Lerp(GoldHi, Gold, tTop / 0.55f) : Color.Lerp(Gold, GoldDeep, (tTop - 0.55f) / 0.45f);
-            c = Over(c, new Color(1f, 0.98f, 0.88f), 0.55f * Band(h - (y + 0.5f), 4f, 6f));
-            c = Over(c, new Color(120 / 255f, 80 / 255f, 20 / 255f), 0.35f * Band(y + 0.5f, 4f, 6f));
-            c = Over(c, new Color(130 / 255f, 84 / 255f, 22 / 255f), 0.8f * (cov - inner));
-            c.a = cov;
-            return c;
         }
 
         static Color OrnamentLinePixel(int x, int y, int w, int h)

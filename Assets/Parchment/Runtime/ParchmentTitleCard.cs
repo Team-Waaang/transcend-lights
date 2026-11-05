@@ -11,16 +11,13 @@ namespace AiHackathon.Parchment
     [Serializable]
     public struct TitleCardInfo
     {
-        [Tooltip("Ribbon text above the scroll, e.g. 제1교시")]
-        public string label;
         [Tooltip("Large title in the middle, e.g. 룬")]
         public string title;
         [Tooltip("Optional small line under the title")]
         public string subtitle;
 
-        public TitleCardInfo(string label, string title, string subtitle = "")
+        public TitleCardInfo(string title, string subtitle = "")
         {
-            this.label = label;
             this.title = title;
             this.subtitle = subtitle;
         }
@@ -28,7 +25,7 @@ namespace AiHackathon.Parchment
 
     /// <summary>
     /// Period title card drawn as a parchment scroll: two rolls unwind outward from the center, a gold glint sweeps
-    /// the sheet, the ribbon pops in and the title is written one character at a time. Closing reverses it.
+    /// the sheet and the title is written one character at a time. Closing reverses it.
     /// Port of animation/parchment-dialogue.html.
     /// </summary>
     /// <remarks>
@@ -46,8 +43,6 @@ namespace AiHackathon.Parchment
         [Range(0f, 0.6f)] public float unwoundShrink = 0.3f;
         [Tooltip("Roll surface travel per unit of unwound paper.")]
         public float spinRatio = 1f;
-        [Tooltip("Resting Y of the ribbon, relative to the top edge of the card.")]
-        public float nameplateY = 4f;
 
         [Header("Timing (seconds)")]
         public float riseDelay = 0.2f;
@@ -83,9 +78,6 @@ namespace AiHackathon.Parchment
         public ParchmentTextReveal subtitleReveal;
         public RectTransform ornamentLine;
         public RectTransform ornamentDiamond;
-        public RectTransform nameplate;
-        public CanvasGroup nameplateGroup;
-        public TMP_Text labelText;
         public RectTransform rollL, rollR;
         public RectTransform capL, capR;
         public RawImage rollTexL, rollTexR;
@@ -100,8 +92,8 @@ namespace AiHackathon.Parchment
 
         Phase phase = Phase.Closed;
         float P;                     // 0 rolled up … 1 unrolled (overshoots while it settles)
-        bool shown, nameplateOn, ornamentOn;
-        float appearK, nameplateK, ornamentK, glintK = 1f;
+        bool shown, ornamentOn;
+        float appearK, ornamentK, glintK = 1f;
         bool skipTyping, skipHold, holding;
         Vector2 basePos;
         readonly Stack<IEnumerator> runner = new();
@@ -160,11 +152,10 @@ namespace AiHackathon.Parchment
         public void PreviewOpen(TitleCardInfo info)
         {
             basePos = ((RectTransform)transform).anchoredPosition;
-            P = 1f; appearK = nameplateK = ornamentK = 1f; glintK = 1f;
-            shown = nameplateOn = ornamentOn = true;
+            P = 1f; appearK = ornamentK = 1f; glintK = 1f;
+            shown = ornamentOn = true;
             Layout(P);
             ApplyVisuals();
-            if (labelText) labelText.text = info.label;
             if (titleReveal) titleReveal.Text.text = info.title;
             if (subtitleReveal) subtitleReveal.Text.text = info.subtitle;
         }
@@ -192,7 +183,6 @@ namespace AiHackathon.Parchment
             Step();
             float dt = Dt;
             appearK = Mathf.MoveTowards(appearK, shown ? 1f : 0f, dt / Mathf.Max(appearDuration, 1e-4f));
-            nameplateK = Mathf.MoveTowards(nameplateK, nameplateOn ? 1f : 0f, dt / 0.28f);
             ornamentK = Mathf.MoveTowards(ornamentK, ornamentOn ? 1f : 0f, dt / 0.45f);
             if (glintK < 1f) glintK = Mathf.Min(1f, glintK + dt / 0.9f);
             ApplyVisuals();
@@ -238,11 +228,10 @@ namespace AiHackathon.Parchment
         {
             phase = Phase.Opening;
             skipTyping = false;
-            if (labelText) labelText.text = info.label;
             titleReveal.Prepare(info.title);
             subtitleReveal.Prepare(info.subtitle);
             content.alpha = 1f;
-            nameplateOn = ornamentOn = false;
+            ornamentOn = false;
             shown = true;
 
             if (P < 0.02f) yield return Wait(riseDelay);   // rise in rolled up first
@@ -250,7 +239,6 @@ namespace AiHackathon.Parchment
             yield return Tween(1f, openDuration, k => EaseOutBack(k, 1.25f));   // overshoot a little and settle
 
             glintK = 0f;
-            nameplateOn = true;
             onOpened.Invoke();
             if (cueClip) StartCoroutine(CueAfterDelay());
 
@@ -273,7 +261,6 @@ namespace AiHackathon.Parchment
             holding = false;
             titleReveal.RevealAll(true);
             subtitleReveal.RevealAll(true);
-            nameplateOn = false;
             float a0 = content.alpha;
             for (float t = 0f; t < 0.17f; t += Dt)
             {
@@ -347,11 +334,10 @@ namespace AiHackathon.Parchment
         {
             phase = Phase.Closed;
             P = 0f;
-            shown = nameplateOn = ornamentOn = holding = false;
-            appearK = nameplateK = ornamentK = 0f;
+            shown = ornamentOn = holding = false;
+            appearK = ornamentK = 0f;
             glintK = 1f;
             if (content) content.alpha = 1f;
-            if (labelText) labelText.text = string.Empty;
             if (titleReveal) titleReveal.Prepare(string.Empty);
             if (subtitleReveal) subtitleReveal.Prepare(string.Empty);
             Layout(P);
@@ -402,15 +388,6 @@ namespace AiHackathon.Parchment
             if (group) group.alpha = Mathf.Clamp01(appearK / 0.7f);
             rt.anchoredPosition = basePos + new Vector2(0f, -26f * (1f - e));
             rt.localScale = Vector3.one * Mathf.LerpUnclamped(0.96f, 1f, e);
-
-            if (nameplate)
-            {
-                float n = nameplateOn ? EaseOutBack(nameplateK, 1.7f) : nameplateK;
-                if (nameplateGroup) nameplateGroup.alpha = Mathf.Clamp01(nameplateK / 0.7f);
-                nameplate.localScale = Vector3.one * Mathf.LerpUnclamped(0.85f, 1f, n);
-                var pos = nameplate.anchoredPosition;
-                nameplate.anchoredPosition = new Vector2(pos.x, nameplateY - 6f * (1f - n));
-            }
 
             float o = 1f - Mathf.Pow(1f - ornamentK, 3f);
             if (ornamentLine) ornamentLine.localScale = new Vector3(o, 1f, 1f);

@@ -12,9 +12,9 @@ namespace AiHackathon.Parchment
         public ParchmentTitleCard card;
         public TitleCardInfo[] cards =
         {
-            new("제1교시", "룬", "손끝이 떨리면, 룬도 떨린다."),
-            new("제2교시", "암흑", "빛이 꺼져도 지팡이 끝은 기억한다."),
-            new("제3교시", "잿빛", "둘의 빛을 하나로 겹쳐라."),
+            new("룬", "손끝이 떨리면, 룬도 떨린다."),
+            new("암흑", "빛이 꺼져도 지팡이 끝은 기억한다."),
+            new("잿빛", "둘의 빛을 하나로 겹쳐라."),
         };
         public float startDelay = 0.5f;
         public float gap = 0.9f;
