@@ -79,6 +79,7 @@ namespace Waaang
         Vector3 lastTrailPoint;
         bool trailHasPoint;
         const int MaxTrails = 16;
+        const int MaxTrailPoints = 512;
         GameObject beamInstance;
         const float AssetBeamLength = 20f;
 
@@ -107,6 +108,13 @@ namespace Waaang
             SetBeamActive(false);
             EnsureAssetBeam();
             ToonLook.ApplyScene();
+        }
+
+        void OnDestroy()
+        {
+            // The asset beam lives at the scene root, so a despawned second caster would leave it behind.
+            if (beamInstance != null)
+                Destroy(beamInstance);
         }
 
         void EnsureAssetBeam()
@@ -431,6 +439,12 @@ namespace Waaang
             }
             if ((point - lastTrailPoint).sqrMagnitude < 0.0006f)
                 return;
+            // A very long hold would grow one LineRenderer forever; continue it as a new stroke instead.
+            if (trail.positionCount >= MaxTrailPoints)
+            {
+                Vector3 joint = lastTrailPoint;
+                BeginTrail(joint);
+            }
             trail.positionCount++;
             trail.SetPosition(trail.positionCount - 1, point);
             lastTrailPoint = point;
@@ -443,7 +457,8 @@ namespace Waaang
             var lineObject = new GameObject("Scorch Line");
             lineObject.transform.SetParent(trailRoot, false);
             trail = lineObject.AddComponent<LineRenderer>();
-            trail.material = trailMaterial;
+            // sharedMaterial: .material would clone a new material for every stroke.
+            trail.sharedMaterial = trailMaterial;
             trail.useWorldSpace = true;
             trail.widthMultiplier = 0.035f;
             trail.numCornerVertices = 4;
@@ -455,8 +470,14 @@ namespace Waaang
             trail.SetPosition(1, point);
             lastTrailPoint = point;
             trailHasPoint = true;
+            // Destroy() only happens at the end of the frame, so childCount does not drop inside this loop.
+            // Detach the old stroke first, otherwise the loop never ends and the game freezes on the 17th stroke.
             while (trailRoot.childCount > MaxTrails)
-                Destroy(trailRoot.GetChild(0).gameObject);
+            {
+                var oldest = trailRoot.GetChild(0);
+                oldest.SetParent(null, false);
+                Destroy(oldest.gameObject);
+            }
         }
 
         static Material CreateTrailMaterial()
