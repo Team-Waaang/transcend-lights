@@ -120,3 +120,4 @@ InitTestScene*.unity*
 .claude
 # Local secrets (API keys)
 .env
+.DS_Store
