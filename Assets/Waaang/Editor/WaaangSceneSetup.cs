@@ -303,7 +303,7 @@ namespace Waaang.EditorTools
             staff.transform.localRotation = Quaternion.identity;
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/TripoModels/magical_wand_3d_model/magical_wand_3d_model.fbx");
+                "Assets/TripoModels/amelia_weapon/amelia_weapon.fbx");
             var model = Object.Instantiate(prefab, staff.transform, false);
             model.name = "Magical Wand";
             float scale = Mathf.Max(0.001f, character.lossyScale.y);
@@ -311,7 +311,7 @@ namespace Waaang.EditorTools
             Vector3 tipLocal = AlignWand(model.transform);
 
             var source = AssetDatabase.LoadAssetAtPath<Material>(
-                "Assets/TripoModels/magical_wand_3d_model/Materials/magical_wand_3d_model.mat");
+                "Assets/TripoModels/amelia_weapon/Materials/magical_wand_3d_model.mat");
             var texture = source != null ? source.mainTexture : null;
             var wandMaterial = Solid("Wand.mat", Color.white);
             if (texture != null)
