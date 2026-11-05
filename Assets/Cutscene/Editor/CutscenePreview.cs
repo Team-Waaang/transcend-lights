@@ -93,6 +93,9 @@ namespace AiHackathon.Cutscene.Editor
                     if (brain != null) { brain.ManualUpdate(); brain.ManualUpdate(); }
                     var prev = cam.targetTexture;
                     cam.targetTexture = rt;
+                    // The first render after a jump can still draw meshes and skins at their previous transforms
+                    // (a second, stale wand); render once to settle, then capture.
+                    cam.Render();
                     cam.Render();
                     cam.targetTexture = prev;
                     var active = RenderTexture.active;

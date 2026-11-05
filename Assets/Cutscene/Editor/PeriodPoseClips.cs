@@ -47,6 +47,16 @@ namespace AiHackathon.Cutscene.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>Re-bakes only the Period 2 clips (lights out, torches up).</summary>
+        public static string BuildPeriod2()
+        {
+            Save(Make(AmeliaFbx, "Amelia_A3_Flinch", 4.0f, AmeliaFlinch));
+            Save(Make(AmeliaFbx, "Amelia_A4_Steady", 3.6f, AmeliaSteady));
+            Save(Make(NoxFbx, "Nox_N3_Torch", 4.4f, NoxTorch));
+            AssetDatabase.SaveAssets();
+            return "baked";
+        }
+
         internal static AnimationClip Load(string name) => AssetDatabase.LoadAssetAtPath<AnimationClip>(AnimDir + "/" + name + ".anim");
 
         static AnimationClip Make(string fbx, string name, float length, Action<PoseRig, float> pose)
@@ -579,16 +589,21 @@ namespace AiHackathon.Cutscene.Editor
             rig.Turn("Neck", X, -3f * tense);
             rig.Turn("Head", X, -4f * tense - 4f * resolve);
 
-            // Held out to the right of her face, tip forward and up, so the light sits in front of her.
-            var torch = new Vector3(0.12f, 0.8f, 0.2f);
-            var torchAxis = new Vector3(0.55f, 0.3f, 0.75f).normalized;
-            var point = Vector3.Lerp(ClutchPoint, torch, raise) + new Vector3(0.02f, 0f, 0.05f) * Mathf.Sin(raise * Mathf.PI);
-            var axis = Vector3.Slerp(ClutchAxis, torchAxis, raise);
-            // Knuckles must stay across the shaft: with the wand pointed forward they face up and out.
-            Grip(rig, R, point, axis, Vector3.Slerp(ClutchKnuckles, new Vector3(0.3f, 1f, -0.3f), raise),
-                Vector3.Lerp(ClutchPole, new Vector3(0.3f, -0.35f, -0.15f), raise));
-            ClutchSupport(rig, point, axis, 1f, Ease(t, 0.75f, 1.4f));
+            // Held out to the right of her face, tip up, forward and out, so the light sits in front of her. Upright
+            // enough that the butt below the fist hangs clear of her chest instead of running back into it.
+            Grip(rig, R, Vector3.Lerp(ClutchPoint, TorchPoint, raise) + new Vector3(0.02f, 0f, 0.05f) * Mathf.Sin(raise * Mathf.PI),
+                Vector3.Slerp(ClutchAxis, TorchAxis, raise), Vector3.Slerp(ClutchKnuckles, TorchKnuckles, raise),
+                Vector3.Lerp(ClutchPole, TorchPole, raise));
+            ShaftLine(rig, R, out var held, out var heldAxis);
+            ClutchSupport(rig, held, heldAxis, 1f, Ease(t, 0.75f, 1.4f));
         }
+
+        // The raised torch (Amelia's right hand; Nox mirrors it): fist in front of the shoulder, the wand leaning up,
+        // forward and out, knuckles out so the fist closes around the shaft.
+        static readonly Vector3 TorchPoint = new Vector3(0.14f, 0.78f, 0.28f);
+        static readonly Vector3 TorchAxis = new Vector3(0.35f, 0.62f, 0.7f).normalized;
+        static readonly Vector3 TorchKnuckles = new Vector3(0.8f, 0.1f, 0.6f);
+        static readonly Vector3 TorchPole = new Vector3(0.35f, -0.35f, -0.15f);
 
         /// <summary>
         /// Unbothered by the dark: she lifts the wand above her shoulder like a torch, sweeps the room left and right
@@ -609,12 +624,14 @@ namespace AiHackathon.Cutscene.Editor
             rig.Turn("Right_Shoulder", Z, 7f * shrug);
 
             GripPose(L, out var p0, out var a0, out var k0, out var pole0);
-            // Raised to shoulder height, tip out ahead and up: the light hangs in front of her, not over her head.
-            var p1 = new Vector3(-0.15f, 0.86f, 0.12f) + new Vector3(-0.05f * scanL + 0.05f * scanR, 0f, 0f);
-            var a1 = (new Vector3(-0.55f, 0.3f, 0.75f) + new Vector3(-0.3f * scanL + 0.3f * scanR, 0f, 0f)).normalized;
+            // Raised in front of the shoulder, tip out ahead and up (the light hangs in front of her); upright enough
+            // that the butt stays clear of her head and shoulder. The scans swing the tip left and right.
+            float scan = -scanL + scanR;
+            var p1 = M(TorchPoint, L) + new Vector3(0.05f * scan, 0.01f, 0f);
+            var a1 = (M(TorchAxis, L) + new Vector3(0.3f * scan, 0f, 0f)).normalized;
             var point = Vector3.Lerp(p0, p1, up) + new Vector3(-0.04f, 0f, 0.05f) * Mathf.Sin(up * Mathf.PI);
-            Grip(rig, L, point, Vector3.Slerp(a0, a1, up), Vector3.Slerp(k0, new Vector3(-0.3f, 1f, -0.3f), up),
-                Vector3.Lerp(pole0, new Vector3(-0.35f, -0.25f, -0.15f), up));
+            Grip(rig, L, point, Vector3.Slerp(a0, a1, up), Vector3.Slerp(k0, M(TorchKnuckles, L), up),
+                Vector3.Lerp(pole0, M(TorchPole, L), up));
 
             HandOnHip(rig, R, out var hipWrist, out var hipHand);
             rig.Arm(R, hipWrist, rig["Right_UpperArm"].position + new Vector3(0.4f, -0.12f, -0.28f), hipHand);
