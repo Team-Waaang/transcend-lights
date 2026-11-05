@@ -24,6 +24,8 @@ namespace Waaang
         [FormerlySerializedAs("useMouseWhenPhoneNotReady")]
         [Tooltip("이 슬롯에 휴대폰이 없을 때 마우스로 조작합니다. 휴대폰이 붙으면 그 휴대폰이 우선합니다.")]
         public bool mouseMode = true;
+        [Tooltip("켜면 입력이 있어도 쏘지 못합니다 (예: 보스의 저주 사슬에 묶였을 때).")]
+        public bool fireBlocked;
         public enum MouseFireButton { Left, Right }
         [Tooltip("마우스로 쏠 버튼. 두 명을 마우스로 시험할 때 왼쪽 플레이어는 좌클릭, 오른쪽은 우클릭.")]
         public MouseFireButton mouseButton = MouseFireButton.Left;
@@ -735,6 +737,8 @@ namespace Waaang
 
         bool IsFiring()
         {
+            if (fireBlocked)
+                return false;
             var session = FindSession(phoneSlot);
             if (session != null)
                 return session.Model.Pressed;
@@ -750,6 +754,8 @@ namespace Waaang
                 return false;
             return mouseButton == MouseFireButton.Right ? mouse.rightButton.isPressed : mouse.leftButton.isPressed;
         }
+
+        ParticleSystem.Particle[] liveStrokes;
 
         void UpdateAssetBeam(bool firing, Vector3 start, Vector3 end, bool hit, Vector3 normal)
         {
@@ -775,12 +781,38 @@ namespace Waaang
             float scale = length / AssetBeamLength;
             beamInstance.transform.SetPositionAndRotation(end, Quaternion.FromToRotation(Vector3.up, along / length));
             beamInstance.transform.localScale = Vector3.one * scale;
-            float widthFix = Mathf.Clamp(beamThickness / scale, 0.1f, 4f);
+            // Wide clamp: at 0.1 a 40 m miss (scale 2) came out over twice as thick.
+            float widthFix = Mathf.Clamp(beamThickness / scale, 0.01f, 8f);
             for (int i = 0; i < strokeSystems.Length; i++)
             {
-                var main = strokeSystems[i].main;
+                var system = strokeSystems[i];
+                var main = system.main;
                 main.startSizeXMultiplier = strokeBaseWidth[i].x * widthFix;
                 main.startSizeZMultiplier = strokeBaseWidth[i].y * widthFix;
+                // Strokes already in flight keep the width they were emitted with, but the beam's scale follows the
+                // length every frame: swinging from a near target to a far one blew them up for a moment. Re-fit them.
+                int count = system.particleCount;
+                if (count == 0)
+                    continue;
+                if (liveStrokes == null || liveStrokes.Length < count)
+                    liveStrokes = new ParticleSystem.Particle[Mathf.NextPowerOfTwo(count)];
+                count = system.GetParticles(liveStrokes);
+                bool size3D = main.startSize3D;
+                for (int k = 0; k < count; k++)
+                {
+                    if (size3D)
+                    {
+                        var size = liveStrokes[k].startSize3D;
+                        size.x = strokeBaseWidth[i].x * widthFix;
+                        size.z = strokeBaseWidth[i].y * widthFix;
+                        liveStrokes[k].startSize3D = size;
+                    }
+                    else
+                    {
+                        liveStrokes[k].startSize = strokeBaseWidth[i].x * widthFix;
+                    }
+                }
+                system.SetParticles(liveStrokes, count);
             }
 
             if (impactRoot != null && hit)

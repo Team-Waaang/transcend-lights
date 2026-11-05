@@ -15,7 +15,7 @@ namespace AiHackathon.Game
     /// </summary>
     public class StoneCreature : MonoBehaviour
     {
-        public enum State { Dormant, Wander, Startled, Flee, Petrified }
+        public enum State { Dormant, Wander, Startled, Flee, Petrified, Chase }
 
         [Tooltip("Visual root the procedural animation moves; its rest pose is captured on Awake.")]
         public Transform body;
@@ -56,6 +56,52 @@ namespace AiHackathon.Game
         public Light flashLight;
 
         public UnityEvent<StoneCreature> onPetrified = new UnityEvent<StoneCreature>();
+
+        [Header("Chase (summoned by the Period 3 boss)")]
+        public float chaseSpeed = 0.7f;
+        [Tooltip("Ground distance to its target at which it reaches the player.")]
+        public float reachDistance = 0.8f;
+        [Tooltip("Seconds of laser that turn a charging creature to stone and break it.")]
+        public float shotHp = 0.3f;
+        /// <summary>A charging creature got to its target (it crumbles away right after).</summary>
+        public event System.Action<StoneCreature> Reached;
+        /// <summary>A charging creature was shot to stone and is breaking up.</summary>
+        public event System.Action<StoneCreature> Shattered;
+        public Transform ChaseTarget { get; private set; }
+        public bool Charging => Current == State.Chase;
+        public bool Gone { get; private set; }
+
+        float shotLeft = -1f, shatterAt = -1f;
+
+        /// <summary>Runs at <paramref name="target"/> (the boss's summon) until it is shot or gets there.</summary>
+        public void Charge(Transform target, float speed, float hp)
+        {
+            ChaseTarget = target;
+            chaseSpeed = speed;
+            shotHp = shotLeft = Mathf.Max(0.05f, hp);
+            everSpotted = true;
+            Current = State.Chase;
+        }
+
+        /// <summary>Laser on a charging creature for <paramref name="seconds"/>: the stone creeps up it, then it breaks.</summary>
+        public void Shot(float seconds)
+        {
+            if (Current != State.Chase) return;
+            shotLeft -= seconds;
+            lastLit = Time.time;
+            Exposure = Mathf.Clamp01(1f - shotLeft / shotHp);
+            if (shotLeft > 0f) return;
+            Petrify();
+            Break(0.35f);
+            Shattered?.Invoke(this);
+        }
+
+        // Crumbles away after <paramref name="delay"/> (shrinks into a burst of grit, then is destroyed).
+        void Break(float delay)
+        {
+            if (shatterAt >= 0f) return;
+            shatterAt = Time.time + delay;
+        }
 
         public State Current { get; private set; } = State.Dormant;
         public float Exposure { get; private set; }
@@ -199,6 +245,21 @@ namespace AiHackathon.Game
                     startleT += dt;
                     if (startleT > 0.42f) Current = State.Flee;
                     break;
+                case State.Chase:
+                    if (ChaseTarget == null) break;
+                    Vector3 toward = ChaseTarget.position - transform.position; toward.y = 0f;
+                    if (toward.magnitude < reachDistance)
+                    {
+                        // Got there: it bursts against the player.
+                        Current = State.Petrified;
+                        flash = 0.6f;
+                        Reached?.Invoke(this);
+                        Break(0f);
+                        break;
+                    }
+                    move = toward.normalized;
+                    wantSpeed = chaseSpeed * stiff;
+                    break;
                 case State.Flee:
                     move = fleeDir;
                     wantSpeed = fleeSpeed * stiff;
@@ -236,6 +297,19 @@ namespace AiHackathon.Game
             }
 
             Animate(dt);
+            if (shatterAt >= 0f && Time.time >= shatterAt)
+            {
+                float k = (Time.time - shatterAt) / 0.22f;
+                if (k <= Time.deltaTime / 0.22f && crumbleDust != null) crumbleDust.Emit(36);
+                body.localScale = frozenScale * Mathf.Max(0f, 1f - k);
+                if (k >= 1f && !Gone)
+                {
+                    Gone = true;
+                    // Let the grit finish before the object goes.
+                    foreach (var r in renderers) if (r != null) r.enabled = false;
+                    Destroy(gameObject, 1.5f);
+                }
+            }
 
             float litK = Lit ? 1f : 0f;
             foreach (var m in mats)

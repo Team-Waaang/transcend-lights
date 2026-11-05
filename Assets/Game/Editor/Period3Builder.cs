@@ -121,7 +121,8 @@ namespace AiHackathon.Game.Editor
             bossAnimator.transform.localScale = Vector3.one * BossScale;
             var body = bossAnimator.GetComponentInChildren<SkinnedMeshRenderer>();
             PinHoodToHead(body);
-            bossAnimator.runtimeAnimatorController = BuildBossController();
+            var bossController = BuildBossController();
+            bossAnimator.runtimeAnimatorController = bossController;
             var idle = FindClip(HoodedFbx, "Idle stance");
             idle.SampleAnimation(bossAnimator.gameObject, 0f);
             var capsule = bossAnimator.gameObject.AddComponent<CapsuleCollider>();
@@ -147,7 +148,7 @@ namespace AiHackathon.Game.Editor
             var orb = new GameObject("Curse Orb");
             orb.transform.SetParent(fx);
             var orbCol = orb.AddComponent<SphereCollider>();
-            orbCol.radius = 0.2f;
+            orbCol.radius = 0.45f;   // generous: the laser trails the pointer, a tight box was hard to hit
             orb.AddComponent<CurseOrb>();
             var orbVfx = Vfx(orb.transform, "HCFX_Orb_04", Vector3.zero, 0.16f);
             orbVfx.SetActive(true);
@@ -201,7 +202,96 @@ namespace AiHackathon.Game.Editor
             underLight.transform.localPosition = new Vector3(0f, 0.15f, 0f);
             underLight.shadows = LightShadows.None;
 
+            // Stone spirits he summons: the Period 2 rock creature, charging instead of hiding. A roomy hitbox: the
+            // laser trails the pointer.
+            var minion = Period2CutsceneBuilder.CreateCreature(fx, "Stone Spirit", Vector3.zero, 0f);
+            if (minion != null)
+            {
+                minion.areaMin = new Vector2(-12f, -12f);
+                minion.areaMax = new Vector2(12f, 12f);
+                minion.viewSlope = 0f;
+                var minionCol = minion.gameObject.AddComponent<SphereCollider>();
+                minionCol.radius = 0.42f;
+                minionCol.center = new Vector3(0f, 0.36f, 0f);
+                minion.reachDistance = 1.0f;
+                // A faint curse glow on each, so they read against the dark arena floor.
+                var minionGlow = Light(minion.transform, "Curse Glow", LightType.Point, new Color(0.85f, 0.45f, 1f), 1.1f, 1.3f);
+                minionGlow.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+                minionGlow.shadows = LightShadows.None;
+                minion.gameObject.SetActive(false);
+            }
+            // Where one claws up: just a thin violet crack-ring on the floor; the creature sheds its own stone grit as
+            // it rises (BossController). The Klaus smoke carried a hidden pink second colour and rose in a column.
+            var summon = new GameObject("Summon FX");
+            summon.transform.SetParent(fx);
+            FloorRing(summon.transform, 0.1f, violet).SetActive(true);
+            summon.SetActive(false);
+
+            // Clones: the same boy, same look and animator, no hover seal; BossDecoy makes it waver now and then.
+            var decoyAnim = SpawnCharacter(HoodedFbx, "Boss Decoy", true);
+            decoyAnim.transform.SetParent(fx, true);
+            decoyAnim.transform.localScale = Vector3.one * BossScale;
+            var decoyBody = decoyAnim.GetComponentInChildren<SkinnedMeshRenderer>();
+            decoyBody.sharedMesh = body.sharedMesh;
+            decoyBody.sharedMaterial = body.sharedMaterial;
+            decoyAnim.runtimeAnimatorController = bossController;
+            var decoyCol = decoyAnim.gameObject.AddComponent<CapsuleCollider>();
+            decoyCol.center = capsule.center;
+            decoyCol.height = capsule.height;
+            decoyCol.radius = capsule.radius * 1.3f;
+            decoyAnim.gameObject.AddComponent<BossDecoy>();
+            decoyAnim.gameObject.SetActive(false);
+
+            // The curse chain's anchor: a floating violet crystal and a chain of light to the bound player.
+            var crystalRoot = new GameObject("Chain Crystal");
+            crystalRoot.transform.SetParent(fx);
+            var crystalShape = new GameObject("Crystal").transform;
+            crystalShape.SetParent(crystalRoot.transform, false);
+            crystalShape.localScale = new Vector3(0.2f, 0.38f, 0.2f);
+            var gem = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            gem.name = "Gem";
+            Object.DestroyImmediate(gem.GetComponent<Collider>());
+            gem.transform.SetParent(crystalShape, false);
+            gem.transform.localRotation = Quaternion.Euler(45f, 0f, 45f);
+            var gemMat = LitMaterial("ChainCrystal", new Color(0.32f, 0.12f, 0.45f), 0.85f);
+            gemMat.EnableKeyword("_EMISSION");
+            gemMat.SetColor("_EmissionColor", new Color(0.9f, 0.35f, 1.6f));
+            gemMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            gem.GetComponent<Renderer>().sharedMaterial = gemMat;
+            var gemGlow = Light(crystalRoot.transform, "Glow", LightType.Point, violet, 2f, 2.2f);
+            gemGlow.transform.localPosition = Vector3.zero;
+            gemGlow.shadows = LightShadows.None;
+            var gemAura = Tint(Vfx(crystalRoot.transform, "HCFX_Gathering_Energy", Vector3.zero, 0.07f, 0.6f), violet);
+            gemAura.SetActive(true);
+            var crystalCol = crystalRoot.AddComponent<SphereCollider>();
+            crystalCol.radius = 0.4f;
+            var chainGo = new GameObject("Chain");
+            chainGo.transform.SetParent(crystalRoot.transform, false);
+            var chain = chainGo.AddComponent<LineRenderer>();
+            chain.positionCount = 18;
+            chain.useWorldSpace = true;
+            chain.widthCurve = new AnimationCurve(new Keyframe(0f, 0.06f), new Keyframe(1f, 0.035f));
+            var cg = new Gradient();
+            cg.SetKeys(new[] { new GradientColorKey(new Color(1f, 0.7f, 1f), 0f), new GradientColorKey(new Color(0.6f, 0.25f, 1f), 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0.85f, 1f) });
+            chain.colorGradient = cg;
+            chain.numCapVertices = 2;
+            chain.sharedMaterial = AdditiveMat("CurseChain", null, new Color(1.4f, 0.7f, 2.2f, 1f));
+            chain.shadowCastingMode = ShadowCastingMode.Off;
+            var crystalFx = crystalRoot.AddComponent<ChainCrystal>();
+            crystalFx.crystal = crystalShape;
+            crystalFx.chain = chain;
+            crystalFx.glow = gemGlow;
+            crystalRoot.SetActive(false);
+            var crystalBreak = Tint(Vfx(fx, "HCFX_Hit_04", Vector3.zero, 0.14f), new Color(0.95f, 0.7f, 1f));
+            crystalBreak.name = "Crystal Break FX";
+
             var controller = bossAnimator.gameObject.AddComponent<BossController>();
+            controller.minionTemplate = minion != null ? minion.gameObject : null;
+            controller.summonFx = summon;
+            controller.decoyTemplate = decoyAnim.gameObject;
+            controller.crystalTemplate = crystalRoot;
+            controller.crystalBreakFx = crystalBreak;
             controller.animator = bossAnimator;
             controller.wandTip = wandTip;
             controller.chest = chest;

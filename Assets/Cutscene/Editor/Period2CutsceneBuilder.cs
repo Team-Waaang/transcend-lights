@@ -207,15 +207,52 @@ namespace AiHackathon.Cutscene.Editor
 
         static StoneCreature[] BuildCreatures()
         {
+            var root = new GameObject("Rock Creatures").transform;
+            var list = new List<StoneCreature>();
+            for (int i = 0; i < CreatureSpawns.Length; i++)
+            {
+                var spawn = CreatureSpawns[i];
+                var creature = CreateCreature(root, "Rock Creature " + (i + 1), new Vector3(spawn.x, 0f, spawn.z), spawn.w);
+                if (creature == null) return new StoneCreature[0];
+                creature.areaMin = HuntMin;
+                creature.areaMax = HuntMax;
+                // Inside the play camera's view (16:9): the horizontal half-angle's tangent, less a little.
+                float halfTan = Mathf.Tan(PeriodSceneKit.PlayCamFov * 0.5f * Mathf.Deg2Rad) * 16f / 9f;
+                creature.viewSlope = halfTan * 0.85f;
+                creature.viewApex = new Vector2(0f, PeriodSceneKit.PlayCamBack.z);
+                creature.viewMargin = 0.5f;
+                // A little variety in pace.
+                creature.wanderSpeed = 0.36f + 0.04f * (i % 3);
+                creature.fleeSpeed = 0.95f + 0.07f * (i % 3);
+                list.Add(creature);
+            }
+            return list.ToArray();
+        }
+
+        /// <summary>
+        /// One rock creature (model on the Petrify shader, scaled to <see cref="CreatureHeight"/>, standing on its root)
+        /// with its alert, petrify, grit and step effects and its flash light. Also used by Period 3, where the boss
+        /// summons them. Materials go under the current <see cref="CutsceneKit.AssetRoot"/>.
+        /// </summary>
+        internal static StoneCreature CreateCreature(Transform parent, string name, Vector3 position, float yawDegrees)
+        {
             var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(CreatureFbx);
             if (fbx == null)
             {
                 Debug.LogError("[Cutscene] Missing " + CreatureFbx);
-                return new StoneCreature[0];
+                return null;
             }
-            var mat = new Material(Shader.Find("AiHackathon/Petrify"));
+            // One shared material, kept in place (not deleted and remade) so scenes that already use it stay wired.
+            var matPath = $"{Root}/Materials/RockCreature.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+            if (mat == null)
+            {
+                EnsureFolder(Root + "/Materials");
+                mat = new Material(Shader.Find("AiHackathon/Petrify"));
+                AssetDatabase.CreateAsset(mat, matPath);
+            }
             mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(CreatureTexture));
-            mat = SaveMaterial(mat, "RockCreature");
+            EditorUtility.SetDirty(mat);
 
             // Model-space bounds, to stand it on its feet at the root and scale it to CreatureHeight.
             var probe = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
@@ -239,62 +276,44 @@ namespace AiHackathon.Cutscene.Editor
             float scale = CreatureHeight / Mathf.Max(0.01f, bounds.size.y);
             float radius = Mathf.Max(bounds.extents.x, bounds.extents.z) * scale * 0.85f;
 
-            var root = new GameObject("Rock Creatures").transform;
-            var list = new List<StoneCreature>();
-            for (int i = 0; i < CreatureSpawns.Length; i++)
+            var go = new GameObject(name);
+            go.transform.SetParent(parent);
+            go.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yawDegrees, 0f));
+            var body = new GameObject("Body").transform;
+            body.SetParent(go.transform, false);
+            var yaw = new GameObject("Facing").transform;
+            yaw.SetParent(body, false);
+            yaw.localRotation = Quaternion.Euler(0f, CreatureYaw, 0f);
+            var model = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
+            model.transform.SetParent(yaw, false);
+            model.transform.localScale = Vector3.one * scale;
+            model.transform.localPosition = -scale * new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+            var renderers = model.GetComponentsInChildren<Renderer>();
+            foreach (var r in renderers)
             {
-                var spawn = CreatureSpawns[i];
-                var go = new GameObject("Rock Creature " + (i + 1));
-                go.transform.SetParent(root);
-                go.transform.SetPositionAndRotation(new Vector3(spawn.x, 0f, spawn.z), Quaternion.Euler(0f, spawn.w, 0f));
-                var body = new GameObject("Body").transform;
-                body.SetParent(go.transform, false);
-                var yaw = new GameObject("Facing").transform;
-                yaw.SetParent(body, false);
-                yaw.localRotation = Quaternion.Euler(0f, CreatureYaw, 0f);
-                var model = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
-                model.transform.SetParent(yaw, false);
-                model.transform.localScale = Vector3.one * scale;
-                model.transform.localPosition = -scale * new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
-                var renderers = model.GetComponentsInChildren<Renderer>();
-                foreach (var r in renderers)
-                {
-                    var mats = new Material[r.sharedMaterials.Length];
-                    for (int k = 0; k < mats.Length; k++) mats[k] = mat;
-                    r.sharedMaterials = mats;
-                    r.shadowCastingMode = ShadowCastingMode.On;
-                }
-                foreach (var col in model.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(col);
-
-                var creature = go.AddComponent<StoneCreature>();
-                creature.body = body;
-                creature.renderers = renderers;
-                creature.height = CreatureHeight;
-                creature.radius = radius;
-                creature.areaMin = HuntMin;
-                creature.areaMax = HuntMax;
-                // Inside the play camera's view (16:9): the horizontal half-angle's tangent, less a little.
-                float halfTan = Mathf.Tan(PeriodSceneKit.PlayCamFov * 0.5f * Mathf.Deg2Rad) * 16f / 9f;
-                creature.viewSlope = halfTan * 0.85f;
-                creature.viewApex = new Vector2(0f, PeriodSceneKit.PlayCamBack.z);
-                creature.viewMargin = 0.5f;
-                // A little variety in pace.
-                creature.wanderSpeed = 0.36f + 0.04f * (i % 3);
-                creature.fleeSpeed = 0.95f + 0.07f * (i % 3);
-
-                creature.alertFx = Vfx(go.transform, "HCFX_Sign_ExclamationMark", new Vector3(0f, CreatureHeight + 0.3f, 0f), 0.12f);
-                // Its rising rainbow bubbles read as more magic than alarm.
-                Mute(creature.alertFx, "particle_up");
-                creature.petrifyFx = PetrifyBurst(go.transform, radius);
-                creature.crumbleDust = Grit(go.transform, radius);
-                creature.stepDust = StepPuff(go.transform, radius);
-                var glow = Light(go.transform, "Petrify Glow", LightType.Point, new Color(1f, 0.78f, 0.45f), 0f, 2.6f);
-                glow.transform.localPosition = new Vector3(0f, CreatureHeight * 0.6f, 0f);
-                glow.shadows = LightShadows.None;
-                creature.flashLight = glow;
-                list.Add(creature);
+                var mats = new Material[r.sharedMaterials.Length];
+                for (int k = 0; k < mats.Length; k++) mats[k] = mat;
+                r.sharedMaterials = mats;
+                r.shadowCastingMode = ShadowCastingMode.On;
             }
-            return list.ToArray();
+            foreach (var col in model.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(col);
+
+            var creature = go.AddComponent<StoneCreature>();
+            creature.body = body;
+            creature.renderers = renderers;
+            creature.height = CreatureHeight;
+            creature.radius = radius;
+            creature.alertFx = Vfx(go.transform, "HCFX_Sign_ExclamationMark", new Vector3(0f, CreatureHeight + 0.3f, 0f), 0.12f);
+            // Its rising rainbow bubbles read as more magic than alarm.
+            Mute(creature.alertFx, "particle_up");
+            creature.petrifyFx = PetrifyBurst(go.transform, radius);
+            creature.crumbleDust = Grit(go.transform, radius);
+            creature.stepDust = StepPuff(go.transform, radius);
+            var glow = Light(go.transform, "Petrify Glow", LightType.Point, new Color(1f, 0.78f, 0.45f), 0f, 2.6f);
+            glow.transform.localPosition = new Vector3(0f, CreatureHeight * 0.6f, 0f);
+            glow.shadows = LightShadows.None;
+            creature.flashLight = glow;
+            return creature;
         }
 
         /// <summary>

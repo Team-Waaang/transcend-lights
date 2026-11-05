@@ -11,6 +11,8 @@ namespace AiHackathon.Game
     {
         [Tooltip("Seconds of laser it takes to pop.")]
         public float hp = 0.3f;
+        [Tooltip("Radius of the laser hitbox (bigger than the visible orb: the laser follows the wand, which lags the pointer).")]
+        public float hitRadius = 0.45f;
 
         public event Action<CurseOrb> Popped;
         public event Action<CurseOrb> Reached;
@@ -24,6 +26,12 @@ namespace AiHackathon.Game
         bool done;
 
         public bool Done => done;
+
+        void Awake()
+        {
+            var sphere = GetComponent<SphereCollider>();
+            if (sphere != null) sphere.radius = Mathf.Max(sphere.radius, hitRadius / Mathf.Max(1e-4f, transform.lossyScale.x));
+        }
 
         /// <summary>Arcs to <paramref name="to"/> (+offset) through a control point lifted by <paramref name="arc"/>.</summary>
         public void Launch(Vector3 start, Transform to, Vector3 offset, float seconds, Vector3 arc)
