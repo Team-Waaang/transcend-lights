@@ -75,7 +75,7 @@ namespace Waaang
             copy.aimSharpness = primary.aimSharpness;
             copy.useLeftHand = primary.useLeftHand;
             copy.fingerCurl = primary.fingerCurl;
-        }
+            copy.beamLoopPeriod = primary.beamLoopPeriod;        }
 
         void Despawn()
         {

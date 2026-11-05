@@ -141,11 +141,13 @@ namespace Waaang.EditorTools
             var tip = staff != null ? staff.Find("Staff Tip") : null;
             if (tip != null && rig.rightGrip != null)
                 rig.rightGrip.localPosition = tip.localPosition * 0.2f;
-            rig.useLeftHand = false;
+            FitStaffTip(staff);
+            // Both hands on the shaft, pointing straight at the target.
+            rig.useLeftHand = true;
             rig.holdOffset = new Vector3(0.32f, 0f, 0.12f);
             rig.holdReach = 0.04f;
             rig.fingerCurl = 1f;
-            rig.staffUpright = 0.4f;
+            rig.staffUpright = 0f;
 
             FrameOverShoulder(camera, character);
             EditorUtility.SetDirty(rig);
@@ -326,6 +328,7 @@ namespace Waaang.EditorTools
             var tip = new GameObject("Staff Tip").transform;
             tip.SetParent(staff.transform, false);
             tip.localPosition = tipLocal;
+            FitStaffTip(staff.transform);
             var tipLight = tip.gameObject.AddComponent<Light>();
             tipLight.type = LightType.Point;
             tipLight.color = new Color(1f, 0.78f, 0.45f);
@@ -341,6 +344,48 @@ namespace Waaang.EditorTools
             left.SetParent(staff.transform, false);
             left.localPosition = new Vector3(0f, 0.06f, 0f);
             return staff;
+        }
+
+        const float StaffTipInset = 0.02f;
+
+        [MenuItem("Waaang/Fit Staff Tip To Wand End In Open Scene")]
+        public static void FitStaffTipInOpenScene()
+        {
+            var rigs = Object.FindObjectsByType<WandPointerRig>(FindObjectsInactive.Include);
+            for (int i = 0; i < rigs.Length; i++)
+                FitStaffTip(rigs[i].staff);
+            if (rigs.Length > 0)
+                EditorSceneManager.MarkSceneDirty(rigs[0].gameObject.scene);
+        }
+
+        // AlignWand returns the middle of the wand head, ~18 cm short of the end, so the beam left from inside the
+        // ornament. Put "Staff Tip" on the staff axis just inside the mesh's far end instead. Done here in the editor
+        // because the wand mesh is not Read/Write, so its vertices cannot be read at runtime.
+        static void FitStaffTip(Transform staff)
+        {
+            if (staff == null)
+                return;
+            var tip = staff.Find("Staff Tip");
+            if (tip == null)
+                return;
+            float top = float.MinValue;
+            var filters = staff.GetComponentsInChildren<MeshFilter>(true);
+            for (int f = 0; f < filters.Length; f++)
+            {
+                var mesh = filters[f].sharedMesh;
+                if (mesh == null)
+                    continue;
+                var vertices = mesh.vertices;
+                var toStaff = staff.worldToLocalMatrix * filters[f].transform.localToWorldMatrix;
+                for (int i = 0; i < vertices.Length; i++)
+                    top = Mathf.Max(top, toStaff.MultiplyPoint3x4(vertices[i]).y);
+            }
+            if (top == float.MinValue)
+                return;
+            float inset = StaffTipInset / Mathf.Max(0.0001f, staff.lossyScale.y);
+            Undo.RecordObject(tip, "Fit Staff Tip");
+            tip.localPosition = new Vector3(0f, Mathf.Max(0f, top - inset), 0f);
+            EditorUtility.SetDirty(tip);
         }
 
         static Vector3 AlignWand(Transform model)

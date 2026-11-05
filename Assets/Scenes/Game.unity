@@ -2744,7 +2744,7 @@ Transform:
   m_GameObject: {fileID: 1263195949}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.00000001932576, y: 0.6293682, z: -2.5234686e-12}
+  m_LocalPosition: {x: 0, y: 0.7380444, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3526,6 +3526,7 @@ MonoBehaviour:
   aimSharpness: 12
   useLeftHand: 1
   beamPrefab: {fileID: 2172804743408484048, guid: 8a81cda4f2252b841a8ed72e0c454672, type: 3}
+  beamLoopPeriod: 0.45
   fingerCurl: 1
 --- !u!4 &1563448111
 Transform:

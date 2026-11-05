@@ -43,6 +43,8 @@ namespace Waaang
         [Tooltip("켜면 왼손도 지팡이를 잡습니다.")]
         public bool useLeftHand = true;
         public GameObject beamPrefab;
+        [Tooltip("누르고 있는 동안 레이저 이펙트를 다시 쏘는 주기(초).")]
+        public float beamLoopPeriod = 0.45f;
         [Tooltip("오른손 손가락을 지팡이에 감는 정도.")]
         [Range(0f, 1.5f)] public float fingerCurl = 1f;
 
@@ -127,7 +129,34 @@ namespace Waaang
                 return;
             beamInstance = Instantiate(beamPrefab);
             beamInstance.name = "Asset Laser";
+            LoopBeam(beamInstance);
             beamInstance.SetActive(false);
+        }
+
+        // Same treatment as the cutscene beams (CutsceneKit.KlausBeam + Looping): the HCFX beam is a one-shot,
+        // so re-fire it every beamLoopPeriod while held, and drop the smoke and dark stroke layers that pile
+        // up into mud when it re-fires.
+        void LoopBeam(GameObject beam)
+        {
+            var systems = beam.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < systems.Length; i++)
+            {
+                var system = systems[i];
+                string layer = system.name;
+                if (layer == "smoke_up" || layer == "hit_smoke" || layer == "laser_black")
+                {
+                    system.gameObject.SetActive(false);
+                    continue;
+                }
+                bool wasPlaying = system.isPlaying;
+                system.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                var main = system.main;
+                main.loop = true;
+                main.duration = beamLoopPeriod;
+                main.playOnAwake = true;
+                if (wasPlaying)
+                    system.Play(false);
+            }
         }
 
         // Also called later when character is assigned after AddComponent (SecondCaster).
@@ -252,6 +281,9 @@ namespace Waaang
 
             var tip = staff.Find("Staff Tip");
             Vector3 tipPosition = tip != null ? tip.position : staff.TransformPoint(Vector3.up);
+            // SecondCaster assigns beamPrefab after AddComponent, i.e. after Awake already ran.
+            if (beamInstance == null && beamPrefab != null)
+                EnsureAssetBeam();
             if (beamInstance != null)
                 UpdateAssetBeam(firing, tipPosition, aimPoint);
             else
@@ -399,13 +431,15 @@ namespace Waaang
 
         void UpdateAssetBeam(bool firing, Vector3 tip, Vector3 aimPoint)
         {
-            beamInstance.SetActive(firing);
             if (aimLine != null)
                 aimLine.enabled = false;
             if (glowLine != null)
                 glowLine.enabled = false;
             if (!firing)
+            {
+                beamInstance.SetActive(false);
                 return;
+            }
             Vector3 along = tip - aimPoint;
             float length = along.magnitude;
             if (length < 0.05f)
@@ -413,12 +447,9 @@ namespace Waaang
             beamInstance.transform.SetPositionAndRotation(
                 aimPoint, Quaternion.FromToRotation(Vector3.up, along / length));
             beamInstance.transform.localScale = Vector3.one * (length / AssetBeamLength);
-            if (!wasFiring)
-            {
-                var systems = beamInstance.GetComponentsInChildren<ParticleSystem>(true);
-                for (int i = 0; i < systems.Length; i++)
-                    systems[i].Play(true);
-            }
+            // Activating restarts the looping systems (playOnAwake), so each press starts a fresh beam.
+            if (!beamInstance.activeSelf)
+                beamInstance.SetActive(true);
         }
 
         void SetBeamActive(bool active)
