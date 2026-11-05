@@ -6,6 +6,16 @@ namespace Waaang
     public sealed class RegistrationBoard : MonoBehaviour
     {
         public PhonePointer.PhonePointerReceiver Receiver;
+
+        /// <summary>
+        /// Phones connected when the game was started by hand before everyone was in (ConnectionFlow, Enter): from
+        /// then on the board treats the game as started and only asks those players again. -1: started normally.
+        /// </summary>
+        public static int StartedWith = -1;
+
+        /// <summary>True while the QR is up (the connection screen draws its status around it).</summary>
+        public bool ShowingQr => visible && showQr;
+        public bool Visible => visible;
         RegistrationStage stage;
         Texture2D qr, surround;
         string pairingToken;
@@ -27,8 +37,9 @@ namespace Waaang
             visible = Receiver && Receiver.Listening && Receiver.Pairing != null;
             if (visible)
             {
-                showQr = !Receiver.GameStarted ? !Receiver.ExpectedPlayersConnected : AnyConnectionLost();
-                visible = !Receiver.GameStarted || showQr || AnyTrackingLost();
+                bool started = Receiver.GameStarted || StartedWith >= 0;
+                showQr = !started ? !Receiver.ExpectedPlayersConnected : AnyConnectionLost();
+                visible = !started || showQr || AnyTrackingLost();
             }
             if (stage) stage.Present(visible, !showQr);
         }
@@ -95,7 +106,8 @@ namespace Waaang
                 if (s.ConnectionStatus == PhonePointer.ConnectionStatus.Reconnecting) return true;
                 if (s.ConnectionStatus == PhonePointer.ConnectionStatus.Connected) connected++;
             }
-            expectedPlayers = Mathf.Max(expectedPlayers, Mathf.Max(Receiver.MaxPhones, connected));
+            int expected = StartedWith >= 0 ? StartedWith : Receiver.MaxPhones;
+            expectedPlayers = Mathf.Max(expectedPlayers, Mathf.Max(expected, connected));
             return connected < expectedPlayers;
         }
         void OnDestroy() { if (qr) Destroy(qr); if (surround) Destroy(surround); }

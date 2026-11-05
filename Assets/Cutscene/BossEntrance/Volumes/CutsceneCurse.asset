@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: CutsceneCurse
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 6649332346414562488}
-  - {fileID: 2447656690197848732}
---- !u!114 &2447656690197848732
+  - {fileID: 8961517580710697727}
+  - {fileID: 3913907014276892972}
+--- !u!114 &3913907014276892972
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -43,7 +43,7 @@ MonoBehaviour:
   rounded:
     m_OverrideState: 0
     m_Value: 0
---- !u!114 &6649332346414562488
+--- !u!114 &8961517580710697727
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}

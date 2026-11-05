@@ -88,53 +88,12 @@ namespace AiHackathon.Cutscene.Editor
             return m;
         }
 
-        internal static void BuildEnvironment()
-        {
-            var fogColor = new Color(0.12f, 0.1f, 0.15f);
-            RenderSettings.fog = true;
-            RenderSettings.fogMode = FogMode.Exponential;
-            RenderSettings.fogDensity = 0.09f;
-            RenderSettings.fogColor = fogColor;
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.42f, 0.4f, 0.5f);
-            RenderSettings.skybox = null;
-
-            var env = new GameObject("Environment").transform;
-            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            ground.name = "Ground";
-            ground.transform.SetParent(env);
-            ground.transform.localScale = new Vector3(4f, 1f, 4f);
-            ground.GetComponent<Renderer>().sharedMaterial = LitMaterial("Ground", new Color(0.13f, 0.12f, 0.15f), 0.15f);
-
-            // Ruined pillars of the arena, mostly behind the boss so the camera side stays open.
-            var stone = LitMaterial("Stone", new Color(0.24f, 0.22f, 0.27f), 0.05f);
-            var rng = new System.Random(7);
-            float R(float a, float b) => a + (float)rng.NextDouble() * (b - a);
-            for (int i = 0; i < 9; i++)
-            {
-                float angle = Mathf.Lerp(-125f, 125f, i / 8f) + R(-8f, 8f);
-                float radius = R(4.2f, 6.5f);
-                var pos = Quaternion.Euler(0f, angle, 0f) * Vector3.right * radius;
-                var pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                pillar.name = "Pillar_" + i;
-                pillar.transform.SetParent(env);
-                float h = R(1.2f, 3.6f), w = R(0.35f, 0.6f);
-                pillar.transform.position = new Vector3(pos.x, h * 0.5f, pos.z);
-                pillar.transform.localScale = new Vector3(w, h * 0.5f, w);
-                pillar.transform.rotation = Quaternion.Euler(R(-6f, 6f), R(0f, 360f), R(-10f, 10f));
-                pillar.GetComponent<Renderer>().sharedMaterial = stone;
-
-                var rubble = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                rubble.name = "Rubble_" + i;
-                rubble.transform.SetParent(env);
-                float s = R(0.25f, 0.5f);
-                rubble.transform.position = pos + Quaternion.Euler(0f, R(0f, 360f), 0f) * Vector3.forward * R(0.6f, 1.1f) + Vector3.up * s * 0.3f;
-                rubble.transform.localScale = new Vector3(s, s * 0.7f, s * 1.3f);
-                rubble.transform.rotation = Quaternion.Euler(R(-20f, 20f), R(0f, 360f), R(-20f, 20f));
-                rubble.GetComponent<Renderer>().sharedMaterial = stone;
-            }
-            foreach (var c in env.GetComponentsInChildren<Collider>()) UnityEngine.Object.DestroyImmediate(c);
-        }
+        /// <summary>
+        /// The Period 3 boss arena (<see cref="BossArena"/>) with its fog and ambient. Returns the looping
+        /// environment effects (brazier flames, ground mist): add them to the timeline's controlled list so they
+        /// play in previews and scrubbing too.
+        /// </summary>
+        internal static List<GameObject> BuildEnvironment() => BossArena.Build();
 
         /// <summary>
         /// The wand is part of the Tripo body mesh (no bone of its own): its tip is the vertex rigidly
@@ -886,7 +845,8 @@ namespace AiHackathon.Cutscene.Editor
             }
             model.gameObject.SetActive(wasActive);
 
-            var mask = new AvatarMask { name = "UpperBody" + name };
+            // One mask per layer: several layers in one cutscene must not overwrite each other's mask asset.
+            var mask = new AvatarMask { name = $"UpperBody{name}_{model.name}_{start:0.0}" };
             mask.AddTransformPath(root, true);
             for (int i = 0; i < mask.transformCount; i++) mask.SetTransformActive(i, paths.Contains(mask.GetTransformPath(i)));
             var maskPath = $"{AssetRoot}/Anim/{mask.name}.mask";

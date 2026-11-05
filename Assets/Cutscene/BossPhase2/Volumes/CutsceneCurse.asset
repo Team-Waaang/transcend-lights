@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-7143905328009539822
+--- !u!114 &-5928626870271891235
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,9 +41,9 @@ MonoBehaviour:
   m_Name: CutsceneCurse
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: -7143905328009539822}
-  - {fileID: 852242353453675708}
---- !u!114 &852242353453675708
+  - {fileID: -5928626870271891235}
+  - {fileID: 2220953891884050555}
+--- !u!114 &2220953891884050555
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}

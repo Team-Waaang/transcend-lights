@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-3843779645580610165
+--- !u!114 &-2721027259362157384
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,10 +41,10 @@ MonoBehaviour:
   m_Name: CutscenePhase2
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: -3843779645580610165}
-  - {fileID: 3994876059897651997}
-  - {fileID: 8567440393256196602}
---- !u!114 &3994876059897651997
+  - {fileID: -2721027259362157384}
+  - {fileID: 4877621466720383770}
+  - {fileID: 7593315525427420156}
+--- !u!114 &4877621466720383770
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -72,7 +72,7 @@ MonoBehaviour:
   rounded:
     m_OverrideState: 0
     m_Value: 0
---- !u!114 &8567440393256196602
+--- !u!114 &7593315525427420156
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}

@@ -6,7 +6,7 @@ AvatarMask:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: UpperBodyTremble
+  m_Name: UpperBodyBreathing_Boss_Hooded_2.1
   m_Mask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
   m_Elements:
   - m_Path: 
@@ -42,9 +42,9 @@ AvatarMask:
   - m_Path: Armature/Hips/Spine/Chest/UpperChest
     m_Weight: 1
   - m_Path: Armature/Hips/Spine/Chest/UpperChest/Left_Shoulder
-    m_Weight: 0
-  - m_Path: Armature/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm
     m_Weight: 1
+  - m_Path: Armature/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm
+    m_Weight: 0
   - m_Path: Armature/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm
     m_Weight: 0
   - m_Path: Armature/Hips/Spine/Chest/UpperChest/Left_Shoulder/Left_UpperArm/Left_LowerArm/Left_Hand
@@ -102,9 +102,9 @@ AvatarMask:
   - m_Path: Armature/Hips/Spine/Chest/UpperChest/Right_Shoulder
     m_Weight: 1
   - m_Path: Armature/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm
-    m_Weight: 1
+    m_Weight: 0
   - m_Path: Armature/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm
-    m_Weight: 1
+    m_Weight: 0
   - m_Path: Armature/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand
     m_Weight: 0
   - m_Path: Armature/Hips/Spine/Chest/UpperChest/Right_Shoulder/Right_UpperArm/Right_LowerArm/Right_Hand/Right_IndexProximal
