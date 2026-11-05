@@ -18,10 +18,13 @@ namespace Waaang.EditorTools
             AssetDatabase.Refresh();
             var connection = BuildConnection();
             var game = BuildGame();
-            // Connection first, Game listed; every other scene already in Build Settings (the periods) stays.
-            var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene> { new EditorBuildSettingsScene(connection, true), new EditorBuildSettingsScene(game, true) };
+            // Connection first, then Period 1 and Game; every other scene already in Build Settings (the other
+            // periods, the boss cutscenes) stays. Tools/Periods/Set Up School Day puts them in play order.
+            const string period1 = "Assets/Cutscene/Period1/Period1Cutscene.unity";
+            var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>
+                { new EditorBuildSettingsScene(connection, true), new EditorBuildSettingsScene(period1, true), new EditorBuildSettingsScene(game, true) };
             foreach (var existing in EditorBuildSettings.scenes)
-                if (existing.path != connection && existing.path != game) scenes.Add(existing);
+                if (existing.path != connection && existing.path != period1 && existing.path != game) scenes.Add(existing);
             EditorBuildSettings.scenes = scenes.ToArray();
             AssetDatabase.SaveAssets();
             Debug.Log("Built " + connection + " and " + game);
@@ -40,6 +43,8 @@ namespace Waaang.EditorTools
             var view = host.AddComponent<PhonePointer.PhonePointerRegistrationView>();
             view.Receiver = receiver;
             view.enabled = false;
+            var board = host.AddComponent<RegistrationBoard>();
+            board.Receiver = receiver;
             var link = host.AddComponent<PhoneLink>();
             link.Receiver = receiver;
             link.requiredPhones = 2;

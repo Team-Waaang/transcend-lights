@@ -6,8 +6,8 @@ namespace AiHackathon.Game
 {
     /// <summary>
     /// The school day: connection screen → 1교시 → 2교시 → 3교시. Each period calls <see cref="Next"/> when it is
-    /// cleared; the flow fades to black, shows which period is next, and loads it. Periods that are not in Build
-    /// Settings yet (2교시 for now) are skipped.
+    /// cleared; the flow fades to black, shows which period is next, and loads it. A period that is not in Build
+    /// Settings is skipped.
     /// </summary>
     public class PeriodFlow : MonoBehaviour
     {
@@ -19,11 +19,11 @@ namespace AiHackathon.Game
 
         public const string ConnectionScene = "Assets/Scenes/Connection.unity";
 
-        /// <summary>The periods in order. 2교시 drops in here once its scene exists.</summary>
+        /// <summary>The periods in order.</summary>
         public static readonly Period[] Periods =
         {
             new Period("Assets/Cutscene/Period1/Period1Cutscene.unity", "1교시", "룬"),
-            new Period("Assets/Game/Period2/Period2.unity", "2교시", ""),
+            new Period("Assets/Cutscene/Period2/Period2Cutscene.unity", "2교시", "암흑"),
             new Period("Assets/Game/Period3/Period3.unity", "3교시", "보스전"),
         };
 

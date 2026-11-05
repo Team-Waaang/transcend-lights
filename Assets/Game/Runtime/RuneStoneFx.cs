@@ -39,6 +39,12 @@ namespace AiHackathon.Game
         public float cutsceneGlow;
         public float cutsceneHover;
 
+        /// <summary>Extra glow set by game logic, e.g. a memory period showing the rune before the lights go out.</summary>
+        [System.NonSerialized] public float revealGlow;
+        /// <summary>Multiplies the stone's base colour (paint included); a memory period darkens it to hide the rune.</summary>
+        [System.NonSerialized] public float shade = 1f;
+        static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+
         float resultGlow;
         float flicker = 1f;
         float size = 1f;
@@ -241,12 +247,13 @@ namespace AiHackathon.Game
 
         void LateUpdate()
         {
-            float glow = (Mathf.Max(cutsceneGlow, 0f) + resultGlow) * flicker;
+            float glow = (Mathf.Max(cutsceneGlow, 0f) + resultGlow + Mathf.Max(revealGlow, 0f)) * flicker;
             if (stone != null)
             {
                 block ??= new MaterialPropertyBlock();
                 stone.GetPropertyBlock(block);
                 block.SetColor(EmissionColor, GlowColor * glow);
+                block.SetColor(BaseColor, new Color(shade, shade, shade, 1f));
                 stone.SetPropertyBlock(block);
             }
             if (runeLight != null) runeLight.intensity = lightIntensity * glow;

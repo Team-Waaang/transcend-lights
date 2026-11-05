@@ -34,6 +34,9 @@ namespace PhonePointer
         public bool sensitivitySupported;
         public PhoneTrackingMode trackingMode;
         public bool airMouseSupported;
+        // Additive v2 fields. The server owns the slot; resume keeps the same character.
+        public int playerSlot;
+        public bool playerSlotAssigned;
         public PoseSample pose;
         public string arState, trackingReason;
         public double poseRate;

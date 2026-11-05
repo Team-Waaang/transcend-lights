@@ -165,7 +165,35 @@ static class PlayProbe
         return "cleared " + period.Cleared;
     }
 
+    /// <summary>Lights every creature until it petrifies (as if both players hunted them all down).</summary>
+    public static string ClearHunt()
+    {
+        var hunt = Object.FindAnyObjectByType<LightHuntPeriod>();
+        if (hunt == null) return "no light hunt";
+        float until = (float)EditorApplication.timeSinceStartup + 6f;
+        void Step()
+        {
+            if (!Application.isPlaying || EditorApplication.timeSinceStartup > until || hunt.Cleared) { EditorApplication.update -= Step; return; }
+            foreach (var c in hunt.creatures)
+                if (c != null && !c.Petrified) c.Illuminate(1.6f, 0, c.Center + Vector3.back * 2f, Vector3.forward);
+        }
+        EditorApplication.update += Step;
+        return "lighting " + hunt.creatures.Length;
+    }
+
+    public static string Paused() => "paused=" + EditorApplication.isPaused + " playing=" + Application.isPlaying;
+    public static string Unpause() { EditorApplication.isPaused = false; return "unpaused"; }
+
+    /// <summary>Keeps Play mode ticking while the editor is in the background (this session only, not a project setting).</summary>
+    public static string RunInBackground() { Application.runInBackground = true; return "runInBackground"; }
+
     public static string Scene() => SceneManager.GetActiveScene().path;
+
+    public static string ResolvePackages()
+    {
+        UnityEditor.PackageManager.Client.Resolve();
+        return "resolving";
+    }
 
     public static string Errors()
     {

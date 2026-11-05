@@ -1,0 +1,12 @@
+{
+  "name": "PhonePointer.Android.Editor",
+  "references": [
+    "PhonePointer.Android",
+    "Unity.XR.Management",
+    "Unity.XR.Management.Editor",
+    "Unity.XR.ARCore.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

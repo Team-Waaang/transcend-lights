@@ -140,7 +140,7 @@ namespace AiHackathon.Cutscene.Editor
                 rig.gameObject.SetActive(false);
                 rig.character.GetComponent<CasterPose>().enabled = false;
                 rig.character.rotation = PlayerFacing * rig.character.rotation; // turn from the builder's +Z facing to +X
-                Period1CutsceneBuilder.HoldStaff(rig.character, rig.staff, AssetDatabase.GetAssetPath(profiles[i].characterModel), profiles[i].LeadSide, profiles[i].staffScale);
+                PeriodSceneKit.HoldStaff(rig.character, rig.staff, AssetDatabase.GetAssetPath(profiles[i].characterModel), profiles[i].LeadSide, profiles[i].staffScale);
                 var animator = rig.character.gameObject.AddComponent<Animator>();
                 animator.applyRootMotion = false;
                 animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;

@@ -10,6 +10,8 @@ namespace AiHackathon.Game
     /// <see cref="RuneTrace"/>; strokes can be lifted and resumed, and once she stops firing for
     /// <see cref="finishDelay"/> the trace is judged. Success moves her stone to the next rune of her lane;
     /// a failure clears the strokes for another try. The period is cleared when every lane is done.
+    /// With <see cref="memory"/> on (Period 2, the dark), each rune is shown glowing for <see cref="showSeconds"/>,
+    /// then goes dark and must be traced from memory; a failure flashes it again for <see cref="hintSeconds"/>.
     /// </summary>
     public class RunePeriod : MonoBehaviour
     {
@@ -23,6 +25,7 @@ namespace AiHackathon.Game
             [NonSerialized] public float lastFire = -10f;
             [NonSerialized] public string message;
             [NonSerialized] public float messageTime = -10f;
+            [NonSerialized] public bool showing;
         }
 
         public GameManager game;
@@ -33,8 +36,20 @@ namespace AiHackathon.Game
         [Tooltip("Fewer trace points than this are dropped as a stray shot.")]
         public int minPoints = 10;
         public bool showHud = true;
+        public string clearedText = "통과!";
+        [Tooltip("Line under the clear banner.")]
+        public string clearedSubtitle = "모든 룬을 깨웠다";
         [Tooltip("Seconds the clear screen stays before the next period loads (PeriodFlow). Negative: stay.")]
         public float advanceAfter = 4f;
+
+        [Header("Memory (draw in the dark)")]
+        public bool memory;
+        public float showSeconds = 3f;
+        public float hintSeconds = 1.6f;
+        [Tooltip("Glow of the rune while it is being shown.")]
+        public float showGlow = 1.1f;
+        [Tooltip("Stone brightness while the rune is hidden (1 = unchanged). Hides the painted rune in the dark.")]
+        [Range(0f, 1f)] public float darkShade = 1f;
 
         public UnityEvent onCleared = new UnityEvent();
         public bool Cleared { get; private set; }
@@ -46,14 +61,22 @@ namespace AiHackathon.Game
                     lane.stone.SetRune(lane.sequence[0]);
         }
 
+        bool started;
+
         void Update()
         {
             if (game == null || game.CurrentPhase != GameManager.Phase.Play) return;
+            if (!started)
+            {
+                started = true;
+                if (memory)
+                    for (int i = 0; i < lanes.Length; i++) StartCoroutine(Show(i, showSeconds, false));
+            }
             for (int i = 0; i < lanes.Length && i < game.players.Length; i++)
             {
                 var lane = lanes[i];
                 var rig = game.players[i].rig;
-                if (lane.stone == null || lane.stone.trace == null || rig == null || lane.busy || lane.done) continue;
+                if (lane.stone == null || lane.stone.trace == null || rig == null || lane.busy || lane.done || lane.showing) continue;
                 var trace = lane.stone.trace;
                 if (rig.Firing)
                 {
@@ -76,6 +99,7 @@ namespace AiHackathon.Game
             lane.busy = true;
             var trace = lane.stone.trace;
             bool ok = trace.Finish();
+            if (memory && ok) lane.stone.shade = 1f;
             lane.message = ok ? "성공!" : "다시!";
             lane.messageTime = Time.time;
             yield return new WaitForSeconds(0.35f);
@@ -89,6 +113,7 @@ namespace AiHackathon.Game
                 {
                     lane.stone.ChangeRune(lane.sequence[lane.index]);
                     while (lane.stone.IsPlaying) yield return null;
+                    if (memory) yield return Show(i, showSeconds, false);
                 }
                 else
                 {
@@ -98,7 +123,31 @@ namespace AiHackathon.Game
                     CheckCleared();
                 }
             }
+            else if (memory)
+            {
+                yield return Show(i, hintSeconds, true);
+            }
             lane.busy = false;
+        }
+
+        // Lights the rune up so it can be memorised, then lets it sink back into the dark.
+        IEnumerator Show(int i, float seconds, bool hint)
+        {
+            var lane = lanes[i];
+            if (lane.stone == null) yield break;
+            lane.showing = true;
+            lane.message = hint ? "다시 한 번 보세요" : "기억하세요!";
+            lane.messageTime = Time.time;
+            const float fadeIn = 0.35f, fadeOut = 0.7f;
+            var s = lane.stone;
+            for (float t = 0f; t < fadeIn; t += Time.deltaTime) { float k = t / fadeIn; s.revealGlow = showGlow * k; s.shade = Mathf.Lerp(darkShade, 1f, k); yield return null; }
+            for (float t = 0f; t < seconds; t += Time.deltaTime) { s.revealGlow = showGlow; s.shade = 1f; yield return null; }
+            for (float t = 0f; t < fadeOut; t += Time.deltaTime) { float k = 1f - t / fadeOut; s.revealGlow = showGlow * k; s.shade = Mathf.Lerp(darkShade, 1f, k); yield return null; }
+            s.revealGlow = 0f;
+            s.shade = darkShade;
+            lane.message = "그려요!";
+            lane.messageTime = Time.time;
+            lane.showing = false;
         }
 
         float clearedAt = -10f;
@@ -139,8 +188,8 @@ namespace AiHackathon.Game
                 float y = Screen.height * 0.36f;
                 GameGui.BannerBack(new Rect(0f, y - 30f * s, Screen.width, 210f * s), new Color(0.12f, 0.07f, 0.02f, 0.75f * a));
                 GameGui.DrawCentered(GameGui.Soft, new Vector2(Screen.width * 0.5f, y + 55f * s), 900f * s, new Color(1f, 0.8f, 0.4f, 0.2f * a));
-                GameGui.GlowLabel(new Rect(0f, y, Screen.width, 120f * s), "1교시 통과!", GameGui.Style(Mathf.RoundToInt(96 * punch), TextAnchor.MiddleCenter), new Color(1f, 0.93f, 0.7f), new Color(1f, 0.7f, 0.3f), a);
-                GameGui.Label(new Rect(0f, y + 118f * s, Screen.width, 44f * s), "모든 룬을 깨웠다", GameGui.Style(30, TextAnchor.MiddleCenter, false), new Color(1f, 0.95f, 0.85f), a);
+                GameGui.GlowLabel(new Rect(0f, y, Screen.width, 120f * s), clearedText, GameGui.Style(Mathf.RoundToInt(96 * punch), TextAnchor.MiddleCenter), new Color(1f, 0.93f, 0.7f), new Color(1f, 0.7f, 0.3f), a);
+                GameGui.Label(new Rect(0f, y + 118f * s, Screen.width, 44f * s), clearedSubtitle, GameGui.Style(30, TextAnchor.MiddleCenter, false), new Color(1f, 0.95f, 0.85f), a);
             }
         }
 
@@ -182,12 +231,12 @@ namespace AiHackathon.Game
             }
 
             // Judgement call-out over the player's side of the screen.
-            if (!string.IsNullOrEmpty(lane.message) && now - lane.messageTime < 1.6f)
+            if (!string.IsNullOrEmpty(lane.message) && (lane.showing || now - lane.messageTime < 1.6f))
             {
                 float k = now - lane.messageTime;
-                float a = Mathf.Clamp01(k / 0.1f) * Mathf.Clamp01((1.6f - k) / 0.4f);
+                float a = Mathf.Clamp01(k / 0.1f) * (lane.showing ? 1f : Mathf.Clamp01((1.6f - k) / 0.4f));
                 float punch = 1f + 0.4f * Mathf.Exp(-k * 10f);
-                bool good = lane.message != "다시!";
+                bool good = lane.message != "다시!" && lane.message != "다시 한 번 보세요";
                 var glow = good ? color : new Color(1f, 0.35f, 0.45f);
                 float cx = left ? Screen.width * 0.27f : Screen.width * 0.73f;
                 GameGui.DrawCentered(GameGui.Soft, new Vector2(cx, Screen.height * 0.42f), 380f * s * punch, new Color(glow.r, glow.g, glow.b, 0.25f * a));

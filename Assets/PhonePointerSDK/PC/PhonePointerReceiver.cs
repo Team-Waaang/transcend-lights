@@ -15,6 +15,7 @@ namespace PhonePointer
         public string Session;
         internal string ResumeToken;
         public int ColorIndex;
+        public int PlayerSlot { get; internal set; }
         public PhoneTrackingMode TrackingMode { get; internal set; }
         public Color Color => SessionPalette.Get(ColorIndex);
         public bool Authenticated, SelectionBound;
@@ -96,7 +97,7 @@ namespace PhonePointer
                 transport=new PointerServerTransport(activeOptions,MaxPhones);
                 Pairing=new PairingInfo { host=address,token=Guid.NewGuid().ToString("N"),tcpPort=transport.TcpPort,udpPort=transport.UdpPort };
                 screenSize=size; displayWidth=Screen.width; displayHeight=Screen.height; wasDisplayValid=DisplayValid;
-                MarkerWidth=Mathf.Min(size.x,size.y)*.72f;
+                MarkerWidth=ScreenMarkerLayout.ReferenceWidthMeters(size,Screen.width,Screen.height);
                 try { log=new DiagnosticLog(Path.Combine(Application.persistentDataPath,"PhonePointerLogs"),"pc"); }
                 catch(Exception e) { Error="Diagnostic file unavailable: "+e.Message; }
                 log?.Add(null,"server",$"Protocol v2 TCP {Pairing.tcpPort} UDP {Pairing.udpPort}");
@@ -216,6 +217,9 @@ namespace PhonePointer
             if(nextColorIndex==int.MaxValue) { Reject(candidate,"Session color identifiers exhausted. Restart the server."); return; }
             candidate.Authenticated=true; candidate.Session=Guid.NewGuid().ToString("N"); candidate.ResumeToken=Guid.NewGuid().ToString("N");
             candidate.TrackingMode=m.trackingMode;
+            int slot=0;
+            while(sessions.Exists(p=>p.PlayerSlot==slot)) slot++;
+            candidate.PlayerSlot=slot;
             candidate.ColorIndex=nextColorIndex++; // Never recycle a departed session's color within this server run.
             candidate.Model.Connect(candidate.Session,screenSize,now);
             candidate.Model.ResumeConnection(1,now);
@@ -292,7 +296,12 @@ namespace PhonePointer
             }
             if(!ok) { s.Diagnostics.RejectedEvents++; log?.Add(s.Session,"inputRejected",m.type+": "+(rejection ?? "Invalid state, snapshot or duplicate event")); }
         }
-        public void Reregister() { if(Screen.fullScreen || Application.isEditor) { displayWidth=Screen.width; displayHeight=Screen.height; } foreach(var s in sessions) Reregister(s,DisconnectReason.None); }
+        public void Reregister()
+        {
+            if(Screen.fullScreen || Application.isEditor) { displayWidth=Screen.width; displayHeight=Screen.height; }
+            MarkerWidth=ScreenMarkerLayout.ReferenceWidthMeters(screenSize,Screen.width,Screen.height);
+            foreach(var s in sessions) Reregister(s,DisconnectReason.None);
+        }
         void Reregister(PhoneSession s,DisconnectReason reason)
         {
             s.Model.BeginRegistration(); s.AwaitingResumePose=false; s.DisconnectReason=reason; s.Diagnostics.LastReason=reason;
@@ -306,7 +315,7 @@ namespace PhonePointer
             { s.Model.MarkRegistered(); s.Model.LoseTracking(); }
             transport.RegisterSession(s.Session,s.Model.Revision,s.Model.Generation,s.Channel.Address);
             Send(s,new ControlMessage { type="config",width=screenSize.x,height=screenSize.y,
-                markerWidth=MarkerWidth,resumeToken=s.ResumeToken,preserve=preserve,options=activeOptions.Copy(),sensitivity=s.Model.Sensitivity,sensitivitySupported=true,trackingMode=s.TrackingMode,airMouseSupported=true });
+                playerSlot=s.PlayerSlot,playerSlotAssigned=true,markerWidth=MarkerWidth,resumeToken=s.ResumeToken,preserve=preserve,options=activeOptions.Copy(),sensitivity=s.Model.Sensitivity,sensitivitySupported=true,trackingMode=s.TrackingMode,airMouseSupported=true });
         }
         void Send(PhoneSession s,ControlMessage m)
         { m.session=s.Session; m.revision=s.Model.Revision; m.generation=s.Model.Generation; s.Channel?.Send(m); }

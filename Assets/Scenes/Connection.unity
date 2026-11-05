@@ -387,6 +387,7 @@ GameObject:
   - component: {fileID: 1677414577}
   - component: {fileID: 1677414576}
   - component: {fileID: 1677414575}
+  - component: {fileID: 1677414580}
   m_Layer: 0
   m_Name: Phone Link
   m_TagString: Untagged
@@ -406,7 +407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69455ff2c91312647b0b5b26c3930bbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Waaang.ConnectionFlow
-  gameSceneName: Game
+  gameSceneName: Period1Cutscene
 --- !u!114 &1677414576
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -429,7 +430,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1677414574}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c39d1c6f8bd5bcabac4184a224a0d03, type: 3}
   m_Name: 
@@ -477,6 +478,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1677414580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1677414574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e1b555236632a742b6ebf769895d3a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Waaang.RegistrationBoard
+  Receiver: {fileID: 1677414578}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
