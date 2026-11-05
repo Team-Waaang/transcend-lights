@@ -286,6 +286,41 @@ namespace AiHackathon.Game.Editor
             var crystalBreak = Tint(Vfx(fx, "HCFX_Hit_04", Vector3.zero, 0.14f), new Color(0.95f, 0.7f, 1f));
             crystalBreak.name = "Crystal Break FX";
 
+            // Phase 2's opening barrier QTE: a seal to shoot, a turning rune disc with a soft glow, tinted per player
+            // at runtime (white here). Painted by the title builder; the Klaus circle stands in without it.
+            var sealRoot = new GameObject("Barrier Seal");
+            sealRoot.transform.SetParent(fx);
+            sealRoot.transform.localScale = Vector3.one * 0.62f;
+            var sealTex = AssetDatabase.LoadAssetAtPath<Texture2D>(TitleCircleTex) ?? AssetDatabase.LoadAssetAtPath<Texture2D>(MagicCircleTex);
+            var glowTex = AssetDatabase.LoadAssetAtPath<Texture2D>(TitleGlowTex);
+            var sealGlow = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            sealGlow.name = "Glow";
+            Object.DestroyImmediate(sealGlow.GetComponent<Collider>());
+            sealGlow.transform.SetParent(sealRoot.transform, false);
+            sealGlow.transform.localScale = Vector3.one * 1.7f;
+            sealGlow.GetComponent<Renderer>().sharedMaterial = AdditiveMat("BarrierSealGlow", glowTex, new Color(1f, 1f, 1f, 0.55f));
+            var sealDisc = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            sealDisc.name = "Disc";
+            Object.DestroyImmediate(sealDisc.GetComponent<Collider>());
+            sealDisc.transform.SetParent(sealRoot.transform, false);
+            sealDisc.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+            sealDisc.GetComponent<Renderer>().sharedMaterial = AdditiveMat("BarrierSeal", sealTex, Color.white);
+            foreach (var r in sealRoot.GetComponentsInChildren<Renderer>()) r.shadowCastingMode = ShadowCastingMode.Off;
+            var sealLight = Light(sealRoot.transform, "Light", LightType.Point, Color.white, 1.6f, 1.6f);
+            sealLight.transform.localPosition = Vector3.zero;
+            sealLight.shadows = LightShadows.None;
+            // A roomy hitbox: the laser trails the pointer.
+            sealRoot.AddComponent<SphereCollider>().radius = 0.62f;
+            var seal = sealRoot.AddComponent<QteSeal>();
+            seal.disc = sealDisc.transform;
+            seal.tinted = new[] { sealDisc.GetComponent<Renderer>(), sealGlow.GetComponent<Renderer>() };
+            seal.lit = sealLight;
+            sealRoot.SetActive(false);
+            var sealBreak = Tint(Vfx(fx, "HCFX_Hit_04", Vector3.zero, 0.13f), new Color(1f, 0.95f, 0.8f));
+            sealBreak.name = "Seal Break FX";
+            var sealMiss = Tint(Vfx(fx, "HCFX_Explosion_02", Vector3.zero, 0.07f, 0.8f), violet);
+            sealMiss.name = "Seal Miss FX";
+
             var controller = bossAnimator.gameObject.AddComponent<BossController>();
             controller.minionTemplate = minion != null ? minion.gameObject : null;
             controller.summonFx = summon;
@@ -341,6 +376,11 @@ namespace AiHackathon.Game.Editor
             period.entranceScene = "Assets/Cutscene/BossEntrance/BossEntranceCutscene.unity";
             period.phase2Scene = "Assets/Cutscene/BossPhase2/BossPhase2Cutscene.unity";
             period.defeatScene = BossDefeatCutsceneBuilder.ScenePath;
+            var barrier = period.gameObject.AddComponent<BarrierQte>();
+            barrier.sealTemplate = sealRoot;
+            barrier.breakFx = sealBreak;
+            barrier.missFx = sealMiss;
+            period.barrierQte = barrier;
 
             // Brazier flames and mist play on their own in play mode.
             foreach (var loop in envLoops) loop.SetActive(true);
@@ -355,6 +395,8 @@ namespace AiHackathon.Game.Editor
         }
 
         const string MagicCircleTex = "Assets/VFX_Klaus/Textures/Tex_fx_HCFX_MagieCircle_04.tga";
+        const string TitleCircleTex = "Assets/Game/Title/Textures/MagicCircle.png";
+        const string TitleGlowTex = "Assets/Game/Title/Textures/Glow.png";
 
         /// <summary>
         /// The ward: a force-field shell (AiHackathon/Ward), two rune rings orbiting it on tilted planes, a magic
