@@ -4,8 +4,8 @@
   "voice_clips_measured": 36,
   "provider": "ElevenLabs Music",
   "model": "music_v1",
-  "music_source_bytes": 3083159,
-  "combined_source_bytes": 10036973,
+  "music_source_bytes": 3320260,
+  "combined_source_bytes": 10274074,
   "source_voice_audio_modified": false,
   "subjective_listening_approved": false,
   "music_file_audit_passed": 6,
@@ -88,5 +88,47 @@
     "listeners": 1,
     "outputPeak": 0.142444775,
     "frame": 2270
+  },
+  "boss_score_direction": "urgent 150 BPM orchestral-hybrid action, escalating phase 1 / phase 2 / resonance",
+  "boss_music_revision": {
+    "direction": "urgent 150 BPM orchestral-hybrid combat; three escalating variations",
+    "backup_dir": "Tools\\Audio\\.cache\\music\\revisions\\urgent-20261106-072503",
+    "unchanged_tracks_sha256": {
+      "bgm_rune_class.ogg": "d61510473bf50ffc24b05291ac6b8139c1cdbe2f136b93fcd55855decc78e380",
+      "bgm_dark_hall.ogg": "978153e57327546d678391b573221cd72a1c510aaf0b351a7cb4f382d9325a62",
+      "bgm_victory.ogg": "5f345f663d6d8410831e45637c7471b44c8325686682b2bb75fe82e76befcfed"
+    },
+    "subjective_listening_approved": false,
+    "original_audio_backups": {
+      "bgm_boss_phase1.ogg": "Tools\\Audio\\.cache\\music\\backups\\20261106-072527\\bgm_boss_phase1.ogg",
+      "bgm_boss_phase2.ogg": "Tools\\Audio\\.cache\\music\\backups\\20261106-072529\\bgm_boss_phase2.ogg",
+      "bgm_boss_resonance.ogg": "Tools\\Audio\\.cache\\music\\backups\\20261106-072531\\bgm_boss_resonance.ogg"
+    },
+    "music_audit_passed": 3,
+    "playback": {
+      "passed": true,
+      "events": [
+        {
+          "track": "bgm_boss_phase1",
+          "stage": "Entrance",
+          "frame": 521
+        },
+        {
+          "track": "bgm_boss_phase2",
+          "stage": "Phase2Cutscene",
+          "frame": 735
+        },
+        {
+          "track": "bgm_boss_resonance",
+          "stage": "DefeatCutscene",
+          "frame": 1000
+        }
+      ],
+      "outputPeak": 0.19549197,
+      "maxMusicSources": 2,
+      "currentGain": 0.415996283,
+      "frame": 1169
+    },
+    "non_boss_tracks_unchanged": true
   }
 }

@@ -1,14 +1,14 @@
 # Lesson and boss music
 
-Six instrumental loops generated with ElevenLabs Music `music_v1`. The boss variations are three consecutive sections of one composition plan at 120 BPM in D minor, with the same requested motif; phase 2 increases subdivisions and percussion, while resonance adds a cooperative finale arrangement. Rune class and the dark hall use separate tempos, palettes and moods. Subjective listening approval remains pending.
+Six instrumental loops generated with ElevenLabs Music `music_v1`. The boss variations are three consecutive sections of one composition plan at 150 BPM in D minor, with the same requested motif; phase 1 now starts with driving sixteenth-note strings and punchy orchestral drums; phase 2 further increases subdivisions and percussion, while resonance adds a cooperative finale arrangement. Rune class and the dark hall use separate tempos, palettes and moods. Subjective listening approval remains pending.
 
 | Track | Runtime use | Loop duration | LUFS | True peak dBTP |
 | --- | --- | ---: | ---: | ---: |
 | `bgm_rune_class.ogg` | Connection and period 1 rune class | 38.4 s | -19.98 | -3.98 |
 | `bgm_dark_hall.ogg` | Period 2 light hunt | 48.0 s | -19.96 | -7.97 |
-| `bgm_boss_phase1.ogg` | Boss entrance, title and phase 1 | 32.0 s | -19.99 | -6.15 |
-| `bgm_boss_phase2.ogg` | Boss awakening cutscene and phase 2 | 32.0 s | -20.0 | -6.77 |
-| `bgm_boss_resonance.ogg` | Final beam-clash cutscene and live QTE | 32.0 s | -19.99 | -6.31 |
+| `bgm_boss_phase1.ogg` | Boss entrance, title and phase 1 | 32.0 s | -20.07 | -6.26 |
+| `bgm_boss_phase2.ogg` | Boss awakening cutscene and phase 2 | 32.0 s | -20.07 | -8.39 |
+| `bgm_boss_resonance.ogg` | Final beam-clash cutscene and live QTE | 32.0 s | -20.06 | -9.05 |
 | `bgm_victory.ogg` | Purification and final results | 32.0 s | -19.98 | -7.18 |
 
 ## Runtime
@@ -28,7 +28,7 @@ python Tools/Audio/generate_music.py --force --only boss_suite
 
 The exact prompts/composition plan and split positions are in `music-plan.json`. The API key is read from the project `.env` and is not logged. Generation requires Music API permission and an eligible paid account. The generator reuses cached raw compositions and keeps existing final files by default. `--force` makes a new generation, backing up replaced final clips. Cache and backups are under ignored `Tools/Audio/.cache/music/` so editor restarts do not remove them.
 
-The final bars crossfade into the beginning, followed by measured constant-gain normalization, 3 ms boundary smoothing and 44.1 kHz stereo Ogg Vorbis 128 kbps export. `music-audit.json` checks decoding, duration, channels, peak, LUFS and loop head/tail balance. All six files passed. The files add 2.94 MiB of source audio.
+The final bars crossfade into the beginning, followed by measured constant-gain normalization, 3 ms boundary smoothing and 44.1 kHz stereo Ogg Vorbis 128 kbps export. `music-audit.json` checks decoding, duration, channels, peak, LUFS and loop head/tail balance. All six files passed. The files add 3.17 MiB of source audio.
 
 Official API contract: [ElevenLabs Compose Music](https://elevenlabs.io/docs/api-reference/music/compose).
 
@@ -44,3 +44,11 @@ Unity imported the MP3 exports with 2,304 extra samples (about 52 ms). Runtime a
 - Reports: `music-audit.json`, `music-mix-verification.json`, `music-flow-verification.json`, and `music-verification-summary.json`. Subjective listening and physical two-phone/Android packaging checks remain.
 
 The latest main-branch `Title` scene also reuses the rune-class score. `title-music-verification.json` confirms actual playback with one music source, one listener and no clipping after integrating the upstream title-screen changes.
+
+## Urgent boss score revision
+
+The three boss loops were regenerated as a relentless 150 BPM orchestral-hybrid battle suite: rapid spiccato strings, insistent low ostinati, punchy toms/timpani, snare subdivisions and short brass accents. Phase 2 layers racing upper strings and denser percussion; resonance is the highest-pressure cooperative variation. A short unused continuation tail keeps the generated ending outside the three game loops. Each runtime loop remains 32 seconds with the same resource ID and existing dialogue/effect ducking.
+
+`boss-music-revision.json` records the original audio/plan backup paths and checksums proving the lesson and victory tracks are unchanged. Restore an original `.ogg` backup over its runtime file to roll back, preserving the existing `.meta`. New tracks are measured near -20 LUFS with true-peak headroom; subjective listening approval remains pending.
+
+Urgent boss revision playback passed for all three phase selections, with at most two music sources, no game-console errors, and measured output peak 0.19549197 (below clipping). See `boss-music-playback.json`; subjective listening remains pending.
