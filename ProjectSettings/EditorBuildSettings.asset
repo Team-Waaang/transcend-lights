@@ -18,4 +18,6 @@ EditorBuildSettings:
     path: Assets/Scenes/RuneSlabRecognitionTest.unity
     guid: f031db89ddec6b046affd53d1da8a699
   m_configObjects:
+    UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 193c4635628393d4bbfc643c50a81c42, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: 0efa80eb49f36194db8360bc09cff03e, type: 2}

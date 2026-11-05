@@ -18,9 +18,11 @@ namespace PhonePointer
         }
         public static Texture2D Encode(string value)
         {
-            var matrix = new QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, 512, 512,
+            var matrix = new QRCodeWriter().encode(value, BarcodeFormat.QR_CODE, 1024, 1024,
                 new Dictionary<EncodeHintType, object> { { EncodeHintType.MARGIN, 4 }, { EncodeHintType.ERROR_CORRECTION, ZXing.QrCode.Internal.ErrorCorrectionLevel.M } });
-            var texture = new Texture2D(matrix.Width, matrix.Height, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            // Supersampled modules retain the four-module white quiet zone when scaled.
+            var texture = new Texture2D(matrix.Width, matrix.Height, TextureFormat.RGBA32, false)
+                { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
             var pixels = new Color32[matrix.Width * matrix.Height];
             for (int y = 0; y < matrix.Height; y++) for (int x = 0; x < matrix.Width; x++)
                 pixels[(matrix.Height - 1 - y) * matrix.Width + x] = matrix[x, y] ? new Color32(0,0,0,255) : new Color32(255,255,255,255);
