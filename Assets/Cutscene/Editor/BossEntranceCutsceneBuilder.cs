@@ -22,6 +22,7 @@ namespace AiHackathon.Cutscene.Editor
 
         // Story beats (seconds)
         const float TAppear = 2.45f;      // smoke bursts, boss starts crouched inside it
+        const float TLand = 2.53f;        // the planted crouch reads as the one landing
         const float TStare = 6.2f;        // cold stare begins
         const float TGlint = 8.4f;        // face light peaks as the head comes up
         const float TSummon = 10.0f;      // summon wind-up
@@ -85,7 +86,7 @@ namespace AiHackathon.Cutscene.Editor
             AddShots(timeline, director, cam, new[]
             {
                 new Shot { Name = "A_Establish", Start = 0f, End = TAppear, From = new Vector3(-4.0f, 1.1f, -2.6f), To = new Vector3(-3.3f, 0.9f, -2.1f), LookPoint = new Vector3(0f, 0.45f, 0f), Fov = 40f, Shake = 0.1f },
-                new Shot { Name = "B_RiseLow", Start = TAppear, End = 4.6f, From = new Vector3(-1.45f, 0.12f, -0.7f), To = new Vector3(-1.3f, 0.16f, -0.6f), LookPoint = new Vector3(0f, 0.5f, 0f), Fov = 42f, Shake = 0.2f, Kicks = new[] { TAppear + 0.02f } },
+                new Shot { Name = "B_RiseLow", Start = TAppear, End = 4.6f, From = new Vector3(-1.45f, 0.12f, -0.7f), To = new Vector3(-1.3f, 0.16f, -0.6f), LookPoint = new Vector3(0f, 0.5f, 0f), Fov = 42f, Shake = 0.2f, Kicks = new[] { TLand }, KickPeak = 2.2f, KickDecay = 0.9f, Thud = TLand },
                 new Shot { Name = "C_Silhouette", Start = 4.6f, End = TStare, From = new Vector3(-0.7f, 0.6f, -1.7f), To = new Vector3(-0.55f, 0.62f, -1.45f), LookPoint = new Vector3(0f, 0.6f, 0f), Fov = 38f, Shake = 0.12f },
                 new Shot { Name = "D_ColdStare", Start = TStare, End = TSummon, From = new Vector3(-0.64f, 0.78f, -0.43f), To = new Vector3(-0.52f, 0.79f, -0.36f), LookAt = bossHead, Fov = 32f, Shake = 0.1f },
                 new Shot { Name = "E_Summon", Start = TSummon, End = 13.5f, From = new Vector3(-1.9f, 0.25f, -1.3f), To = new Vector3(-2.3f, 0.3f, -1.6f), LookPoint = new Vector3(0f, 0.85f, 0f), Fov = 44f, Shake = 0.25f, Kicks = new[] { TSummonPeak + 0.02f } },
@@ -133,6 +134,10 @@ namespace AiHackathon.Cutscene.Editor
             var smoke = Tint(Vfx(vfx, "HCFX_Smoke_02_Floor", Vector3.zero, 0.1f, 0.6f), new Color(0.28f, 0.18f, 0.38f));
             controlled.Add((smoke, TAppear - 0.15f, 4.6f));
             controlled.Add((FloorRing(vfx, 0.22f, Violet), TAppear - 0.05f, TAppear + 1.2f));
+            // One ash puff when the crouch plants. Glows stay off so it reads as dust, not a spell.
+            var dust = Tint(Vfx(vfx, "HCFX_Smoke_01_Floor", new Vector3(0f, 0.02f, 0f), 0.14f, 0.8f), new Color(0.55f, 0.5f, 0.48f));
+            Mute(dust, "glow_view", "glow_floor", "smoke_mesh");
+            controlled.Add((dust, TLand - 0.02f, TLand + 1.5f));
             // Summon: power gathers at the raised wand, then the curse answers with a burst, a floor ring and pillars behind.
             controlled.Add((Vfx(vfx, MspDir + "LightningExplosion/Prefabs/LightningExplosionCharge", tip, 0.04f), TSummon + 0.3f, TEnd));
             var burst = Vfx(vfx, MspDir + "LightningExplosion/Prefabs/LightningExplosionHit", tip, 0.06f);
@@ -160,7 +165,7 @@ namespace AiHackathon.Cutscene.Editor
             Bind(clip, "Lights/Key", typeof(Light), "m_Intensity", Smooth(0f, 0.5f, TAppear, 0.6f, 5f, 1.15f, TSummonPeak, 1.15f, TSummonPeak + 0.6f, 0.8f));
             // The grade sinks into dread when the curse answers the summon.
             Bind(clip, "Volumes/Dread", typeof(Volume), "weight", Smooth(0f, 0f, TSummonPeak - 0.05f, 0f, TSummonPeak + 0.8f, 1f));
-            Bind(clip, "Volumes/Impact", typeof(Volume), "weight", Lin(Pulses(0f, 0.35f, 0.6f, TAppear, TSummonPeak, TSlam)));
+            Bind(clip, "Volumes/Impact", typeof(Volume), "weight", Lin(Pulses(0f, 0.45f, 0.7f, TLand, TSummonPeak, TSlam)));
             return SaveClip(clip);
         }
 

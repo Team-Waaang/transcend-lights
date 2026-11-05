@@ -50,6 +50,9 @@ namespace AiHackathon.Cutscene.Editor
             public float Shake;
             public bool StrongShake;
             public float[] Kicks;       // absolute times of camera shake spikes
+            public float KickPeak;      // > 0: spike amplitude, otherwise Shake * 2.5 + 0.8
+            public float KickDecay;     // > 0: seconds to settle back to Shake, otherwise 0.6
+            public float Thud;          // absolute time of one vertical ground thump, 0 = none
             public float FovTo;         // > 0: lens zooms from Fov to this over the shot
             public bool SnapIn;         // accelerate (ease-in) the move and zoom, for a punch-in that ends on a cut
         }
@@ -548,7 +551,7 @@ namespace AiHackathon.Cutscene.Editor
             var clip = new AnimationClip { name = "Cam_" + s.Name };
             AnimationCurve Move(float a, float b) => s.SnapIn ? EaseIn(dur, a, b) : Lin(0, a, dur, b);
             Bind(clip, "Cam", typeof(Transform), "m_LocalPosition.x", Move(s.From.x, s.To.x));
-            Bind(clip, "Cam", typeof(Transform), "m_LocalPosition.y", Move(s.From.y, s.To.y));
+            Bind(clip, "Cam", typeof(Transform), "m_LocalPosition.y", s.Thud > 0f ? ThudY(s, dur) : Move(s.From.y, s.To.y));
             Bind(clip, "Cam", typeof(Transform), "m_LocalPosition.z", Move(s.From.z, s.To.z));
             if (s.FovTo > 0) Bind(clip, "Cam", typeof(CinemachineCamera), "Lens.FieldOfView", Move(s.Fov, s.FovTo));
             if (s.LookAt != null)
@@ -584,7 +587,9 @@ namespace AiHackathon.Cutscene.Editor
                     foreach (var k in s.Kicks)
                     {
                         float t = k - s.Start;
-                        keys.AddRange(new[] { t - 0.02f, s.Shake, t + 0.03f, s.Shake * 2.5f + 0.8f, t + 0.6f, s.Shake });
+                        float peak = s.KickPeak > 0f ? s.KickPeak : s.Shake * 2.5f + 0.8f;
+                        float back = s.KickDecay > 0f ? s.KickDecay : 0.6f;
+                        keys.AddRange(new[] { t - 0.02f, s.Shake, t + 0.04f, peak, t + back, s.Shake });
                     }
                     keys.AddRange(new[] { dur, s.Shake });
                     Bind(clip, "Cam", typeof(CinemachineBasicMultiChannelPerlin), "AmplitudeGain", Lin(keys.ToArray()));
@@ -629,6 +634,14 @@ namespace AiHackathon.Cutscene.Editor
             Bind(clip, path, typeof(Transform), "m_LocalScale.x", s);
             Bind(clip, path, typeof(Transform), "m_LocalScale.y", s);
             Bind(clip, path, typeof(Transform), "m_LocalScale.z", s);
+        }
+
+        /// <summary>One ground hit: the camera drops and springs back on top of the shot's vertical move.</summary>
+        static AnimationCurve ThudY(Shot s, float dur)
+        {
+            float LinY(float t) => Mathf.Lerp(s.From.y, s.To.y, dur <= 0f ? 0f : Mathf.Clamp01(t / dur));
+            float lt = Mathf.Clamp(s.Thud - s.Start, 0.05f, dur - 0.05f);
+            return Lin(0f, s.From.y, lt - 0.02f, LinY(lt - 0.02f), lt + 0.05f, LinY(lt + 0.05f) - 0.02f, lt + 0.16f, LinY(lt + 0.16f) + 0.006f, lt + 0.55f, LinY(lt + 0.55f), dur, s.To.y);
         }
 
         /// <summary>Accelerating curve from <paramref name="a"/> to <paramref name="b"/> over <paramref name="dur"/> (flat start, steep finish).</summary>
