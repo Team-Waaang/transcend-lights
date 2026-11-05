@@ -42,3 +42,5 @@ Unity imported the MP3 exports with 2,304 extra samples (about 52 ms). Runtime a
 - During speech, measured music gain changed from 0.416 to 0.1248 (30%); the steady beam loop changed from 0.1531 to 0.1072 (70%), then music recovered to 0.4142.
 - Final combined output peak was 0.6013, below clipping. Compilation and game runtime checks have no errors.
 - Reports: `music-audit.json`, `music-mix-verification.json`, `music-flow-verification.json`, and `music-verification-summary.json`. Subjective listening and physical two-phone/Android packaging checks remain.
+
+The latest main-branch `Title` scene also reuses the rune-class score. `title-music-verification.json` confirms actual playback with one music source, one listener and no clipping after integrating the upstream title-screen changes.

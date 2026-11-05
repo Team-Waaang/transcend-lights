@@ -78,5 +78,15 @@
   "remaining_checks": [
     "Subjective listening on target speakers/headphones.",
     "Physical two-phone play and Android APK packaging were not tested."
-  ]
+  ],
+  "latest_main_title_integration": {
+    "passed": true,
+    "scene": "Title",
+    "track": "bgm_rune_class",
+    "CurrentGain": 0.415999979,
+    "PlayingSources": 1,
+    "listeners": 1,
+    "outputPeak": 0.142444775,
+    "frame": 2270
+  }
 }
