@@ -76,7 +76,7 @@ Shader "AiHackathon/Ward"
             half4 frag(Varyings i, bool front : SV_IsFrontFace) : SV_Target
             {
                 float3 n = normalize(i.normalWS);
-                float3 v = normalize(GetWorldSpaceCameraPos() - i.positionWS);
+                float3 v = normalize(GetCameraPositionWS() - i.positionWS);
                 float facing = abs(dot(n, v));
                 float fresnel = pow(1.0 - facing, _RimPower);
 
