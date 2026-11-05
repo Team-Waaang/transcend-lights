@@ -47,7 +47,7 @@ namespace AiHackathon.Cutscene.Editor
             AssetRoot = Root;
             PrepareFolders();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            BuildEnvironment();
+            var envLoops = BuildEnvironment();
 
             var boss = SpawnCharacter(HoodedFbx, "Boss_Hooded", true);
             var body = boss.GetComponentInChildren<SkinnedMeshRenderer>();
@@ -60,6 +60,7 @@ namespace AiHackathon.Cutscene.Editor
             var chest = FindBone(boss.transform, "UpperChest");
 
             var fx = BuildFx(body, out var controlled);
+            foreach (var loop in envLoops) controlled.Add((loop, 0f, TEnd));
             var cam = BuildCamera();
             var ui = BuildUi(cam);
 
@@ -91,6 +92,13 @@ namespace AiHackathon.Cutscene.Editor
             AddAnimation(timeline, fxGroup, director, "Lights Grading", fx, BuildFxClip(), TEnd);
             AddAnimation(timeline, fxGroup, director, "Fade Flash", ui, BuildUiClip(), TEnd);
             AddControlled(timeline, fxGroup, director, controlled);
+            // The seal beats with his heart while he kneels and blazes when the curse erupts; the fire flares with it.
+            BossArena.AddTimelineClip(timeline, fxGroup, director, "Arena_BossPhase2", TEnd, clip =>
+            {
+                BossArena.SealCurve(clip, Lin(Concat(Pulses(BossArena.SealAlpha, 0.6f, 0.4f, Heartbeats), new[] { TErupt - 0.05f, BossArena.SealAlpha, TErupt + 0.1f, 0.95f, TEnd, 0.6f })));
+                BossArena.FireCurve(clip, Smooth(0f, BossArena.FireLight, TErupt, 1.2f, TErupt + 0.2f, 3f, TEnd, 2.4f));
+                BossArena.CrystalCurve(clip, Smooth(0f, BossArena.CrystalLight, TErupt, BossArena.CrystalLight, TErupt + 0.3f, 1.8f, TEnd, 1.4f));
+            });
 
             AssetDatabase.SaveAssets();
             director.time = 0;

@@ -118,3 +118,5 @@ InitTestScene*.unity*
 .codex
 .agents
 .claude
+# Local secrets (API keys)
+.env

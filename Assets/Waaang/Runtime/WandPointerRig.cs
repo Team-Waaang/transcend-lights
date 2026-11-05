@@ -24,6 +24,8 @@ namespace Waaang
         [FormerlySerializedAs("useMouseWhenPhoneNotReady")]
         [Tooltip("이 슬롯에 휴대폰이 없을 때 마우스로 조작합니다. 휴대폰이 붙으면 그 휴대폰이 우선합니다.")]
         public bool mouseMode = true;
+        [Tooltip("켜면 입력이 있어도 쏘지 못합니다 (예: 보스의 저주 사슬에 묶였을 때).")]
+        public bool fireBlocked;
         public enum MouseFireButton { Left, Right }
         [Tooltip("마우스로 쏠 버튼. 두 명을 마우스로 시험할 때 왼쪽 플레이어는 좌클릭, 오른쪽은 우클릭.")]
         public MouseFireButton mouseButton = MouseFireButton.Left;
@@ -52,6 +54,8 @@ namespace Waaang
         [Tooltip("켜면 왼손도 지팡이를 잡습니다.")]
         public bool useLeftHand = true;
         public GameObject beamPrefab;
+        [Tooltip("끄면 레이저(이펙트, 벽 흔적, 맞은 자리 빛)를 그리지 않고 조준만 합니다. 2교시처럼 지팡이 빛으로 노는 교시용.")]
+        public bool showBeam = true;
         [Tooltip("누르고 있는 동안 레이저 이펙트를 다시 쏘는 주기(초).")]
         public float beamLoopPeriod = 0.45f;
         [Tooltip("레이저 굵기. 거리와 상관없이 일정합니다 (이펙트 원본 대비 배율).")]
@@ -64,6 +68,10 @@ namespace Waaang
         public Color beamTint = new Color(0f, 0f, 0f, 0f);
         [Tooltip("벽에 남은 흔적이 이 시간(초)이 지나면 가늘어지며 사라집니다. 0이면 계속 남습니다.")]
         public float trailLifetime = 10f;
+        [Tooltip("레이저가 닿은 곳에 흔적을 남깁니다. 움직이는 대상을 쏘는 전투에서는 끕니다.")]
+        public bool drawTrails = true;
+        [Tooltip("조준점 옆에 맞은 콜라이더 이름을 표시합니다 (디버그).")]
+        public bool showHitLabel;
         [Tooltip("흔적이 사라지는 데 걸리는 시간(초).")]
         public float trailFade = 1.2f;
         [Tooltip("벽에 남는 흔적 색 (HDR).")]
@@ -185,6 +193,9 @@ namespace Waaang
         public bool HasHit { get; private set; }
         public Vector3 HitPoint { get; private set; }
         public Collider HitCollider { get; private set; }
+        /// <summary>Where the beam leaves the wand (just past its tip) and the way it points (along the staff).</summary>
+        public Vector3 BeamOrigin { get; private set; }
+        public Vector3 BeamDirection { get; private set; } = Vector3.forward;
 
         /// <summary>Points the caster at a screen position (0..1) until the phone or mouse moves it.</summary>
         public void SetPointer(Vector2 uv)
@@ -533,7 +544,11 @@ namespace Waaang
             HasHit = hit;
             HitPoint = hit ? info.point : beamEnd;
             HitCollider = hit ? info.collider : null;
-            if (firing && hit)
+            BeamOrigin = beamStart;
+            BeamDirection = staffAxis;
+            // Without the laser the rig only aims: nothing is drawn, scorched or lit here.
+            firing &= showBeam;
+            if (firing && hit && drawTrails)
                 ExtendTrail(info);
             else
                 trail = null;
@@ -722,6 +737,8 @@ namespace Waaang
 
         bool IsFiring()
         {
+            if (fireBlocked)
+                return false;
             var session = FindSession(phoneSlot);
             if (session != null)
                 return session.Model.Pressed;
@@ -737,6 +754,8 @@ namespace Waaang
                 return false;
             return mouseButton == MouseFireButton.Right ? mouse.rightButton.isPressed : mouse.leftButton.isPressed;
         }
+
+        ParticleSystem.Particle[] liveStrokes;
 
         void UpdateAssetBeam(bool firing, Vector3 start, Vector3 end, bool hit, Vector3 normal)
         {
@@ -762,12 +781,38 @@ namespace Waaang
             float scale = length / AssetBeamLength;
             beamInstance.transform.SetPositionAndRotation(end, Quaternion.FromToRotation(Vector3.up, along / length));
             beamInstance.transform.localScale = Vector3.one * scale;
-            float widthFix = Mathf.Clamp(beamThickness / scale, 0.1f, 4f);
+            // Wide clamp: at 0.1 a 40 m miss (scale 2) came out over twice as thick.
+            float widthFix = Mathf.Clamp(beamThickness / scale, 0.01f, 8f);
             for (int i = 0; i < strokeSystems.Length; i++)
             {
-                var main = strokeSystems[i].main;
+                var system = strokeSystems[i];
+                var main = system.main;
                 main.startSizeXMultiplier = strokeBaseWidth[i].x * widthFix;
                 main.startSizeZMultiplier = strokeBaseWidth[i].y * widthFix;
+                // Strokes already in flight keep the width they were emitted with, but the beam's scale follows the
+                // length every frame: swinging from a near target to a far one blew them up for a moment. Re-fit them.
+                int count = system.particleCount;
+                if (count == 0)
+                    continue;
+                if (liveStrokes == null || liveStrokes.Length < count)
+                    liveStrokes = new ParticleSystem.Particle[Mathf.NextPowerOfTwo(count)];
+                count = system.GetParticles(liveStrokes);
+                bool size3D = main.startSize3D;
+                for (int k = 0; k < count; k++)
+                {
+                    if (size3D)
+                    {
+                        var size = liveStrokes[k].startSize3D;
+                        size.x = strokeBaseWidth[i].x * widthFix;
+                        size.z = strokeBaseWidth[i].y * widthFix;
+                        liveStrokes[k].startSize3D = size;
+                    }
+                    else
+                    {
+                        liveStrokes[k].startSize = strokeBaseWidth[i].x * widthFix;
+                    }
+                }
+                system.SetParticles(liveStrokes, count);
             }
 
             if (impactRoot != null && hit)
@@ -962,15 +1007,12 @@ namespace Waaang
 
             float x = pointerUv.x * Screen.width;
             float y = (1f - pointerUv.y) * Screen.height;
-            Color previous = GUI.color;
-            GUI.color = phoneSlot == 0
-                ? new Color(1f, 0.82f, 0.2f, 1f)
-                : new Color(0.45f, 0.75f, 1f, 1f);
-            GUI.DrawTexture(new Rect(x - 14f, y - 1.5f, 28f, 3f), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(x - 1.5f, y - 14f, 3f, 28f), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(x - 3f, y - 3f, 6f, 6f), Texture2D.whiteTexture);
-            GUI.color = previous;
-            if (!string.IsNullOrEmpty(hitName))
+            var color = phoneSlot == 0 ? new Color(1f, 0.82f, 0.3f, 1f) : new Color(0.45f, 0.75f, 1f, 1f);
+            // Tightens and brightens while firing.
+            float size = (Firing ? 34f : 42f) * AiHackathon.Game.GameGui.Scale;
+            if (!Firing) color.a = 0.8f;
+            AiHackathon.Game.GameGui.Crosshair(pointerUv, color, size);
+            if (showHitLabel && !string.IsNullOrEmpty(hitName))
                 GUI.Label(new Rect(x + 16f, y - 10f, 240f, 24f), hitName);
         }
     }

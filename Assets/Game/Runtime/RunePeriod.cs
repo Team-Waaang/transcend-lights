@@ -10,6 +10,8 @@ namespace AiHackathon.Game
     /// <see cref="RuneTrace"/>; strokes can be lifted and resumed, and once she stops firing for
     /// <see cref="finishDelay"/> the trace is judged. Success moves her stone to the next rune of her lane;
     /// a failure clears the strokes for another try. The period is cleared when every lane is done.
+    /// With <see cref="memory"/> on (Period 2, the dark), each rune is shown glowing for <see cref="showSeconds"/>,
+    /// then goes dark and must be traced from memory. A failed rune counts as a miss and the stone moves on.
     /// </summary>
     public class RunePeriod : MonoBehaviour
     {
@@ -23,6 +25,9 @@ namespace AiHackathon.Game
             [NonSerialized] public float lastFire = -10f;
             [NonSerialized] public string message;
             [NonSerialized] public float messageTime = -10f;
+            [NonSerialized] public bool showing;
+            [NonSerialized] public int passed, failed;
+            [NonSerialized] public System.Collections.Generic.List<bool> results = new System.Collections.Generic.List<bool>();
         }
 
         public GameManager game;
@@ -33,6 +38,20 @@ namespace AiHackathon.Game
         [Tooltip("Fewer trace points than this are dropped as a stray shot.")]
         public int minPoints = 10;
         public bool showHud = true;
+        public string clearedText = "통과!";
+        [Tooltip("Line under the clear banner.")]
+        public string clearedSubtitle = "모든 룬을 깨웠다";
+        [Tooltip("Seconds the clear screen stays before the next period loads (PeriodFlow). Negative: stay.")]
+        public float advanceAfter = 4f;
+
+        [Header("Memory (draw in the dark)")]
+        public bool memory;
+        public float showSeconds = 3f;
+        public float hintSeconds = 1.6f;
+        [Tooltip("Glow of the rune while it is being shown.")]
+        public float showGlow = 1.1f;
+        [Tooltip("Stone brightness while the rune is hidden (1 = unchanged). Hides the painted rune in the dark.")]
+        [Range(0f, 1f)] public float darkShade = 1f;
 
         public UnityEvent onCleared = new UnityEvent();
         public bool Cleared { get; private set; }
@@ -44,14 +63,22 @@ namespace AiHackathon.Game
                     lane.stone.SetRune(lane.sequence[0]);
         }
 
+        bool started;
+
         void Update()
         {
             if (game == null || game.CurrentPhase != GameManager.Phase.Play) return;
+            if (!started)
+            {
+                started = true;
+                if (memory)
+                    for (int i = 0; i < lanes.Length; i++) StartCoroutine(Show(i, showSeconds, false));
+            }
             for (int i = 0; i < lanes.Length && i < game.players.Length; i++)
             {
                 var lane = lanes[i];
                 var rig = game.players[i].rig;
-                if (lane.stone == null || lane.stone.trace == null || rig == null || lane.busy || lane.done) continue;
+                if (lane.stone == null || lane.stone.trace == null || rig == null || lane.busy || lane.done || lane.showing) continue;
                 var trace = lane.stone.trace;
                 if (rig.Firing)
                 {
@@ -74,74 +101,163 @@ namespace AiHackathon.Game
             lane.busy = true;
             var trace = lane.stone.trace;
             bool ok = trace.Finish();
-            lane.message = ok ? "성공!" : "다시!";
+            if (memory && ok) lane.stone.shade = 1f;
+            lane.message = ok ? "성공!" : "실패…";
             lane.messageTime = Time.time;
             yield return new WaitForSeconds(0.35f);
             rig.ClearTrails();
             trace.Clear();
             while (lane.stone.IsPlaying) yield return null;
-            if (ok)
+            // Pass or fail, the stone moves on to the next rune: a miss counts as a miss, not a retry.
+            if (ok) lane.passed++; else lane.failed++;
+            lane.results.Add(ok);
+            lane.index++;
+            if (lane.index < lane.sequence.Length)
             {
-                lane.index++;
-                if (lane.index < lane.sequence.Length)
-                {
-                    lane.stone.ChangeRune(lane.sequence[lane.index]);
-                    while (lane.stone.IsPlaying) yield return null;
-                }
-                else
-                {
-                    lane.done = true;
-                    lane.message = "완료!";
-                    lane.messageTime = Time.time;
-                    CheckCleared();
-                }
+                lane.stone.ChangeRune(lane.sequence[lane.index]);
+                while (lane.stone.IsPlaying) yield return null;
+                if (memory) yield return Show(i, showSeconds, false);
+            }
+            else
+            {
+                lane.done = true;
+                lane.message = "완료!";
+                lane.messageTime = Time.time;
+                CheckCleared();
             }
             lane.busy = false;
+        }
+
+        // Lights the rune up so it can be memorised, then lets it sink back into the dark.
+        IEnumerator Show(int i, float seconds, bool hint)
+        {
+            var lane = lanes[i];
+            if (lane.stone == null) yield break;
+            lane.showing = true;
+            lane.message = hint ? "다시 한 번 보세요" : "기억하세요!";
+            lane.messageTime = Time.time;
+            const float fadeIn = 0.35f, fadeOut = 0.7f;
+            var s = lane.stone;
+            for (float t = 0f; t < fadeIn; t += Time.deltaTime) { float k = t / fadeIn; s.revealGlow = showGlow * k; s.shade = Mathf.Lerp(darkShade, 1f, k); yield return null; }
+            for (float t = 0f; t < seconds; t += Time.deltaTime) { s.revealGlow = showGlow; s.shade = 1f; yield return null; }
+            for (float t = 0f; t < fadeOut; t += Time.deltaTime) { float k = 1f - t / fadeOut; s.revealGlow = showGlow * k; s.shade = Mathf.Lerp(darkShade, 1f, k); yield return null; }
+            s.revealGlow = 0f;
+            s.shade = darkShade;
+            lane.message = "그려요!";
+            lane.messageTime = Time.time;
+            lane.showing = false;
+        }
+
+        float clearedAt = -10f;
+
+        IEnumerator Advance()
+        {
+            yield return new WaitForSecondsRealtime(advanceAfter);
+            PeriodFlow.Next();
         }
 
         void CheckCleared()
         {
             foreach (var lane in lanes) if (!lane.done) return;
             Cleared = true;
+            clearedAt = Time.unscaledTime;
             onCleared.Invoke();
+            if (advanceAfter >= 0f) StartCoroutine(Advance());
         }
 
         void OnGUI()
         {
             if (!showHud || game == null || game.CurrentPhase != GameManager.Phase.Play) return;
-            float scale = Screen.height / 1080f;
-            var style = new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(26 * scale), fontStyle = FontStyle.Bold };
-            var small = new GUIStyle(style) { fontSize = Mathf.RoundToInt(20 * scale), fontStyle = FontStyle.Normal };
+            float s = GameGui.Scale;
+            float now = Time.unscaledTime;
             for (int i = 0; i < lanes.Length && i < game.players.Length; i++)
-            {
-                var lane = lanes[i];
-                var profile = game.players[i].profile;
-                var trace = lane.stone != null ? lane.stone.trace : null;
-                bool left = i == 0;
-                float w = 520f * scale, x = left ? 30f * scale : Screen.width - w - 30f * scale, y = 24f * scale;
-                style.alignment = small.alignment = left ? TextAnchor.UpperLeft : TextAnchor.UpperRight;
-                style.normal.textColor = profile != null ? profile.playerColor : Color.white;
-                string name = profile != null ? profile.displayName : "P" + (i + 1);
-                int total = Mathf.Max(1, lane.sequence.Length);
-                GUI.Label(new Rect(x, y, w, 40f * scale), $"{name}   룬 {Mathf.Min(lane.index + 1, total)}/{total}", style);
-                small.normal.textColor = Color.white;
-                if (trace != null && !lane.done)
-                    GUI.Label(new Rect(x, y + 38f * scale, w, 30f * scale), $"범위 {trace.Coverage * 100f:0}%  ·  정확도 {trace.Accuracy * 100f:0}%  (기준 {trace.coverageToPass * 100f:0}%)", small);
-                if (!string.IsNullOrEmpty(lane.message) && Time.time - lane.messageTime < 1.6f)
-                    GUI.Label(new Rect(x, y + 70f * scale, w, 40f * scale), lane.message, style);
-            }
-            if (game.mouseTest)
-            {
-                small.alignment = TextAnchor.LowerCenter;
-                small.normal.textColor = new Color(1f, 1f, 1f, 0.75f);
-                GUI.Label(new Rect(0f, Screen.height - 50f * scale, Screen.width, 40f * scale), "마우스 테스트: 좌클릭 = 왼쪽 플레이어, 우클릭 = 오른쪽 플레이어 · 돌의 룬을 따라 그리고 손을 떼면 판정", small);
-            }
+                DrawLane(i, s, now);
+
+            if (game.mouseTest && CasterInput.Session(0) == null)
+                GameGui.Label(new Rect(0f, Screen.height - 44f * s, Screen.width, 36f * s),
+                    "마우스 테스트: 좌클릭 = 왼쪽 플레이어, 우클릭 = 오른쪽 플레이어 · 돌의 룬을 따라 그리고 손을 떼면 판정",
+                    GameGui.Style(19, TextAnchor.MiddleCenter, false), new Color(1f, 1f, 1f, 0.6f));
+
             if (Cleared)
             {
-                var big = new GUIStyle(style) { fontSize = Mathf.RoundToInt(64 * scale), alignment = TextAnchor.MiddleCenter };
-                big.normal.textColor = new Color(1f, 0.85f, 0.45f);
-                GUI.Label(new Rect(0f, Screen.height * 0.38f, Screen.width, 90f * scale), "1교시 통과!", big);
+                float k = now - clearedAt;
+                float a = Mathf.Clamp01(k / 0.4f);
+                float punch = 1f + 0.3f * Mathf.Exp(-k * 7f);
+                float y = Screen.height * 0.36f;
+                GameGui.BannerBack(new Rect(0f, y - 30f * s, Screen.width, 210f * s), new Color(0.12f, 0.07f, 0.02f, 0.75f * a));
+                GameGui.DrawCentered(GameGui.Soft, new Vector2(Screen.width * 0.5f, y + 55f * s), 900f * s, new Color(1f, 0.8f, 0.4f, 0.2f * a));
+                GameGui.GlowLabel(new Rect(0f, y, Screen.width, 120f * s), clearedText, GameGui.Style(Mathf.RoundToInt(96 * punch), TextAnchor.MiddleCenter), new Color(1f, 0.93f, 0.7f), new Color(1f, 0.7f, 0.3f), a);
+                GameGui.Label(new Rect(0f, y + 118f * s, Screen.width, 44f * s), clearedSubtitle, GameGui.Style(30, TextAnchor.MiddleCenter, false), new Color(1f, 0.95f, 0.85f), a);
             }
+        }
+
+        void DrawLane(int i, float s, float now)
+        {
+            var lane = lanes[i];
+            var profile = game.players[i].profile;
+            var trace = lane.stone != null ? lane.stone.trace : null;
+            bool left = i == 0;
+            var color = profile != null ? profile.playerColor : Color.white;
+            string name = profile != null ? profile.displayName : "P" + (i + 1);
+            int total = Mathf.Max(1, lane.sequence.Length);
+            float w = 470f * s, x = left ? 46f * s : Screen.width - w - 46f * s, y = 34f * s;
+            var anchor = left ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight;
+
+            // Panel: soft glow behind, name, rune pips.
+            // Dark glass panel so the HUD reads over the sunlit classroom.
+            GameGui.BannerBack(new Rect(x - 60f * s, y - 26f * s, w + 120f * s, 210f * s), new Color(0.012f, 0.011f, 0.01f, 0.88f));
+            GameGui.Rect(new Rect(left ? x : x + w * 0.35f, y + 82f * s, w * 0.65f, Mathf.Max(1f, 1f * s)), new Color(color.r, color.g, color.b, 0.45f));
+            GameGui.GlowLabel(new Rect(x, y, w, 44f * s), name, GameGui.Style(38, anchor), Color.Lerp(color, Color.white, 0.25f), color);
+            for (int k = 0; k < total; k++)
+            {
+                bool done = k < lane.index || lane.done;
+                bool current = k == lane.index && !lane.done;
+                float px = left ? x + 12f * s + k * 30f * s : x + w - 12f * s - (total - 1 - k) * 30f * s;
+                // A missed rune stays as a dim red pip.
+                bool missed = done && k < lane.results.Count && !lane.results[k];
+                var c = missed ? new Color(0.75f, 0.3f, 0.35f, 0.8f) : done ? color : current ? Color.Lerp(color, Color.white, 0.5f + 0.5f * Mathf.Sin(now * 5f)) : new Color(1f, 1f, 1f, 0.25f);
+                if ((done && !missed) || current) GameGui.DrawCentered(GameGui.Soft, new Vector2(px, y + 62f * s), 40f * s, new Color(color.r, color.g, color.b, 0.45f));
+                GameGui.DrawCentered(GameGui.Diamond, new Vector2(px, y + 62f * s), (current ? 22f : 18f) * s, c);
+            }
+            GameGui.Label(new Rect(x, y + 2f * s, w, 40f * s), lane.done ? "완료" : $"룬  {Mathf.Min(lane.index + 1, total)} / {total}",
+                GameGui.Style(26, left ? TextAnchor.MiddleRight : TextAnchor.MiddleLeft), lane.done ? new Color(1f, 0.92f, 0.65f) : new Color(1f, 1f, 1f, 0.9f));
+
+            // Trace meters: coverage and accuracy with their pass marks.
+            if (trace != null && !lane.done)
+            {
+                float by = y + 92f * s;
+                Meter(new Rect(x, by, w, 14f * s), "범위", trace.Coverage, trace.coverageToPass, color, left, s);
+                Meter(new Rect(x, by + 44f * s, w, 14f * s), "정확도", trace.Accuracy, trace.accuracyToPass, color, left, s);
+            }
+
+            // Judgement call-out over the player's side of the screen.
+            if (!string.IsNullOrEmpty(lane.message) && (lane.showing || now - lane.messageTime < 1.6f))
+            {
+                float k = now - lane.messageTime;
+                float a = Mathf.Clamp01(k / 0.1f) * (lane.showing ? 1f : Mathf.Clamp01((1.6f - k) / 0.4f));
+                float punch = 1f + 0.4f * Mathf.Exp(-k * 10f);
+                bool good = lane.message != "실패…" && lane.message != "다시!";
+                var glow = good ? color : new Color(1f, 0.35f, 0.45f);
+                float cx = left ? Screen.width * 0.27f : Screen.width * 0.73f;
+                GameGui.DrawCentered(GameGui.Soft, new Vector2(cx, Screen.height * 0.42f), 380f * s * punch, new Color(glow.r, glow.g, glow.b, 0.25f * a));
+                GameGui.GlowLabel(new Rect(cx - 300f * s, Screen.height * 0.42f - 50f * s, 600f * s, 100f * s), lane.message,
+                    GameGui.Style(Mathf.RoundToInt(72 * punch), TextAnchor.MiddleCenter), good ? Color.white : new Color(1f, 0.85f, 0.88f), glow, a);
+            }
+        }
+
+        static void Meter(Rect r, string label, float value, float pass, Color color, bool left, float s)
+        {
+            bool ok = value >= pass;
+            var from = new Color(color.r * 0.4f, color.g * 0.4f, color.b * 0.45f);
+            var to = ok ? Color.Lerp(color, Color.white, 0.45f) : color;
+            var bar = new Rect(r.x + (left ? 74f * s : 0f), r.y + 9f * s, r.width - 74f * s, r.height);
+            GameGui.Label(new Rect(left ? r.x : r.xMax - 70f * s, r.y + 1f * s, 70f * s, 30f * s), label, GameGui.Style(22, left ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight), new Color(1f, 1f, 1f, 0.9f));
+            GameGui.FancyBar(bar, value, value, from, to, 1f, false, ok ? 0.6f : 0.25f);
+            float mx = bar.x + bar.width * Mathf.Clamp01(pass);
+            GameGui.Rect(new Rect(mx - 1f * s, bar.y - 4f * s, 2f * s, bar.height + 8f * s), new Color(1f, 1f, 1f, 0.8f));
+            GameGui.DrawCentered(GameGui.Diamond, new Vector2(mx, bar.y - 6f * s), 10f * s, new Color(1f, 0.95f, 0.85f, 0.9f));
+            GameGui.Label(new Rect(bar.x, bar.yMax + 2f * s, bar.width, 24f * s), Mathf.RoundToInt(value * 100f) + "%" + (ok ? "  ✓" : ""),
+                GameGui.Style(19, left ? TextAnchor.UpperRight : TextAnchor.UpperLeft), ok ? new Color(1f, 0.95f, 0.7f) : new Color(1f, 1f, 1f, 0.7f));
         }
     }
 }
