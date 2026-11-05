@@ -113,8 +113,10 @@ namespace AiHackathon.Cutscene.Editor
             return rig.HandRotation(side, f, p);
         }
 
-        // Where the shaft passes through a closed fist, in hand space.
-        static Vector3 GripLocal(PoseRig rig, string side) => rig.FingerLocal(side) * 0.042f + rig.PalmLocal(side) * 0.016f;
+        // Where the shaft passes through a closed fist, in hand space: across the palm just short of the knuckles,
+        // one shaft radius plus the palm's thickness below the bones, so the fingers have room to close around it.
+        static Vector3 GripLocal(PoseRig rig, string side) =>
+            rig.FingerLocal(side) * (rig.KnuckleDistance(side) * 0.86f) + rig.PalmLocal(side) * 0.021f;
         static Vector3 AxisLocal(PoseRig rig, string side) =>
             Vector3.Cross(rig.FingerLocal(side), -rig.PalmLocal(side)).normalized * (side == R ? 1f : -1f);
 
@@ -123,8 +125,24 @@ namespace AiHackathon.Cutscene.Editor
         {
             var rot = GripRotation(rig, side, axis, knuckles);
             rig.Arm(side, point - rot * GripLocal(rig, side), rig[side + "UpperArm"].position + pole, rot);
-            rig.Curl(side, curl, 0.7f);
+            // Fingers and thumb close around the shaft itself rather than into a fixed fist beside it. Wrap around
+            // where the wand really is (it hangs off this hand), not the target: when the arm can't quite reach,
+            // the hand and the wand stop short together.
+            rig.Curl(side, 0.15f, 0.1f);
+            ShaftLine(rig, side, out var held, out var heldAxis);
+            rig.Wrap(side, held, heldAxis, ShaftContact, Mathf.Clamp01(curl / 0.85f));
         }
+
+        /// <summary>The wand's line as the hand holding it (<paramref name="side"/>) carries it now.</summary>
+        static void ShaftLine(PoseRig rig, string side, out Vector3 point, out Vector3 axis)
+        {
+            var hand = rig[side + "Hand"];
+            point = hand.position + hand.rotation * GripLocal(rig, side);
+            axis = hand.rotation * AxisLocal(rig, side);
+        }
+
+        // Shaft radius plus half a finger, in model units (the game's wands are about 1.2 cm in radius at 1x).
+        const float ShaftContact = 0.017f;
 
         static void GripPose(string side, out Vector3 point, out Vector3 axis, out Vector3 knuckles, out Vector3 pole, float forward = 0f)
         {
@@ -375,7 +393,9 @@ namespace AiHackathon.Cutscene.Editor
             var supportPoint = point - axis * 0.075f;
             var supportWrist = supportPoint - gripRot * GripLocal(rig, support);
             FreeArm(rig, support, restWrist, restHand, supportWrist, gripRot, set, M(new Vector3(0.02f, -0.02f, 0.05f), lead),
-                M(new Vector3(-0.35f, -0.3f, -0.08f), lead), M(new Vector3(-0.3f, -0.38f, 0.0f), lead), 0.3f, 0.85f);
+                M(new Vector3(-0.35f, -0.3f, -0.08f), lead), M(new Vector3(-0.3f, -0.38f, 0.0f), lead), 0.3f, 0.2f);
+            ShaftLine(rig, lead, out var held, out var heldAxis);
+            rig.Wrap(support, held, heldAxis, ShaftContact, set);
         }
 
         // ---------------------------------------------------------------- in-game idle
@@ -506,7 +526,9 @@ namespace AiHackathon.Cutscene.Editor
             var gripWrist = point - axis * 0.07f - gripRot * GripLocal(rig, L);
             float k = u * (1f - release);
             FreeArm(rig, L, restWrist, restHand, gripWrist, gripRot, k, new Vector3(-0.02f, 0f, 0.04f),
-                new Vector3(-0.35f, -0.3f, -0.08f), new Vector3(-0.3f, -0.35f, -0.15f), 0.3f, 0.85f);
+                new Vector3(-0.35f, -0.3f, -0.08f), new Vector3(-0.3f, -0.35f, -0.15f), 0.3f, 0.2f);
+            ShaftLine(rig, R, out var held, out var heldAxis);
+            rig.Wrap(L, held, heldAxis, ShaftContact, k);
         }
 
         /// <summary>

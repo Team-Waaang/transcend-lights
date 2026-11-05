@@ -20,6 +20,7 @@ namespace AiHackathon.Cutscene.Editor
         readonly Dictionary<Transform, List<Keyframe>[]> keys = new Dictionary<Transform, List<Keyframe>[]>();
         readonly Dictionary<string, Vector3> fingerLocal = new Dictionary<string, Vector3>();
         readonly Dictionary<string, Vector3> palmLocal = new Dictionary<string, Vector3>();
+        readonly Dictionary<string, float> knuckle = new Dictionary<string, float>();
         readonly Transform hips;
         readonly Vector3 hipsBindLocal, hipsBindWorld;
         readonly Quaternion hipsBindRotation;
@@ -48,6 +49,7 @@ namespace AiHackathon.Cutscene.Editor
                 var hand = this[side + "Hand"];
                 var toLocal = Quaternion.Inverse(hand.rotation);
                 fingerLocal[side] = (toLocal * (this[side + "MiddleProximal"].position - hand.position)).normalized;
+                knuckle[side] = (this[side + "MiddleProximal"].position - hand.position).magnitude;
                 // Tripo binds in a T-pose with both palms facing the floor.
                 palmLocal[side] = toLocal * Vector3.down;
                 feet[side] = (this[side + "Foot"].position, this[side + "Foot"].rotation, this[side + "LowerLeg"].position);
@@ -60,6 +62,8 @@ namespace AiHackathon.Cutscene.Editor
 
         public Vector3 FingerLocal(string side) => fingerLocal[side];
         public Vector3 PalmLocal(string side) => palmLocal[side];
+        /// <summary>Wrist to the middle knuckle in the bind pose (model units).</summary>
+        public float KnuckleDistance(string side) => knuckle[side];
 
         /// <summary>
         /// Moves and turns the hips (world offset from bind, world-space euler), then bends the legs with IK so both feet
@@ -132,6 +136,58 @@ namespace AiHackathon.Cutscene.Editor
                 var bone = this[prefix + Joints[j]];
                 bone.rotation = Quaternion.AngleAxis(bend[j] * amount, axis) * bone.rotation;
             }
+        }
+
+        static readonly float[] FingerWrapMax = { 95f, 105f, 80f };
+        static readonly float[] ThumbWrapMax = { 35f, 45f, 55f };
+
+        /// <summary>
+        /// Closes the hand around a shaft: each finger joint (and the thumb's) bends toward the palm until the next
+        /// joint meets the cylinder of <paramref name="radius"/> about the line through <paramref name="point"/> along
+        /// <paramref name="axis"/>, so the fingers wrap the shaft wherever it lies instead of folding to a fixed fist.
+        /// <paramref name="amount"/> blends from the current curl (0) to the full wrap (1).
+        /// </summary>
+        public void Wrap(string side, Vector3 point, Vector3 axis, float radius, float amount = 1f, float thumb = 1f)
+        {
+            if (amount <= 0f) return;
+            axis.Normalize();
+            foreach (var f in Fingers) WrapChain(side, side + f, point, axis, radius, FingerWrapMax, amount);
+            WrapChain(side, side + "Thumb", point, axis, radius, ThumbWrapMax, amount * thumb);
+        }
+
+        void WrapChain(string side, string prefix, Vector3 point, Vector3 axis, float radius, float[] max, float amount)
+        {
+            var first = this[prefix + Joints[0]];
+            var next = this[prefix + Joints[1]];
+            var hinge = Vector3.Cross(next.position - first.position, Palm(side));
+            if (hinge.sqrMagnitude < 1e-10f) return;
+            hinge.Normalize();
+            for (int j = 0; j < Joints.Length; j++)
+            {
+                var bone = this[prefix + Joints[j]];
+                var child = j + 1 < Joints.Length ? this[prefix + Joints[j + 1]]
+                    : bones.TryGetValue(prefix + "DistalEnd", out var end) ? end : null;
+                var start = bone.rotation;
+                float best = max[j];
+                if (child != null)
+                {
+                    // Already touching (or inside): leave this joint straight rather than fold through the shaft.
+                    if (DistanceToLine(child.position, point, axis) <= radius) best = 0f;
+                    else
+                        for (float a = 2f; a <= max[j]; a += 2f)
+                        {
+                            bone.rotation = Quaternion.AngleAxis(a, hinge) * start;
+                            if (DistanceToLine(child.position, point, axis) <= radius) { best = a; break; }
+                        }
+                }
+                bone.rotation = Quaternion.AngleAxis(best * amount, hinge) * start;
+            }
+        }
+
+        static float DistanceToLine(Vector3 p, Vector3 point, Vector3 axis)
+        {
+            var d = p - point;
+            return (d - axis * Vector3.Dot(d, axis)).magnitude;
         }
 
         public void Key(float time)
