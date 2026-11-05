@@ -1,0 +1,7 @@
+{
+  "name": "PhonePointer.Runtime",
+  "rootNamespace": "PhonePointer",
+  "references": [
+    "PhonePointer.Core"
+  ]
+}
