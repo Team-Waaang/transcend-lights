@@ -187,6 +187,16 @@ static class PlayProbe
     /// <summary>Keeps Play mode ticking while the editor is in the background (this session only, not a project setting).</summary>
     public static string RunInBackground() { Application.runInBackground = true; return "runInBackground"; }
 
+    /// <summary>Moves the (Input System) mouse to a screen point, origin top-left like the HUD.</summary>
+    public static string MouseAt(string x, string y)
+    {
+        var mouse = UnityEngine.InputSystem.Mouse.current;
+        if (mouse == null) return "no mouse";
+        var p = new Vector2(float.Parse(x), Screen.height - float.Parse(y));
+        UnityEngine.InputSystem.InputSystem.QueueStateEvent(mouse, new UnityEngine.InputSystem.LowLevel.MouseState { position = p });
+        return "mouse " + p;
+    }
+
     public static string Scene() => SceneManager.GetActiveScene().path;
 
     public static string ResolvePackages()

@@ -215,22 +215,36 @@ namespace AiHackathon.Game
                 wordWrap = false,
                 clipping = TextClipping.Overflow,
                 richText = false,
+                hover = new GUIStyleState(),
+                active = new GUIStyleState(),
+                focused = new GUIStyleState(),
             };
+        }
+
+        /// <summary>
+        /// Sets the text colour of every state. IMGUI draws a label in its hover / active colour when the mouse is
+        /// over it, so changing only <c>normal</c> made the outline and glow passes turn bright under the cursor
+        /// (the mouse-test aim) and the text looked doubled.
+        /// </summary>
+        static void SetColor(GUIStyle style, Color c)
+        {
+            style.normal.textColor = style.hover.textColor = style.active.textColor = style.focused.textColor = c;
+            style.onNormal.textColor = style.onHover.textColor = style.onActive.textColor = style.onFocused.textColor = c;
         }
 
         /// <summary>Text with a dark outline so it reads over bright effects.</summary>
         public static void Label(Rect r, string text, GUIStyle style, Color color, float alpha = 1f)
         {
             var c = style.normal.textColor;
-            style.normal.textColor = new Color(0f, 0f, 0f, 0.75f * alpha);
+            SetColor(style, new Color(0f, 0f, 0f, 0.75f * alpha));
             float o = Mathf.Max(1f, 2f * Scale);
             GUI.Label(new Rect(r.x - o, r.y, r.width, r.height), text, style);
             GUI.Label(new Rect(r.x + o, r.y, r.width, r.height), text, style);
             GUI.Label(new Rect(r.x, r.y - o, r.width, r.height), text, style);
             GUI.Label(new Rect(r.x, r.y + o, r.width, r.height), text, style);
-            style.normal.textColor = new Color(color.r, color.g, color.b, color.a * alpha);
+            SetColor(style, new Color(color.r, color.g, color.b, color.a * alpha));
             GUI.Label(r, text, style);
-            style.normal.textColor = c;
+            SetColor(style, c);
         }
 
         /// <summary>Text with a coloured glow behind it (call-outs).</summary>
@@ -238,13 +252,13 @@ namespace AiHackathon.Game
         {
             var c = style.normal.textColor;
             float g = 4f * Scale;
-            style.normal.textColor = new Color(glow.r, glow.g, glow.b, 0.18f * alpha);
+            SetColor(style, new Color(glow.r, glow.g, glow.b, 0.18f * alpha));
             for (int i = 0; i < 8; i++)
             {
                 float a = i * Mathf.PI / 4f;
                 GUI.Label(new Rect(r.x + Mathf.Cos(a) * g, r.y + Mathf.Sin(a) * g, r.width, r.height), text, style);
             }
-            style.normal.textColor = c;
+            SetColor(style, c);
             Label(r, text, style, color, alpha);
         }
 
