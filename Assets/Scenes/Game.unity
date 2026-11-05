@@ -1926,7 +1926,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaff062d92658e341816ef12f13225f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Waaang.CasterPose
-  idle: {fileID: -4165278989240887976, guid: 122205c479fc44d81b5c288bb372e6fb, type: 3}
+  idle: {fileID: 7400000, guid: e64909f894adb4c579eae585e0260ff5, type: 2}
   speed: 1
   breathPeriod: 3.4
   breathDegrees: 1.2
@@ -5701,6 +5701,9 @@ MonoBehaviour:
   lightSurfaceOffset: 0.28
   phoneSlot: 1
   mouseMode: 0
+  mouseButton: 0
+  mouseAimWhileFiring: 0
+  toonScene: 1
   holdOffset: {x: 0.32, y: 0, z: 0.12}
   holdReach: 0.04
   staffUpright: 0
@@ -5941,6 +5944,9 @@ MonoBehaviour:
   lightSurfaceOffset: 0.28
   phoneSlot: 0
   mouseMode: 0
+  mouseButton: 0
+  mouseAimWhileFiring: 0
+  toonScene: 1
   holdOffset: {x: 0.32, y: 0, z: 0.12}
   holdReach: 0.04
   staffUpright: 0
@@ -6880,7 +6886,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaff062d92658e341816ef12f13225f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Waaang.CasterPose
-  idle: {fileID: -4165278989240887976, guid: 122205c479fc44d81b5c288bb372e6fb, type: 3}
+  idle: {fileID: 7400000, guid: e64909f894adb4c579eae585e0260ff5, type: 2}
   speed: 1
   breathPeriod: 3.4
   breathDegrees: 1.2

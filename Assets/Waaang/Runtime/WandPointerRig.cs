@@ -24,6 +24,13 @@ namespace Waaang
         [FormerlySerializedAs("useMouseWhenPhoneNotReady")]
         [Tooltip("이 슬롯에 휴대폰이 없을 때 마우스로 조작합니다. 휴대폰이 붙으면 그 휴대폰이 우선합니다.")]
         public bool mouseMode = true;
+        public enum MouseFireButton { Left, Right }
+        [Tooltip("마우스로 쏠 버튼. 두 명을 마우스로 시험할 때 왼쪽 플레이어는 좌클릭, 오른쪽은 우클릭.")]
+        public MouseFireButton mouseButton = MouseFireButton.Left;
+        [Tooltip("켜면 마우스 버튼을 누르는 동안만 이 리그가 커서를 따라갑니다 (두 명이 커서 하나를 나눠 쓸 때).")]
+        public bool mouseAimWhileFiring;
+        [Tooltip("시작할 때 씬 전체를 lilToon으로 바꿉니다. 자체 재질을 쓰는 씬(컷씬 교실 등)에서는 끄세요.")]
+        public bool toonScene = true;
 
         [Header("Pose / IK")]
         [Tooltip("오른쪽 어깨 기준 지팡이를 쥐는 위치(m). x=오른쪽, y=위, z=앞.")]
@@ -53,6 +60,10 @@ namespace Waaang
         public float beamStartGap = 0.04f;
         [Tooltip("레이저 이펙트 색. 알파가 0이면 원본 색을 씁니다.")]
         public Color beamTint = new Color(0f, 0f, 0f, 0f);
+        [Tooltip("벽에 남은 흔적이 이 시간(초)이 지나면 가늘어지며 사라집니다. 0이면 계속 남습니다.")]
+        public float trailLifetime = 10f;
+        [Tooltip("흔적이 사라지는 데 걸리는 시간(초).")]
+        public float trailFade = 1.2f;
         [Tooltip("벽에 남는 흔적 색 (HDR).")]
         [ColorUsage(false, true)] public Color trailColor = new Color(1.5f, 0.78f, 0.28f, 1f);
         [Tooltip("오른손이 지팡이를 잡는 위치. 0=손잡이 끝, 1=지팡이 끝. 클수록 지팡이가 뒤로 들어갑니다.")]
@@ -130,7 +141,35 @@ namespace Waaang
             trailRoot.SetParent(transform, false);
             SetBeamActive(false);
             EnsureAssetBeam();
-            ToonLook.ApplyScene();
+            if (toonScene)
+                ToonLook.ApplyScene();
+        }
+
+        // ---------- Read by game logic (e.g. the rune period) ----------
+
+        /// <summary>True while this caster is firing.</summary>
+        public bool Firing { get; private set; }
+        /// <summary>True when the laser currently hits something; see <see cref="HitPoint"/> / <see cref="HitCollider"/>.</summary>
+        public bool HasHit { get; private set; }
+        public Vector3 HitPoint { get; private set; }
+        public Collider HitCollider { get; private set; }
+
+        /// <summary>Points the caster at a screen position (0..1) until the phone or mouse moves it.</summary>
+        public void SetPointer(Vector2 uv)
+        {
+            pointerUv = uv;
+            hasPointerSample = true;
+        }
+
+        /// <summary>Removes every stroke this caster has drawn.</summary>
+        public void ClearTrails()
+        {
+            trail = null;
+            trailHasPoint = false;
+            if (trailRoot == null)
+                return;
+            for (int i = trailRoot.childCount - 1; i >= 0; i--)
+                Destroy(trailRoot.GetChild(i).gameObject);
         }
 
         // Recolour one layer to tint, keeping each layer's own alpha and fades (CutsceneKit.Tint).
@@ -377,6 +416,11 @@ namespace Waaang
             bool hit = Physics.Raycast(beamStart, staffAxis, out RaycastHit info, 40f, roomMask, QueryTriggerInteraction.Ignore);
             Vector3 beamEnd = hit ? info.point : beamStart + staffAxis * 40f;
 
+            FadeTrails();
+            Firing = firing;
+            HasHit = hit;
+            HitPoint = hit ? info.point : beamEnd;
+            HitCollider = hit ? info.collider : null;
             if (firing && hit)
                 ExtendTrail(info);
             else
@@ -544,9 +588,17 @@ namespace Waaang
             var session = FindSession(phoneSlot);
             if (session != null)
                 return session.Model.Pressed;
-            if (phoneSlot == 0 && mouseMode)
-                return Mouse.current != null && Mouse.current.leftButton.isPressed;
+            if (mouseMode)
+                return MousePressed();
             return false;
+        }
+
+        bool MousePressed()
+        {
+            var mouse = Mouse.current;
+            if (mouse == null)
+                return false;
+            return mouseButton == MouseFireButton.Right ? mouse.rightButton.isPressed : mouse.leftButton.isPressed;
         }
 
         void UpdateAssetBeam(bool firing, Vector3 start, Vector3 end, bool hit, Vector3 normal)
@@ -620,6 +672,39 @@ namespace Waaang
             lastTrailPoint = point;
         }
 
+        // Strokes and the time each was last drawn on, so old ones can thin out and go.
+        readonly System.Collections.Generic.List<(LineRenderer line, float time)> strokes = new System.Collections.Generic.List<(LineRenderer, float)>();
+
+        void FadeTrails()
+        {
+            if (trailLifetime <= 0f)
+                return;
+            for (int i = strokes.Count - 1; i >= 0; i--)
+            {
+                var (line, time) = strokes[i];
+                if (line == null)
+                {
+                    strokes.RemoveAt(i);
+                    continue;
+                }
+                if (line == trail)
+                {
+                    strokes[i] = (line, Time.time);
+                    continue;
+                }
+                float age = Time.time - time - trailLifetime;
+                if (age <= 0f)
+                    continue;
+                float k = Mathf.Clamp01(age / Mathf.Max(0.01f, trailFade));
+                line.widthMultiplier = 0.035f * (1f - k * k);
+                if (k >= 1f)
+                {
+                    strokes.RemoveAt(i);
+                    Destroy(line.gameObject);
+                }
+            }
+        }
+
         void BeginTrail(Vector3 point)
         {
             if (trailMaterial == null)
@@ -638,6 +723,7 @@ namespace Waaang
             trail.positionCount = 2;
             trail.SetPosition(0, point);
             trail.SetPosition(1, point);
+            strokes.Add((trail, Time.time));
             lastTrailPoint = point;
             trailHasPoint = true;
             // Destroy() only happens at the end of the frame, so childCount does not drop inside this loop.
@@ -707,9 +793,12 @@ namespace Waaang
                 return;
             }
 
-            if (phoneSlot == 0 && mouseMode && session == null)
+            if (mouseMode && session == null)
             {
-                ApplyMouse();
+                if (!mouseAimWhileFiring || MousePressed())
+                    ApplyMouse();
+                else
+                    pointerVisible = hasPointerSample;
                 return;
             }
 

@@ -141,7 +141,7 @@ namespace Waaang.EditorTools
                 tipLight.color = Color.Lerp(NoxColor, Color.white, 0.3f);
 
             var pose = nox.AddComponent<CasterPose>();
-            pose.idle = FindClip(MageFbx, "Idle stance");
+            pose.idle = CasterIdle();
             var body = nox.GetComponentInChildren<SkinnedMeshRenderer>();
             if (body != null)
                 body.sharedMaterial = RimToon("Nox_Rim.mat", body.sharedMaterial);
@@ -197,6 +197,94 @@ namespace Waaang.EditorTools
             marker.SetActive(false);
             EditorUtility.SetDirty(caster);
             EditorUtility.SetDirty(rig);
+        }
+
+        // ---------- Shared: one caster from a profile ----------
+
+        /// <summary>
+        /// Builds a complete caster into the open scene from <paramref name="profile"/>: the character (1.5x, facing
+        /// +Z, on the floor at <paramref name="position"/>), her staff, laser, hit marker and light, CasterPose idle
+        /// and a WandPointerRig on its own object (returned). Same parts and settings as the Game scene's casters, so
+        /// other scenes (the period cutscenes) play identically.
+        /// </summary>
+        public static WandPointerRig CreateCaster(AiHackathon.Game.CasterProfile profile, Camera camera, Vector3 position, int phoneSlot)
+        {
+            string fbx = AssetDatabase.GetAssetPath(profile.characterModel);
+            string name = profile.displayName;
+            var character = CreateCharacter(fbx, name, name + ".mat");
+            character.transform.position = new Vector3(position.x, character.transform.position.y + position.y, position.z);
+            var body = character.GetComponentInChildren<SkinnedMeshRenderer>();
+            if (body != null && profile.bodyMaterial != null)
+                body.sharedMaterial = profile.bodyMaterial;
+
+            string wandMat = AssetDatabase.GetAssetPath(profile.wandMaterial);
+            var staff = CreateStaff(character.transform, AssetDatabase.GetAssetPath(profile.wandModel), wandMat,
+                string.IsNullOrEmpty(wandMat) ? name + "Wand.mat" : System.IO.Path.GetFileName(wandMat));
+            // Grip a quarter of the way up the wand, like ApplyCutsceneLook.
+            var tip = staff.transform.Find("Staff Tip");
+            var lead = staff.transform.Find("Right Grip");
+            if (tip != null && lead != null)
+                lead.localPosition = tip.localPosition * 0.2f;
+            FitStaffTip(staff.transform);
+            staff.transform.localScale = Vector3.one * profile.staffScale;
+            var tipLight = tip != null ? tip.GetComponent<Light>() : null;
+            if (tipLight != null)
+            {
+                tipLight.color = profile.tipLightColor;
+                tipLight.intensity = profile.tipLightIntensity;
+                tipLight.range = 1.2f;
+                tipLight.enabled = profile.tipLightIntensity > 0f;
+            }
+
+            var pose = character.AddComponent<CasterPose>();
+            pose.idle = profile.idle != null ? profile.idle : FindClip(MageFbx, "Idle stance");
+
+            var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            marker.name = "Hit Marker " + name;
+            marker.transform.localScale = Vector3.one * 0.08f;
+            Object.DestroyImmediate(marker.GetComponent<Collider>());
+            marker.GetComponent<Renderer>().sharedMaterial = Solid("Hit_" + name + ".mat", profile.playerColor);
+            marker.SetActive(false);
+
+            var lightObject = new GameObject("Hit Light " + name);
+            var hitLight = lightObject.AddComponent<Light>();
+            hitLight.type = LightType.Point;
+            hitLight.color = profile.playerColor;
+            hitLight.intensity = profile.hitLightIntensity;
+            hitLight.range = 2.4f;
+            hitLight.shadows = LightShadows.None;
+            hitLight.enabled = false;
+            AddLightData(lightObject);
+
+            var beam = CreateBeam();
+            beam[0].gameObject.name = "Laser " + name;
+
+            var rigObject = new GameObject("Wand Pointer " + name);
+            var rig = rigObject.AddComponent<WandPointerRig>();
+            rig.phoneSlot = phoneSlot;
+            rig.mouseMode = phoneSlot == 0;
+            rig.viewCamera = camera;
+            rig.character = character.transform;
+            rig.staff = staff.transform;
+            rig.rightGrip = lead;
+            rig.leftGrip = staff.transform.Find("Left Grip");
+            rig.hitMarker = marker.transform;
+            rig.hitLight = hitLight;
+            rig.aimLine = beam[0];
+            rig.glowLine = beam[1];
+            rig.useLeftHand = true;
+            rig.holdOffset = new Vector3(0.32f, 0f, 0.12f);
+            rig.holdReach = 0.04f;
+            rig.fingerCurl = 1f;
+            rig.staffUpright = 0f;
+            rig.leftHanded = profile.leftHanded;
+            rig.beamTint = profile.beamTint;
+            rig.trailColor = profile.trailColor;
+            if (profile.beamPrefab != null)
+                rig.beamPrefab = profile.beamPrefab;
+            rig.beamThickness = profile.beamThickness;
+            rig.impactSize = 0.05f;
+            return rig;
         }
 
         // Duo shot: centred behind both players and a little higher, so Amelia's back sits lower-left, Nox's
@@ -268,7 +356,7 @@ namespace Waaang.EditorTools
             var pose = character.GetComponent<CasterPose>();
             if (pose == null)
                 pose = character.gameObject.AddComponent<CasterPose>();
-            pose.idle = FindClip(MageFbx, "Idle stance");
+            pose.idle = CasterIdle();
 
             var body = character.GetComponentInChildren<SkinnedMeshRenderer>();
             if (body != null)
@@ -291,6 +379,15 @@ namespace Waaang.EditorTools
             FrameOverShoulder(camera, character);
             EditorUtility.SetDirty(rig);
             EditorUtility.SetDirty(pose);
+        }
+
+        // Seamless two-handed idle (Tools/Cutscene/Build Period Pose Clips); the old mage idle jumped at its loop point.
+        const string CasterIdlePath = "Assets/Cutscene/Periods/Anim/Caster_Idle.anim";
+
+        static AnimationClip CasterIdle()
+        {
+            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(CasterIdlePath);
+            return clip != null ? clip : FindClip(MageFbx, "Idle stance");
         }
 
         static AnimationClip FindClip(string fbx, string prefix)
