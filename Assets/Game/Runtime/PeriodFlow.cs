@@ -115,7 +115,8 @@ namespace AiHackathon.Game
             GameGui.Rect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0.02f, 0.01f, 0.04f, fade));
             if (cardAlpha <= 0f || string.IsNullOrEmpty(card)) return;
             float s = GameGui.Scale, y = Screen.height * 0.4f;
-            GameGui.DrawCentered(GameGui.Soft, new Vector2(Screen.width * 0.5f, y + 40f * s), 700f * s, new Color(0.6f, 0.4f, 1f, 0.12f * cardAlpha));
+            // A wide, faint pool of light behind the title rather than a round purple blob.
+            GameGui.BannerBack(new Rect(Screen.width * 0.12f, y - 70f * s, Screen.width * 0.76f, 300f * s), new Color(0.42f, 0.32f, 0.75f, 0.16f * cardAlpha));
             GameGui.GlowLabel(new Rect(0f, y, Screen.width, 90f * s), card, GameGui.Style(76, TextAnchor.MiddleCenter), new Color(1f, 0.95f, 0.85f), new Color(0.75f, 0.5f, 1f), cardAlpha);
             if (!string.IsNullOrEmpty(cardSub))
                 GameGui.Label(new Rect(0f, y + 92f * s, Screen.width, 44f * s), cardSub, GameGui.Style(32, TextAnchor.MiddleCenter, false), new Color(0.85f, 0.8f, 1f), cardAlpha);

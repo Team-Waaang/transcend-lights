@@ -36,7 +36,7 @@ namespace AiHackathon.Game
             if (bodyFont == null) bodyFont = fonts.body;
         }
 
-        static Texture2D ring, disc, soft, stripe, diamond, banner;
+        static Texture2D ring, disc, soft, stripe, diamond, banner, vignette;
         static readonly Dictionary<long, Texture2D> gradients = new Dictionary<long, Texture2D>();
 
         public static float Scale => Screen.height / 1080f;
@@ -71,13 +71,17 @@ namespace AiHackathon.Game
             get
             {
                 if (banner != null) return banner;
-                banner = New(128, 32);
-                for (int y = 0; y < 32; y++)
-                for (int x = 0; x < 128; x++)
+                // A soft rounded pool of shade, not a box: alpha falls off smoothly from the middle along a
+                // squircle, reaching zero well inside every edge, so no straight border ever shows.
+                const int w = 256, h = 64;
+                banner = New(w, h);
+                for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
                 {
-                    float u = x / 127f, v = y / 31f;
-                    float a = Mathf.Pow(Mathf.Sin(u * Mathf.PI), 0.8f) * Mathf.Pow(Mathf.Sin(v * Mathf.PI), 0.6f);
-                    banner.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                    float u = Mathf.Abs(x / (w - 1f) * 2f - 1f), v = Mathf.Abs(y / (h - 1f) * 2f - 1f);
+                    float d = Mathf.Pow(Mathf.Pow(u, 3f) + Mathf.Pow(v, 2.2f), 1f / 2.6f);
+                    float a = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.15f, 0.98f, d));
+                    banner.SetPixel(x, y, new Color(1f, 1f, 1f, a * a));
                 }
                 banner.Apply();
                 return banner;
@@ -200,8 +204,31 @@ namespace AiHackathon.Game
                     Rect(new Rect(inner.x + inner.width * i / 10f - 0.5f * s, inner.y, Mathf.Max(1f, 1f * s), inner.height * 0.45f), new Color(0f, 0f, 0f, 0.35f * alpha));
         }
 
-        /// <summary>Message banner: a dark band fading to both sides behind the text.</summary>
+        /// <summary>Message banner: a soft pool of shade behind the text, fading out on every side.</summary>
         public static void BannerBack(Rect r, Color tint) => Tex(r, Banner, tint);
+
+        /// <summary>
+        /// Full-screen backdrop treatment for menu screens: a faint cool lift in the middle and darker corners, so a
+        /// flat clear colour reads as a dim room rather than a blank fill.
+        /// </summary>
+        public static void Backdrop(Rect r, float strength = 1f)
+        {
+            if (vignette == null)
+            {
+                const int n = 128;
+                vignette = New(n, n);
+                for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
+                {
+                    float u = x / (n - 1f) * 2f - 1f, v = y / (n - 1f) * 2f - 1f;
+                    float d = Mathf.Clamp01(Mathf.Sqrt(u * u * 0.8f + v * v) / 1.25f);
+                    vignette.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.SmoothStep(0f, 1f, d)));
+                }
+                vignette.Apply();
+            }
+            Tex(new Rect(r.center.x - r.width * 0.45f, r.center.y - r.height * 0.5f, r.width * 0.9f, r.height), Soft, new Color(0.35f, 0.45f, 0.75f, 0.07f * strength));
+            Tex(r, vignette, new Color(0f, 0f, 0.01f, 0.75f * strength));
+        }
 
         public static GUIStyle Style(int size, TextAnchor anchor, bool title = true)
         {
@@ -232,16 +259,18 @@ namespace AiHackathon.Game
             style.onNormal.textColor = style.onHover.textColor = style.onActive.textColor = style.onFocused.textColor = c;
         }
 
-        /// <summary>Text with a dark outline so it reads over bright effects.</summary>
+        /// <summary>Text with a soft dark shadow round it so it reads over bright effects.</summary>
         public static void Label(Rect r, string text, GUIStyle style, Color color, float alpha = 1f)
         {
             var c = style.normal.textColor;
-            SetColor(style, new Color(0f, 0f, 0f, 0.75f * alpha));
-            float o = Mathf.Max(1f, 2f * Scale);
-            GUI.Label(new Rect(r.x - o, r.y, r.width, r.height), text, style);
-            GUI.Label(new Rect(r.x + o, r.y, r.width, r.height), text, style);
-            GUI.Label(new Rect(r.x, r.y - o, r.width, r.height), text, style);
-            GUI.Label(new Rect(r.x, r.y + o, r.width, r.height), text, style);
+            // Eight light passes (and a slight drop) instead of four hard ones: a shadow, not a cut-out outline.
+            SetColor(style, new Color(0f, 0f, 0f, 0.32f * alpha));
+            float o = Mathf.Max(1f, 1.6f * Scale);
+            for (int i = 0; i < 8; i++)
+            {
+                float a = i * Mathf.PI / 4f;
+                GUI.Label(new Rect(r.x + Mathf.Cos(a) * o, r.y + Mathf.Sin(a) * o + o * 0.6f, r.width, r.height), text, style);
+            }
             SetColor(style, new Color(color.r, color.g, color.b, color.a * alpha));
             GUI.Label(r, text, style);
             SetColor(style, c);
@@ -251,12 +280,18 @@ namespace AiHackathon.Game
         public static void GlowLabel(Rect r, string text, GUIStyle style, Color color, Color glow, float alpha = 1f)
         {
             var c = style.normal.textColor;
-            float g = 4f * Scale;
-            SetColor(style, new Color(glow.r, glow.g, glow.b, 0.18f * alpha));
-            for (int i = 0; i < 8; i++)
+            // Two faint rings of offset copies (near and far) build a soft falloff; one strong ring read as a
+            // second, ghostly outline round the letters.
+            for (int ring = 0; ring < 2; ring++)
             {
-                float a = i * Mathf.PI / 4f;
-                GUI.Label(new Rect(r.x + Mathf.Cos(a) * g, r.y + Mathf.Sin(a) * g, r.width, r.height), text, style);
+                float g = (ring == 0 ? 3f : 7f) * Scale;
+                SetColor(style, new Color(glow.r, glow.g, glow.b, (ring == 0 ? 0.04f : 0.022f) * alpha));
+                int n = ring == 0 ? 8 : 12;
+                for (int i = 0; i < n; i++)
+                {
+                    float a = (i + ring * 0.5f) * Mathf.PI * 2f / n;
+                    GUI.Label(new Rect(r.x + Mathf.Cos(a) * g, r.y + Mathf.Sin(a) * g, r.width, r.height), text, style);
+                }
             }
             SetColor(style, c);
             Label(r, text, style, color, alpha);
