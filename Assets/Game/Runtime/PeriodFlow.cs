@@ -112,18 +112,18 @@ namespace AiHackathon.Game
         {
             if (fade <= 0f && cardAlpha <= 0f) return;
             GUI.depth = -100;
-            GameGui.Rect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0.02f, 0.01f, 0.04f, fade));
+            GameGui.Rect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, fade));
             if (cardAlpha <= 0f || string.IsNullOrEmpty(card)) return;
             float s = GameGui.Scale, y = Screen.height * 0.4f;
-            // A wide, faint pool of light behind the title rather than a round purple blob.
-            GameGui.BannerBack(new Rect(Screen.width * 0.12f, y - 70f * s, Screen.width * 0.76f, 300f * s), new Color(0.42f, 0.32f, 0.75f, 0.16f * cardAlpha));
-            GameGui.GlowLabel(new Rect(0f, y, Screen.width, 90f * s), card, GameGui.Style(76, TextAnchor.MiddleCenter), new Color(1f, 0.95f, 0.85f), new Color(0.75f, 0.5f, 1f), cardAlpha);
+            // A wide, faint pool of warm light behind the title (on black, no colour cast).
+            GameGui.BannerBack(new Rect(Screen.width * 0.12f, y - 70f * s, Screen.width * 0.76f, 300f * s), new Color(1f, 0.85f, 0.6f, 0.06f * cardAlpha));
+            GameGui.GlowLabel(new Rect(0f, y, Screen.width, 90f * s), card, GameGui.Style(76, TextAnchor.MiddleCenter), new Color(1f, 0.95f, 0.85f), new Color(1f, 0.72f, 0.35f), cardAlpha);
             if (!string.IsNullOrEmpty(cardSub))
-                GameGui.Label(new Rect(0f, y + 92f * s, Screen.width, 44f * s), cardSub, GameGui.Style(32, TextAnchor.MiddleCenter, false), new Color(0.85f, 0.8f, 1f), cardAlpha);
+                GameGui.Label(new Rect(0f, y + 92f * s, Screen.width, 44f * s), cardSub, GameGui.Style(32, TextAnchor.MiddleCenter, false), new Color(0.92f, 0.88f, 0.8f), cardAlpha);
             float dots = Mathf.Repeat(Time.unscaledTime * 1.5f, 3f);
             for (int i = 0; i < 3; i++)
                 GameGui.DrawCentered(GameGui.Diamond, new Vector2(Screen.width * 0.5f + (i - 1) * 26f * s, y + 160f * s), 12f * s,
-                    new Color(1f, 0.9f, 1f, cardAlpha * (i <= dots ? 0.9f : 0.25f)));
+                    new Color(1f, 0.92f, 0.78f, cardAlpha * (i <= dots ? 0.9f : 0.25f)));
         }
     }
 }

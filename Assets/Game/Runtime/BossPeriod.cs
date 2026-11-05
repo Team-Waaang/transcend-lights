@@ -60,6 +60,8 @@ namespace AiHackathon.Game
         public float resonanceMultiplier = 1.5f;
         [Tooltip("HP the boss gets back when a curse orb reaches the players.")]
         public float orbHeal = 4f;
+        [Tooltip("HP the boss gets back when a stone spirit reaches a player.")]
+        public float minionHeal = 2.5f;
         [Tooltip("Dev keys: F1 = to the phase 2 cutscene, F2 = to the defeat cutscene.")]
         public bool devKeys = true;
 
@@ -76,6 +78,10 @@ namespace AiHackathon.Game
         Vector3 cameraHome;
         float shake;
         Transform[] chestTargets = new Transform[0];
+
+        /// <summary>What each player did in the fight, for the results screen.</summary>
+        public class PlayerStats { public float damage, resonance; public int orbs, spirits, crystals; }
+        public PlayerStats[] Stats { get; private set; } = new PlayerStats[0];
 
         float chip = 1f, chipHoldUntil;
         float clearedAt = -10f;
@@ -97,7 +103,12 @@ namespace AiHackathon.Game
                 boss.Message += Say;
                 boss.OrbLanded += OnOrbLanded;
                 boss.WardBroken += OnWardBroken;
+                boss.MinionReached += OnMinionReached;
+                boss.Chained += OnChained;
+                boss.ChainHeld += OnChainHeld;
             }
+            Stats = new PlayerStats[game != null ? game.players.Length : 2];
+            for (int i = 0; i < Stats.Length; i++) Stats[i] = new PlayerStats();
             StartCoroutine(Run());
         }
 
@@ -146,15 +157,19 @@ namespace AiHackathon.Game
             Current = Stage.Cleared;
             fade = 1f;
             clearedAt = Time.unscaledTime;
-            // Next period if there is one; otherwise the day is over and Enter starts it again.
-            yield return new WaitForSecondsRealtime(5f);
-            lastPeriod = !PeriodFlow.Next();
-            while (lastPeriod)
+            // The results stay up until Enter / Space / a click, then the next period if there is one (it also moves on
+            // by itself after a while); after the last period the same press starts the day again.
+            lastPeriod = PeriodFlow.NextIndex() < 0;
+            yield return new WaitForSecondsRealtime(2.5f);
+            for (float t = 0f; lastPeriod || t < 11.5f; t += Time.unscaledDeltaTime)
             {
-                var kb = Keyboard.current;
-                if (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame)) { PeriodFlow.Restart(); break; }
+                var k = Keyboard.current;
+                var mouse = Mouse.current;
+                if ((k != null && (k.enterKey.wasPressedThisFrame || k.spaceKey.wasPressedThisFrame)) || (mouse != null && mouse.leftButton.wasPressedThisFrame)) break;
                 yield return null;
             }
+            if (lastPeriod) PeriodFlow.Restart();
+            else PeriodFlow.Next();
         }
 
         /// <summary>The boss flinches, the frame slows a moment and fades to black.</summary>
@@ -259,6 +274,46 @@ namespace AiHackathon.Game
             }
         }
 
+        string NameOf(int i) => game != null && i >= 0 && i < game.players.Length && game.players[i].profile != null
+            ? game.players[i].profile.displayName : "P" + (i + 1);
+
+        void Flinch(int i, float strength)
+        {
+            if (game == null || i < 0 || i >= game.players.Length) return;
+            var c = game.players[i].character;
+            var motion = c != null ? c.GetComponent<CasterMotion>() : null;
+            if (motion != null) motion.Flinch(strength);
+        }
+
+        void OnMinionReached(int i)
+        {
+            boss.Heal(minionHeal);
+            shake = Mathf.Max(shake, 0.09f);
+            flash = Mathf.Max(flash, 0.3f);
+            Flinch(i, 0.8f);
+            Say(NameOf(i) + "에게 돌정령이 부딪혔다! 보스가 회복한다");
+        }
+
+        void OnChained(int i, bool on)
+        {
+            if (game == null || i < 0 || i >= game.players.Length) return;
+            var rig = game.players[i].rig;
+            if (rig != null) rig.fireBlocked = on;
+            if (on)
+            {
+                int other = (i + 1) % game.players.Length;
+                Say(NameOf(i) + "이(가) 저주 사슬에 묶였다! " + NameOf(other) + ", 수정을 쏴서 풀어줘!");
+                Flinch(i, 0.7f);
+            }
+        }
+
+        void OnChainHeld(int i)
+        {
+            shake = Mathf.Max(shake, 0.1f);
+            flash = Mathf.Max(flash, 0.35f);
+            Flinch(i, 1f);
+        }
+
         void OnWardBroken()
         {
             shake = Mathf.Max(shake, 0.1f);
@@ -288,23 +343,49 @@ namespace AiHackathon.Game
             Vector3 wardPoint = Vector3.zero;
             float dt = Time.deltaTime;
             var hitters = new Color[game.players.Length];
+            var hitterIndex = new int[game.players.Length];
             for (int i = 0; i < game.players.Length; i++)
             {
                 var rig = game.players[i].rig;
                 if (rig == null || !rig.isActiveAndEnabled || !rig.Firing || !rig.HasHit || rig.HitCollider == null) continue;
                 var col = rig.HitCollider;
                 var orb = col.GetComponentInParent<CurseOrb>();
-                if (orb != null) { orb.Damage(dt); continue; }
+                if (orb != null) { if (orb.Damage(dt)) Stats[i].orbs++; continue; }
+                var minion = col.GetComponentInParent<StoneCreature>();
+                if (minion != null)
+                {
+                    bool was = minion.Charging;
+                    minion.Shot(dt);
+                    if (was && !minion.Charging) Stats[i].spirits++;
+                    continue;
+                }
+                var decoy = col.GetComponentInParent<BossDecoy>();
+                if (decoy != null) { decoy.Damage(dt, i); continue; }
+                var crystal = col.GetComponentInParent<ChainCrystal>();
+                if (crystal != null)
+                {
+                    bool was = crystal.Done;
+                    crystal.Damage(dt);
+                    if (!was && crystal.Done) Stats[i].crystals++;
+                    continue;
+                }
                 if (col.GetComponentInParent<WardFx>() != null) { onWard++; wardPoint = rig.HitPoint; continue; }
                 if (col.transform.IsChildOf(boss.transform))
                 {
                     hitters[onBoss] = game.players[i].profile != null ? game.players[i].profile.playerColor : Color.white;
+                    hitterIndex[onBoss] = i;
                     onBoss++;
                 }
             }
+            if (boss.ChainedPlayer >= 0 && Mathf.Repeat(Time.time, 0.9f) < dt) Flinch(boss.ChainedPlayer, 0.35f);
             resonating = onBoss >= 2;
             if (resonating) resonanceShown = Time.unscaledTime;
-            for (int k = 0; k < onBoss; k++) boss.TakeDamage(laserDps * dt * (resonating ? resonanceMultiplier : 1f), hitters[k]);
+            for (int k = 0; k < onBoss; k++)
+            {
+                var st = Stats[hitterIndex[k]];
+                st.damage += boss.TakeDamage(laserDps * dt * (resonating ? resonanceMultiplier : 1f), hitters[k]);
+                if (resonating) st.resonance += dt;
+            }
             if (onWard >= 2) boss.DamageWard(dt, wardPoint);
             else if (onWard == 1)
             {
@@ -335,16 +416,88 @@ namespace AiHackathon.Game
             if (fade > 0f) GameGui.Rect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(fadeColor.r, fadeColor.g, fadeColor.b, fade));
             if (Current == Stage.Cleared)
             {
-                GameGui.DrawCentered(GameGui.Soft, new Vector2(Screen.width * 0.5f, Screen.height * 0.38f + 55f * s), 900f * s, new Color(1f, 0.75f, 0.35f, 0.18f));
-                GameGui.GlowLabel(new Rect(0f, Screen.height * 0.38f, Screen.width, 110f * s), "3교시 클리어!", GameGui.Style(92, TextAnchor.MiddleCenter), new Color(1f, 0.9f, 0.62f), new Color(1f, 0.7f, 0.3f));
-                GameGui.Label(new Rect(0f, Screen.height * 0.38f + 110f * s, Screen.width, 50f * s), "저주가 풀렸다. 두 사람의 빛으로.", GameGui.Style(34, TextAnchor.MiddleCenter, false), Color.white);
-                if (lastPeriod)
+                float rise = Mathf.SmoothStep(0f, 1f, (Time.unscaledTime - clearedAt - 1.6f) / 0.6f);
+                float ty = Mathf.Lerp(Screen.height * 0.38f, Screen.height * 0.08f, rise);
+                GameGui.DrawCentered(GameGui.Soft, new Vector2(Screen.width * 0.5f, ty + 55f * s), 900f * s, new Color(1f, 0.75f, 0.35f, 0.18f));
+                GameGui.GlowLabel(new Rect(0f, ty, Screen.width, 110f * s), "3교시 클리어!", GameGui.Style(Mathf.RoundToInt(Mathf.Lerp(92f, 72f, rise)), TextAnchor.MiddleCenter), new Color(1f, 0.9f, 0.62f), new Color(1f, 0.7f, 0.3f));
+                // The banner rises out of the way when the results come in.
+                float up = Mathf.SmoothStep(0f, 1f, (Time.unscaledTime - clearedAt - 1.6f) / 0.6f);
+                float by = Mathf.Lerp(Screen.height * 0.38f, Screen.height * 0.08f, up);
+                GameGui.Label(new Rect(0f, by + 110f * s, Screen.width, 50f * s), "저주가 풀렸다. 두 사람의 빛으로.", GameGui.Style(34, TextAnchor.MiddleCenter, false), Color.white, 1f - up);
+                DrawResults(s, Mathf.Clamp01((Time.unscaledTime - clearedAt - 1.9f) / 0.5f));
+            }
+        }
+
+        /// <summary>
+        /// Results: one card per player (damage with its share of the total, orbs shot down, stone spirits broken,
+        /// chain crystals broken, seconds in resonance), the top damage dealer marked MVP.
+        /// </summary>
+        void DrawResults(float s, float a)
+        {
+            if (a <= 0f || Stats.Length == 0 || game == null) return;
+            float total = 0f, best = -1f;
+            int mvp = -1;
+            for (int i = 0; i < Stats.Length; i++)
+            {
+                total += Stats[i].damage;
+                if (Stats[i].damage > best) { best = Stats[i].damage; mvp = i; }
+            }
+            float cardW = 560f * s, cardH = 470f * s, gap = 60f * s;
+            float x0 = Screen.width * 0.5f - cardW - gap * 0.5f, y0 = Screen.height * 0.27f;
+            GameGui.Label(new Rect(0f, y0 - 58f * s, Screen.width, 44f * s), "전투 결과", GameGui.Style(36, TextAnchor.MiddleCenter), new Color(1f, 0.93f, 0.78f), a);
+            for (int i = 0; i < Stats.Length && i < game.players.Length; i++)
+            {
+                var st = Stats[i];
+                var profile = game.players[i].profile;
+                var color = profile != null ? profile.playerColor : Color.white;
+                string name = profile != null ? profile.displayName : "P" + (i + 1);
+                // Slide in from its side.
+                float slide = (1f - a) * (i == 0 ? -80f : 80f) * s;
+                var r = new Rect(x0 + i * (cardW + gap) + slide, y0, cardW, cardH);
+                GameGui.BannerBack(new Rect(r.x - 40f * s, r.y - 20f * s, r.width + 80f * s, r.height + 40f * s), new Color(0.012f, 0.011f, 0.01f, 0.9f * a));
+                GameGui.Rect(new Rect(r.x, r.y + 70f * s, r.width, Mathf.Max(1f, 2f * s)), new Color(color.r, color.g, color.b, 0.6f * a));
+                GameGui.GlowLabel(new Rect(r.x, r.y + 8f * s, r.width, 56f * s), name, GameGui.Style(44, TextAnchor.MiddleCenter), Color.Lerp(color, Color.white, 0.3f), color, a);
+                if (i == mvp && best > 0f)
                 {
-                    float a = Mathf.Clamp01((Time.unscaledTime - clearedAt - 5f) / 0.6f);
-                    GameGui.GlowLabel(new Rect(0f, Screen.height * 0.62f, Screen.width, 60f * s), "오늘의 수업 끝", GameGui.Style(48, TextAnchor.MiddleCenter), new Color(0.95f, 0.9f, 1f), new Color(0.7f, 0.5f, 1f), a);
-                    GameGui.Label(new Rect(0f, Screen.height * 0.62f + 64f * s, Screen.width, 40f * s), "Enter: 처음부터", GameGui.Style(24, TextAnchor.MiddleCenter, false), new Color(1f, 1f, 1f, 0.6f + 0.3f * Mathf.Sin(Time.unscaledTime * 3f)), a);
+                    float pulse = 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * 4f);
+                    GameGui.GlowLabel(new Rect(r.xMax - 120f * s, r.y + 14f * s, 110f * s, 40f * s), "MVP", GameGui.Style(30, TextAnchor.MiddleRight), new Color(1f, 0.9f, 0.55f), new Color(1f, 0.7f, 0.25f), a * pulse);
+                }
+
+                // Damage: the number, then a bar of the share.
+                float share = total > 0f ? st.damage / total : 0f;
+                GameGui.Label(new Rect(r.x + 30f * s, r.y + 92f * s, r.width - 60f * s, 34f * s), "보스에게 준 피해", GameGui.Style(24, TextAnchor.MiddleLeft, false), new Color(1f, 1f, 1f, 0.75f), a);
+                GameGui.GlowLabel(new Rect(r.x + 30f * s, r.y + 126f * s, r.width - 60f * s, 70f * s), Mathf.RoundToInt(st.damage).ToString(),
+                    GameGui.Style(62, TextAnchor.MiddleLeft), Color.white, color, a);
+                GameGui.Label(new Rect(r.x + 30f * s, r.y + 140f * s, r.width - 60f * s, 50f * s), Mathf.RoundToInt(share * 100f) + "%",
+                    GameGui.Style(34, TextAnchor.MiddleRight), Color.Lerp(color, Color.white, 0.4f), a);
+                // Share bar on a neutral track (the HUD's FancyBar track is the boss's violet).
+                var bar = new Rect(r.x + 30f * s, r.y + 204f * s, r.width - 60f * s, 12f * s);
+                float edge = Mathf.Max(1f, 1.5f * s);
+                GameGui.Rect(new Rect(bar.x - edge, bar.y - edge, bar.width + 2f * edge, bar.height + 2f * edge), new Color(1f, 1f, 1f, 0.18f * a));
+                GameGui.Rect(bar, new Color(0.06f, 0.06f, 0.06f, 0.9f * a));
+                var fill = new Rect(bar.x, bar.y, bar.width * share * a, bar.height);
+                GameGui.Rect(fill, new Color(color.r * 0.7f, color.g * 0.7f, color.b * 0.7f, a));
+                GameGui.Rect(new Rect(fill.x, fill.y, fill.width, fill.height * 0.45f), new Color(Mathf.Lerp(color.r, 1f, 0.4f), Mathf.Lerp(color.g, 1f, 0.4f), Mathf.Lerp(color.b, 1f, 0.4f), 0.8f * a));
+
+                // The rest, one line each.
+                string[] labels = { "저주 구슬 격추", "돌정령 처치", "사슬 수정 파괴", "공명 시간" };
+                string[] values = { st.orbs.ToString(), st.spirits.ToString(), st.crystals.ToString(), st.resonance.ToString("0.0") + "초" };
+                for (int k = 0; k < labels.Length; k++)
+                {
+                    float ly = r.y + 250f * s + k * 52f * s;
+                    GameGui.DrawCentered(GameGui.Diamond, new Vector2(r.x + 40f * s, ly + 20f * s), 12f * s, new Color(color.r, color.g, color.b, 0.9f * a));
+                    GameGui.Label(new Rect(r.x + 62f * s, ly, r.width - 120f * s, 40f * s), labels[k], GameGui.Style(26, TextAnchor.MiddleLeft, false), new Color(1f, 1f, 1f, 0.85f), a);
+                    GameGui.Label(new Rect(r.x + 62f * s, ly, r.width - 92f * s, 40f * s), values[k], GameGui.Style(30, TextAnchor.MiddleRight), new Color(1f, 0.95f, 0.85f), a);
                 }
             }
+            float blink = 0.55f + 0.3f * Mathf.Sin(Time.unscaledTime * 3f);
+            float fy = y0 + cardH + 36f * s;
+            if (lastPeriod)
+            {
+                GameGui.GlowLabel(new Rect(0f, fy, Screen.width, 56f * s), "오늘의 수업 끝", GameGui.Style(44, TextAnchor.MiddleCenter), new Color(1f, 0.95f, 0.85f), new Color(1f, 0.72f, 0.35f), a);
+                fy += 58f * s;
+            }
+            GameGui.Label(new Rect(0f, fy, Screen.width, 36f * s), lastPeriod ? "Enter · 클릭: 처음부터" : "Enter · 클릭: 계속", GameGui.Style(24, TextAnchor.MiddleCenter, false), new Color(1f, 1f, 1f, blink), a);
         }
 
         void DrawBossHud(float s)
@@ -408,7 +561,7 @@ namespace AiHackathon.Game
             {
                 float a = Mathf.Clamp01(st / 0.3f) * Mathf.Clamp01((2.4f - st) / 0.5f);
                 float by = Screen.height * 0.36f;
-                GameGui.BannerBack(new Rect(0f, by - 20f * s, Screen.width, 150f * s), new Color(0.05f, 0f, 0.1f, 0.8f * a));
+                GameGui.BannerBack(new Rect(0f, by - 20f * s, Screen.width, 150f * s), new Color(0.012f, 0.011f, 0.01f, 0.8f * a));
                 GameGui.GlowLabel(new Rect(0f, by, Screen.width, 80f * s), p2 ? "PHASE  II" : "PHASE  I", GameGui.Style(64, TextAnchor.MiddleCenter), Color.white, p2 ? new Color(1f, 0.3f, 0.7f) : new Color(0.7f, 0.4f, 1f), a);
                 GameGui.Label(new Rect(0f, by + 76f * s, Screen.width, 40f * s), p2 ? "저주가 깨어났다" : "저주받은 아이를 구하라", GameGui.Style(28, TextAnchor.MiddleCenter, false), new Color(0.9f, 0.85f, 1f), a);
             }
@@ -416,7 +569,7 @@ namespace AiHackathon.Game
             {
                 float a = Mathf.Clamp01((Time.unscaledTime - messageTime) / 0.15f) * Mathf.Clamp01((2.6f - (Time.unscaledTime - messageTime)) / 0.5f);
                 float my = Screen.height * 0.22f;
-                GameGui.BannerBack(new Rect(Screen.width * 0.15f, my - 8f * s, Screen.width * 0.7f, 76f * s), new Color(0.05f, 0f, 0.1f, 0.75f * a));
+                GameGui.BannerBack(new Rect(Screen.width * 0.15f, my - 8f * s, Screen.width * 0.7f, 76f * s), new Color(0.012f, 0.011f, 0.01f, 0.75f * a));
                 GameGui.Label(new Rect(0f, my, Screen.width, 60f * s), message, GameGui.Style(38, TextAnchor.MiddleCenter), Color.white, a);
             }
             if (game != null && game.mouseTest && CasterInput.Session(0) == null)

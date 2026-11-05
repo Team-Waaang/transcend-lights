@@ -213,7 +213,7 @@ namespace AiHackathon.Cutscene
             {
                 float a = Mathf.Clamp01((t - introAt - 0.3f) / 0.35f);
                 float y = Screen.height * 0.17f;
-                GameGui.BannerBack(new Rect(0f, y - 30f * s, Screen.width, 210f * s), new Color(0.04f, 0f, 0.08f, 0.75f * a));
+                GameGui.BannerBack(new Rect(0f, y - 30f * s, Screen.width, 210f * s), new Color(0.012f, 0.011f, 0.01f, 0.75f * a));
                 float punch = 1f + 0.25f * Mathf.Exp(-(t - introAt - 0.3f) * 8f);
                 GameGui.GlowLabel(new Rect(0f, y, Screen.width, 120f * s), "공  명", GameGui.Style(Mathf.RoundToInt(104 * punch), TextAnchor.MiddleCenter), Color.white, mid, a);
                 GameGui.Label(new Rect(0f, y + 118f * s, Screen.width, 50f * s), "두 사람이 함께 가운데 빛을 겨누고, 버튼을 연타하세요", GameGui.Style(32, TextAnchor.MiddleCenter, false), new Color(0.95f, 0.92f, 1f), a);
@@ -270,7 +270,7 @@ namespace AiHackathon.Cutscene
                 GameGui.FancyBar(new Rect((Screen.width - cw) * 0.5f, y, cw, h), shared, shared, colors[0], colors[1], 1f, false, 0.4f + 0.5f * shared);
 
                 float hy = 34f * s;
-                GameGui.BannerBack(new Rect(Screen.width * 0.2f, hy - 6f * s, Screen.width * 0.6f, 68f * s), new Color(0.04f, 0f, 0.08f, 0.7f));
+                GameGui.BannerBack(new Rect(Screen.width * 0.2f, hy - 6f * s, Screen.width * 0.6f, 68f * s), new Color(0.012f, 0.011f, 0.01f, 0.7f));
                 GameGui.Label(new Rect(0f, hy, Screen.width, 56f * s), "가운데 빛을 겨누고  연타!", GameGui.Style(42, TextAnchor.MiddleCenter), Color.white, 0.7f + 0.3f * Mathf.Sin(now * 8f));
                 if (now - retryMessage < 1.8f)
                     GameGui.GlowLabel(new Rect(0f, hy + 64f * s, Screen.width, 50f * s), "저주가 버틴다!  다시, 더 빠르게!", GameGui.Style(36, TextAnchor.MiddleCenter), new Color(1f, 0.7f, 0.9f), new Color(0.9f, 0.2f, 0.7f));

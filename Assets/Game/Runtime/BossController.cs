@@ -11,9 +11,11 @@ namespace AiHackathon.Game
     /// players, leans into his moves, flinches under lasers and roars into phase 2.
     /// <see cref="BossPeriod"/> starts and stops him, feeds him laser damage and reads his state for the HUD.
     ///
-    /// Patterns: a curse volley (orbs arc toward the players; shoot them down or he heals), a ward (only breaks while
-    /// both players hit it at once; breaking it staggers him and opens a weak spot), and in phase 2 a summoned volley
-    /// from above. Between patterns he idles or moves: that is when lasers hurt most.
+    /// Patterns: a curse volley (orbs arc toward the players; shoot them down or he heals), stone spirits summoned out
+    /// of the seal that run at the players (a few frames of laser breaks one), a ward (only breaks while both players
+    /// hit it at once; breaking it staggers him and opens a weak spot), and in phase 2 clones (shoot the real one; a
+    /// false one bursts and fires back), a curse chain (one player is bound and cannot fire until the other shoots the
+    /// anchor crystal) and a volley from above. Between patterns he idles or moves: that is when lasers hurt most.
     /// </summary>
     [DefaultExecutionOrder(50)]
     public class BossController : MonoBehaviour
@@ -30,6 +32,19 @@ namespace AiHackathon.Game
             [Tooltip("Seconds of both lasers on the ward to break it.")]
             public float wardHp = 1.6f;
             public int summonVolley = 0;
+            [Header("Stone spirits")]
+            public int minions = 3;
+            public float minionSpeed = 0.95f;
+            [Tooltip("Seconds of laser that break one.")]
+            public float minionHp = 0.3f;
+            [Header("Clones (0 = no clone pattern)")]
+            public int decoys = 0;
+            public float decoyHp = 0.25f;
+            public float cloneTime = 7f;
+            [Header("Curse chain (0 = no chain pattern)")]
+            public float chainTime = 0f;
+            [Tooltip("Seconds of laser on the anchor crystal to break the chain.")]
+            public float crystalHp = 1.2f;
             [Tooltip("Chance to blink (vanish and reappear) instead of gliding when he moves.")]
             [Range(0f, 1f)] public float blinkChance = 0.3f;
         }
@@ -56,7 +71,15 @@ namespace AiHackathon.Game
 
         [Header("Phases")]
         public Tuning phase1 = new Tuning();
-        public Tuning phase2 = new Tuning { idleMin = 1.6f, idleMax = 2.4f, volley = 5, orbTravel = 4.2f, wardTime = 7f, wardHp = 2.4f, summonVolley = 7, blinkChance = 0.6f };
+        public Tuning phase2 = new Tuning { idleMin = 1.6f, idleMax = 2.4f, volley = 5, orbTravel = 4.2f, wardTime = 7f, wardHp = 2.4f, summonVolley = 7, blinkChance = 0.6f,
+            minions = 5, minionSpeed = 1.15f, decoys = 2, chainTime = 6f };
+
+        [Header("Summons, clones and chain (wired by the builder)")]
+        public GameObject minionTemplate;
+        public GameObject summonFx;
+        public GameObject decoyTemplate;
+        public GameObject crystalTemplate;
+        public GameObject crystalBreakFx;
 
         [Header("Motion")]
         public float hover = 0.14f;
@@ -80,6 +103,12 @@ namespace AiHackathon.Game
         public event Action<CurseOrb> OrbLanded;
         /// <summary>The ward broke.</summary>
         public event Action WardBroken;
+        /// <summary>A stone spirit got to player i.</summary>
+        public event Action<int> MinionReached;
+        /// <summary>Player i is bound by the curse chain (true) or freed / the chain ran out (false).</summary>
+        public event Action<int, bool> Chained;
+        /// <summary>The chain on player i held to the end (it was not broken).</summary>
+        public event Action<int> ChainHeld;
 
         /// <summary>Where the orbs fly: the players' chests (set by the period).</summary>
         public Transform[] targets = new Transform[0];
@@ -97,6 +126,13 @@ namespace AiHackathon.Game
         Transform spine, chestBone, neck, head;
 
         public IReadOnlyList<CurseOrb> Orbs => orbs;
+        readonly List<StoneCreature> minions = new List<StoneCreature>();
+        readonly List<BossDecoy> decoys = new List<BossDecoy>();
+        ChainCrystal chainCrystal;
+        int chainedPlayer = -1;
+        /// <summary>Player currently bound by the chain, or -1.</summary>
+        public int ChainedPlayer => chainedPlayer;
+        public ChainCrystal Crystal => chainCrystal;
 
         void Awake()
         {
@@ -176,6 +212,7 @@ namespace AiHackathon.Game
             Fighting = true;
             if (phase2Aura != null) phase2Aura.SetActive(phase >= 2);
             StopAllCoroutines();
+            ClearSummons();
             visible = 1f;
             StartCoroutine(Loop());
         }
@@ -186,19 +223,23 @@ namespace AiHackathon.Game
             Fighting = false;
             StopAllCoroutines();
             ClearOrbs();
+            ClearSummons();
             if (ward != null) ward.Clear();
             visible = 1f;
             flinch = 1f;
             Play("Hit", 0.1f, 1.0f);
         }
 
-        public void TakeDamage(float amount, Color from)
+        /// <summary>Laser damage; returns the HP actually taken off (0 while the ward is up).</summary>
+        public float TakeDamage(float amount, Color from)
         {
-            if (!Fighting || ShieldUp || amount <= 0f) return;
+            if (!Fighting || ShieldUp || amount <= 0f) return 0f;
+            float before = Hp;
             Hp = Mathf.Max(0f, Hp - amount * (Weak ? weakMultiplier : 1f));
             hitGlow = 1f;
             hitColor = from;
             flinch = Mathf.Min(1f, flinch + amount * 0.9f);
+            return before - Hp;
         }
 
         /// <summary>Both lasers on the ward for <paramref name="seconds"/>; <paramref name="point"/> is where one landed.</summary>
@@ -241,19 +282,27 @@ namespace AiHackathon.Game
             {
                 var t = Phase >= 2 ? phase2 : phase1;
                 yield return Idle(UnityEngine.Random.Range(t.idleMin, t.idleMax), t);
+                // Orbs are one pattern in three (phase 1) or two in six (phase 2), mixed with the others.
                 if (Phase >= 2)
                 {
-                    switch (step % 3)
+                    switch (step % 6)
                     {
                         case 0: yield return Volley(t.volley, t, false); break;
-                        case 1: yield return Ward(t); break;
+                        case 1: yield return Summon(t); break;
+                        case 2: yield return Clones(t); break;
+                        case 3: yield return Ward(t); break;
+                        case 4: yield return Chain(t); break;
                         default: yield return Volley(t.summonVolley, t, true); break;
                     }
                 }
                 else
                 {
-                    if (step % 2 == 0) yield return Volley(t.volley, t, false);
-                    else yield return Ward(t);
+                    switch (step % 3)
+                    {
+                        case 0: yield return Volley(t.volley, t, false); break;
+                        case 1: yield return Summon(t); break;
+                        default: yield return Ward(t); break;
+                    }
                 }
                 step++;
             }
@@ -363,6 +412,207 @@ namespace AiHackathon.Game
             orbs.Remove(orb);
             Destroy(orb.gameObject);
             OrbLanded?.Invoke(orb);
+        }
+
+        // ------------------------------------------------------------------ stone spirits
+
+        /// <summary>
+        /// He raises the wand and stone spirits claw up out of the seal in front of him, then run at the players.
+        /// One that gets there heals him and knocks its player back; a few frames of laser break one.
+        /// </summary>
+        IEnumerator Summon(Tuning t)
+        {
+            if (minionTemplate == null || targets.Length == 0 || t.minions <= 0) yield break;
+            Message?.Invoke("돌정령 소환! 다가오기 전에 레이저로 부숴!");
+            Play("Summon", 0.2f, 0.4f);
+            yield return new WaitForSeconds(0.9f);
+            for (int i = 0; i < t.minions; i++)
+            {
+                float u = t.minions > 1 ? i / (t.minions - 1f) : 0.5f;
+                // Out of the far side of the court, behind him; they run past him at the players.
+                var spot = new Vector3(home.x + 2.2f + UnityEngine.Random.Range(0f, 0.5f), 0f, Mathf.Lerp(-1.8f, 1.8f, u) + UnityEngine.Random.Range(-0.2f, 0.2f));
+                StartCoroutine(RaiseMinion(spot, i % targets.Length, t));
+                yield return new WaitForSeconds(0.28f);
+            }
+            Play("Idle", 0.4f);
+            float until = Time.time + 14f;
+            yield return new WaitForSeconds(0.8f);
+            while (Time.time < until && minions.Exists(m => m != null && !m.Gone)) yield return null;
+            ClearMinions();
+        }
+
+        // Out of the floor in a puff of curse smoke, a beat to get its bearings, then it charges.
+        IEnumerator RaiseMinion(Vector3 spot, int target, Tuning t)
+        {
+            FxUtil.Burst(summonFx, spot);
+            var go = Instantiate(minionTemplate, minionTemplate.transform.parent);
+            go.transform.SetPositionAndRotation(spot + Vector3.down * 0.8f, Quaternion.LookRotation(Vector3.left));
+            go.SetActive(true);
+            var m = go.GetComponent<StoneCreature>();
+            minions.Add(m);
+            m.Reached += _ => MinionReached?.Invoke(target);
+            // Broken by a laser: a bright pop so the kill reads in the dark arena.
+            m.Shattered += c => FxUtil.Burst(orbPopFx, c.Center);
+            // Grit breaks off as it claws out of the floor.
+            if (m.crumbleDust != null) m.crumbleDust.Emit(16);
+            if (m.stepDust != null) m.stepDust.Emit(6);
+            for (float k = 0f; k < 1f; k += Time.deltaTime / 0.5f)
+            {
+                if (m == null) yield break;
+                go.transform.position = spot + Vector3.down * (0.8f * (1f - k) * (1f - k));
+                yield return null;
+            }
+            if (m == null) yield break;
+            go.transform.position = spot;
+            yield return new WaitForSeconds(0.25f);
+            if (m != null) m.Charge(targets[target], t.minionSpeed * UnityEngine.Random.Range(0.9f, 1.1f), t.minionHp);
+        }
+
+        void ClearMinions()
+        {
+            foreach (var m in minions) if (m != null) Destroy(m.gameObject);
+            minions.Clear();
+        }
+
+        // ------------------------------------------------------------------ clones
+
+        /// <summary>
+        /// He vanishes and comes back as three: himself and false copies that waver now and then. Hitting him breaks
+        /// the trick; a false one bursts and fires orbs back at its shooter. Untouched, the copies each fire an orb.
+        /// </summary>
+        IEnumerator Clones(Tuning t)
+        {
+            if (decoyTemplate == null || t.decoys <= 0) yield break;
+            Message?.Invoke("분신! 진짜를 찾아 쏴! (가짜는 가끔 일렁여)");
+            var spots = new List<Vector3>();
+            int count = t.decoys + 1;
+            for (int i = 0; i < count; i++)
+                spots.Add(home + new Vector3(0.1f, 0f, Mathf.Lerp(-1.25f, 1.25f, count > 1 ? i / (count - 1f) : 0.5f)));
+            int real = UnityEngine.Random.Range(0, count);
+            yield return Blink(spots[real]);
+            for (int i = 0; i < count; i++)
+            {
+                if (i == real) continue;
+                FxUtil.Burst(blinkInFx, spots[i]);
+                var go = Instantiate(decoyTemplate, decoyTemplate.transform.parent);
+                go.SetActive(true);
+                var d = go.GetComponent<BossDecoy>();
+                d.hp = t.decoyHp;
+                d.targets = targets;
+                d.Place(spots[i]);
+                d.Popped += (decoy, shooter) => OnDecoyPopped(decoy, shooter, t);
+                decoys.Add(d);
+            }
+            Play("Idle", 0.3f);
+            float hp0 = Hp;
+            float end = Time.time + t.cloneTime;
+            while (Time.time < end && Hp > hp0 - 0.01f && decoys.Exists(d => d != null)) yield return null;
+            if (Hp <= hp0 - 0.01f)
+            {
+                Message?.Invoke("진짜를 찾았다!");
+                flinch = 1f;
+                weakUntil = Mathf.Max(weakUntil, Time.time + 1.5f);
+                Play("Hit", 0.1f, 1.0f);
+            }
+            else if (decoys.Exists(d => d != null))
+            {
+                // Time's up: each copy left fires once at a player and fades.
+                foreach (var d in decoys)
+                    if (d != null) SpawnOrbFrom(d.transform.position + Vector3.up * 0.9f, targets[UnityEngine.Random.Range(0, targets.Length)], t);
+            }
+            ClearDecoys();
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        void OnDecoyPopped(BossDecoy decoy, int shooter, Tuning t)
+        {
+            var at = decoy.transform.position + Vector3.up * 0.9f;
+            FxUtil.Burst(orbPopFx, at);
+            FxUtil.Burst(blinkOutFx, decoy.transform.position);
+            Message?.Invoke("가짜다! 반격이 온다!");
+            var target = targets.Length > 0 ? targets[Mathf.Clamp(shooter, 0, targets.Length - 1)] : null;
+            if (target != null)
+                for (int k = 0; k < 2; k++) SpawnOrbFrom(at + Vector3.forward * (k - 0.5f) * 0.3f, target, t);
+            decoys.Remove(decoy);
+            Destroy(decoy.gameObject);
+        }
+
+        void ClearDecoys()
+        {
+            foreach (var d in decoys)
+                if (d != null)
+                {
+                    FxUtil.Burst(blinkOutFx, d.transform.position);
+                    Destroy(d.gameObject);
+                }
+            decoys.Clear();
+        }
+
+        void SpawnOrbFrom(Vector3 start, Transform target, Tuning t)
+        {
+            if (orbTemplate == null || target == null) return;
+            var go = Instantiate(orbTemplate, orbTemplate.transform.parent);
+            go.SetActive(true);
+            var orb = go.GetComponent<CurseOrb>();
+            orb.hp = t.orbHp;
+            var offset = new Vector3(0f, UnityEngine.Random.Range(-0.15f, 0.25f), UnityEngine.Random.Range(-0.3f, 0.3f));
+            orb.Launch(start, target, offset, t.orbTravel * UnityEngine.Random.Range(0.9f, 1.1f), new Vector3(0f, 0.6f, UnityEngine.Random.Range(-0.6f, 0.6f)));
+            orb.Popped += OnPopped;
+            orb.Reached += OnReached;
+            orbs.Add(orb);
+        }
+
+        // ------------------------------------------------------------------ curse chain
+
+        /// <summary>
+        /// He casts a chain of curse at one player: it binds her (she cannot fire) to a crystal floating out on her
+        /// side. The other player has to shoot the crystal to break it; if it holds, the curse seeps in.
+        /// </summary>
+        IEnumerator Chain(Tuning t)
+        {
+            if (crystalTemplate == null || targets.Length < 2 || t.chainTime <= 0f) yield break;
+            int p = UnityEngine.Random.Range(0, targets.Length);
+            Play("Cast", 0.2f, 0.5f);
+            yield return new WaitForSeconds(0.7f);
+            var target = targets[p];
+            var at = new Vector3(home.x - 1.5f, 1.15f, Mathf.Clamp(target.position.z * 1.7f, -2f, 2f));
+            FxUtil.Burst(blinkInFx, at + Vector3.down * 0.4f);
+            var go = Instantiate(crystalTemplate, crystalTemplate.transform.parent);
+            go.transform.position = at;
+            go.SetActive(true);
+            chainCrystal = go.GetComponent<ChainCrystal>();
+            chainCrystal.Bind(target, t.crystalHp);
+            chainedPlayer = p;
+            Chained?.Invoke(p, true);
+            Play("Idle", 0.4f);
+            float end = Time.time + t.chainTime;
+            while (Time.time < end && !chainCrystal.Done) yield return null;
+            bool broken = chainCrystal.Done;
+            FxUtil.Burst(crystalBreakFx, chainCrystal.crystal != null ? chainCrystal.crystal.position : at);
+            if (broken) Message?.Invoke("사슬이 끊어졌다!");
+            else
+            {
+                Message?.Invoke("사슬이 버텼다… 저주가 스며든다");
+                Heal(4f);
+                ChainHeld?.Invoke(p);
+            }
+            ClearChain();
+            yield return new WaitForSeconds(0.4f);
+        }
+
+        void ClearChain()
+        {
+            if (chainCrystal != null) Destroy(chainCrystal.gameObject);
+            chainCrystal = null;
+            if (chainedPlayer >= 0) Chained?.Invoke(chainedPlayer, false);
+            chainedPlayer = -1;
+        }
+
+        void ClearSummons()
+        {
+            ClearMinions();
+            ClearDecoys();
+            ClearChain();
         }
 
         IEnumerator Ward(Tuning t)
