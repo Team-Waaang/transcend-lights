@@ -115,5 +115,6 @@ InitTestScene*.unity*
 
 # Per-user AI agent MCP configs (run `unity mcp configure <client>` locally)
 .cursor
-.mcp.json
-.codex/
+.codex
+.agents
+.claude
