@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-1210381000244273510
+--- !u!114 &-8095357140311385566
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -29,10 +29,10 @@ MonoBehaviour:
   m_Name: Period1Impact
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 3088210725638081676}
-  - {fileID: 8701395362842042995}
-  - {fileID: -1210381000244273510}
---- !u!114 &3088210725638081676
+  - {fileID: 6821998687167841291}
+  - {fileID: 8372741874207904059}
+  - {fileID: -8095357140311385566}
+--- !u!114 &6821998687167841291
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -82,7 +82,7 @@ MonoBehaviour:
   dirtIntensity:
     m_OverrideState: 0
     m_Value: 0
---- !u!114 &8701395362842042995
+--- !u!114 &8372741874207904059
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
