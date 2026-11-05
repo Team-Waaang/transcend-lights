@@ -150,7 +150,7 @@ namespace Waaang.EditorTools
             pose.idle = CasterIdle();
             var body = nox.GetComponentInChildren<SkinnedMeshRenderer>();
             if (body != null)
-                body.sharedMaterial = RimToon("Nox_Rim.mat", body.sharedMaterial);
+                body.sharedMaterial = RimToon("Nox_Rim.mat", body.sharedMaterial, NoxRim);
 
             var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             marker.name = "Hit Marker 2";
@@ -411,7 +411,29 @@ namespace Waaang.EditorTools
 
         // lilToon copy of the body material with the cutscene rim (CutsceneKit.RimMaterial), so her back reads
         // against the room from the over-the-shoulder camera.
-        static Material RimToon(string file, Material source)
+        static Material RimToon(string file, Material source) => RimToon(file, source, DefaultRim);
+
+        struct RimSettings
+        {
+            public Color color;   // alpha = rim strength
+            public float border;
+            public float blur;
+            public float fresnel;
+        }
+
+        static readonly RimSettings DefaultRim = new RimSettings
+        {
+            color = new Color(0.85f, 0.75f, 1f, 1f), border = 0.6f, blur = 0.25f, fresnel = 2.5f,
+        };
+
+        // Nox's hair has many thin strands, so the default rim draws a bright lavender line on every strand edge.
+        // Weaker, tighter and less purple keeps only a soft outline.
+        static readonly RimSettings NoxRim = new RimSettings
+        {
+            color = new Color(0.85f, 0.8f, 0.95f, 0.48f), border = 0.72f, blur = 0.18f, fresnel = 3.75f,
+        };
+
+        static Material RimToon(string file, Material source, RimSettings rim)
         {
             string path = MaterialDir + "/" + file;
             var shader = Shader.Find("lilToon");
@@ -435,10 +457,10 @@ namespace Waaang.EditorTools
                     material.SetTexture("_MainTex", texture);
             }
             material.SetFloat("_UseRim", 1f);
-            material.SetColor("_RimColor", new Color(0.85f, 0.75f, 1f, 1f));
-            material.SetFloat("_RimBorder", 0.6f);
-            material.SetFloat("_RimBlur", 0.25f);
-            material.SetFloat("_RimFresnelPower", 2.5f);
+            material.SetColor("_RimColor", rim.color);
+            material.SetFloat("_RimBorder", rim.border);
+            material.SetFloat("_RimBlur", rim.blur);
+            material.SetFloat("_RimFresnelPower", rim.fresnel);
             material.SetFloat("_RimMainStrength", 0f);
             material.SetFloat("_RimShadowMask", 0.3f);
             EditorUtility.SetDirty(material);
