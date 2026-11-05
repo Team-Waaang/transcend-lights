@@ -1,0 +1,18 @@
+{
+  "name": "PhonePointer.Android",
+  "rootNamespace": "PhonePointer",
+  "references": [
+    "PhonePointer.Core",
+    "Unity.XR.ARFoundation",
+    "Unity.XR.ARSubsystems",
+    "Unity.XR.CoreUtils",
+    "Unity.XR.Management",
+    "Unity.ugui",
+    "Unity.TextMeshPro",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [
+    "Editor",
+    "Android"
+  ]
+}
