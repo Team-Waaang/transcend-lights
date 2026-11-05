@@ -39,6 +39,8 @@ namespace Waaang.EditorTools
             var view = host.AddComponent<PhonePointer.PhonePointerRegistrationView>();
             view.Receiver = receiver;
             view.enabled = false;
+            var board = host.AddComponent<RegistrationBoard>();
+            board.Receiver = receiver;
             var link = host.AddComponent<PhoneLink>();
             link.Receiver = receiver;
             link.requiredPhones = 1;
