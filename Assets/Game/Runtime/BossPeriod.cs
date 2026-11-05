@@ -11,7 +11,7 @@ namespace AiHackathon.Game
 {
     /// <summary>
     /// Period 3 ("보스전"): runs the whole period.
-    /// Entrance cutscene → title card → phase 1 → (HP ≤ <see cref="phase2At"/>) phase 2 cutscene → phase 2 →
+    /// Entrance cutscene → title card → phase 1 → (HP ≤ <see cref="phase2At"/>) phase 2 cutscene → barrier QTE → phase 2 →
     /// (HP ≤ <see cref="defeatAt"/>) defeat cutscene with the resonance QTE and the ultimate beam → cleared.
     ///
     /// The cutscenes are their own scenes (built by the cutscene builders) loaded additively on top of this one;
@@ -44,6 +44,8 @@ namespace AiHackathon.Game
         public string defeatScene = "Assets/Cutscene/BossDefeatCutscene.unity";
         [Tooltip("Off: skip the cutscenes (fight testing).")]
         public bool playCutscenes = true;
+        [Tooltip("Phase 2 opens with the barrier QTE (seals against his awakening blast). Empty: straight into the fight.")]
+        public BarrierQte barrierQte;
 
         [Header("Title")]
         public string title = "저주받은 아이";
@@ -77,7 +79,7 @@ namespace AiHackathon.Game
         [Tooltip("Two orbs landing on the same player within this many seconds count as a heavy hit.")]
         public float heavyHitWindow = 1.5f;
 
-        public enum Stage { Entrance, Title, Phase1, Phase2Cutscene, Phase2, DefeatCutscene, Cleared }
+        public enum Stage { Entrance, Title, Phase1, Phase2Cutscene, Phase2Qte, Phase2, DefeatCutscene, Cleared }
         public Stage Current { get; private set; } = Stage.Entrance;
 
         float fade = 1f;
@@ -169,12 +171,20 @@ namespace AiHackathon.Game
             else Voice.Say(VoiceLine.VillainPhase2, 2f);
             EnterPlay();
             SetPhase2Look(true);
+            Current = Stage.Phase2Qte;
+            yield return Fade(0f, 0.6f);
+            bool held = false;
+            if (barrierQte != null && barrierQte.sealTemplate != null)
+            {
+                yield return barrierQte.Run(this);
+                held = barrierQte.Succeeded;
+            }
             Current = Stage.Phase2;
             stageShown = Time.unscaledTime;
-            yield return Fade(0f, 0.6f);
-            Say("2페이즈! 저주가 더 거세진다!");
+            Say(held ? "결계가 폭발을 막았다! 보스가 흔들리는 지금이 기회!" : "2페이즈! 저주가 더 거세진다!");
             boss.HealCap = phase2At;
-            boss.Begin(2);
+            // Reeling from his own blast turned back, he skips the roar.
+            boss.Begin(2, !held);
             while (boss.Hp > defeatAt) yield return null;
             boss.Hp = defeatAt;
             yield return EndPhase();
@@ -367,7 +377,14 @@ namespace AiHackathon.Game
         string NameOf(int i) => game != null && i >= 0 && i < game.players.Length && game.players[i].profile != null
             ? game.players[i].profile.displayName : "P" + (i + 1);
 
-        void Flinch(int i, float strength)
+        /// <summary>Camera shake and the violet hit flash (at least these amounts).</summary>
+        internal void Impact(float shakeAmount, float flashAmount)
+        {
+            shake = Mathf.Max(shake, shakeAmount);
+            flash = Mathf.Max(flash, flashAmount);
+        }
+
+        internal void Flinch(int i, float strength)
         {
             if (game == null || i < 0 || i >= game.players.Length) return;
             var c = game.players[i].character;
@@ -436,6 +453,12 @@ namespace AiHackathon.Game
             {
                 if (Keyboard.current.f1Key.wasPressedThisFrame && Current == Stage.Phase1) boss.Hp = phase2At;
                 if (Keyboard.current.f2Key.wasPressedThisFrame) boss.Hp = Current == Stage.Phase1 ? phase2At : defeatAt;
+            }
+            if (barrierQte != null && barrierQte.Active)
+            {
+                resonating = false;
+                if (game != null) barrierQte.Shoot(game, Time.deltaTime);
+                return;
             }
             if (boss == null || !boss.Fighting || game == null) { resonating = false; return; }
 
@@ -521,6 +544,7 @@ namespace AiHackathon.Game
             float s = GameGui.Scale;
             bool fighting = Current == Stage.Phase1 || Current == Stage.Phase2;
             if (fighting && boss != null) DrawBossHud(s);
+            if (Current == Stage.Phase2Qte && barrierQte != null) barrierQte.DrawHud(s);
 
             if (flash > 0f) GameGui.Rect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0.55f, 0.15f, 0.7f, flash * 0.45f));
             if (fade > 0f) GameGui.Rect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(fadeColor.r, fadeColor.g, fadeColor.b, fade));

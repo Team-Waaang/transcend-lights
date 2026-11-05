@@ -122,6 +122,7 @@ namespace AiHackathon.Game
         readonly List<CurseOrb> orbs = new List<CurseOrb>();
         float wardHp, wardMax;
         float weakUntil;
+        bool roarOnStart = true;
         float hitGlow;
         Color hitColor = Color.white;
         Vector3 home, spot, glideFrom;
@@ -212,9 +213,11 @@ namespace AiHackathon.Game
             }
         }
 
-        public void Begin(int phase)
+        /// <param name="roar">Phase 2 normally opens with a roar; false starts straight in (he is reeling).</param>
+        public void Begin(int phase, bool roar = true)
         {
             Phase = phase;
+            roarOnStart = roar;
             Fighting = true;
             if (phase2Aura != null) phase2Aura.SetActive(phase >= 2);
             StopAllCoroutines();
@@ -266,6 +269,24 @@ namespace AiHackathon.Game
 
         public void Heal(float amount) => Hp = Mathf.Min(HealCap, Hp + amount);
 
+        /// <summary>Holds the hit light at <paramref name="amount"/> or more in <paramref name="color"/> (a blast gathering on him).</summary>
+        public void Glow(Color color, float amount)
+        {
+            hitGlow = Mathf.Max(hitGlow, amount);
+            hitColor = color;
+        }
+
+        /// <summary>He reels (hit pose, flinch) and stays weak for <paramref name="weakSeconds"/>.</summary>
+        public void Stagger(float weakSeconds)
+        {
+            flinch = 1f;
+            Play("Hit", 0.1f, 1.0f);
+            weakUntil = Mathf.Max(weakUntil, Time.time + weakSeconds);
+        }
+
+        /// <summary>Cross-fades his animator to <paramref name="state"/> (Idle, Cast, Guard, Hit, Roar, Summon).</summary>
+        public void Act(string state, float fade = 0.2f) => Play(state, fade);
+
         public void ClearOrbs()
         {
             foreach (var o in orbs) if (o != null) Destroy(o.gameObject);
@@ -277,7 +298,7 @@ namespace AiHackathon.Game
         IEnumerator Loop()
         {
             int step = 0;
-            if (Phase >= 2)
+            if (Phase >= 2 && roarOnStart)
             {
                 // Into phase 2 with a roar.
                 Play("Roar", 0.2f, 0.4f);
