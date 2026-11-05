@@ -36,12 +36,14 @@ namespace AiHackathon.Game
             if (bodyFont == null) bodyFont = fonts.body;
         }
 
-        static Texture2D ring, disc, soft, stripe, diamond, banner, vignette;
+        static Texture2D ring, thickRing, disc, soft, stripe, diamond, banner, vignette;
         static readonly Dictionary<long, Texture2D> gradients = new Dictionary<long, Texture2D>();
 
         public static float Scale => Screen.height / 1080f;
 
         public static Texture2D Ring => ring != null ? ring : ring = MakeRadial(128, (r, aa) => Mathf.Clamp01((0.98f - r) / aa) * Mathf.Clamp01((r - 0.86f) / aa));
+        /// <summary>Bolder ring for the crosshair.</summary>
+        public static Texture2D ThickRing => thickRing != null ? thickRing : thickRing = MakeRadial(128, (r, aa) => Mathf.Clamp01((0.98f - r) / aa) * Mathf.Clamp01((r - 0.76f) / aa));
         public static Texture2D Disc => disc != null ? disc : disc = MakeRadial(64, (r, aa) => Mathf.Clamp01((1f - r) / aa));
         /// <summary>Soft glow blob.</summary>
         public static Texture2D Soft => soft != null ? soft : soft = MakeRadial(64, (r, aa) => Mathf.Pow(Mathf.Clamp01(1f - r), 2f));
@@ -301,13 +303,24 @@ namespace AiHackathon.Game
         public static void Crosshair(Vector2 uv, Color color, float size)
         {
             float x = uv.x * Screen.width, y = (1f - uv.y) * Screen.height;
-            float t = Mathf.Max(2f, 3f * Scale);
-            DrawCentered(Soft, new Vector2(x, y), size * 1.2f, new Color(color.r, color.g, color.b, color.a * 0.35f));
-            Rect(new Rect(x - size * 0.5f, y - t * 0.5f, size * 0.32f, t), color);
-            Rect(new Rect(x + size * 0.18f, y - t * 0.5f, size * 0.32f, t), color);
-            Rect(new Rect(x - t * 0.5f, y - size * 0.5f, t, size * 0.32f), color);
-            Rect(new Rect(x - t * 0.5f, y + size * 0.18f, t, size * 0.32f), color);
-            DrawCentered(Ring, new Vector2(x, y), size * 0.55f, color);
+            var c = new Vector2(x, y);
+            float t = Mathf.Max(3f, 5f * Scale);   // arm thickness
+            float o = Mathf.Max(1f, 1.5f * Scale); // dark outline so it reads on bright backgrounds
+            var dark = new Color(0f, 0f, 0f, color.a * 0.6f);
+            DrawCentered(Soft, c, size * 1.3f, new Color(color.r, color.g, color.b, color.a * 0.4f));
+            // Outline pass, then the colored pass on top.
+            for (int pass = 0; pass < 2; pass++)
+            {
+                float e = pass == 0 ? o : 0f;
+                var col = pass == 0 ? dark : color;
+                Rect(new Rect(x - size * 0.5f - e, y - t * 0.5f - e, size * 0.32f + 2f * e, t + 2f * e), col);
+                Rect(new Rect(x + size * 0.18f - e, y - t * 0.5f - e, size * 0.32f + 2f * e, t + 2f * e), col);
+                Rect(new Rect(x - t * 0.5f - e, y - size * 0.5f - e, t + 2f * e, size * 0.32f + 2f * e), col);
+                Rect(new Rect(x - t * 0.5f - e, y + size * 0.18f - e, t + 2f * e, size * 0.32f + 2f * e), col);
+            }
+            DrawCentered(ThickRing, c, size * 0.6f + 2f * o, dark);
+            DrawCentered(ThickRing, c, size * 0.6f, color);
+            DrawCentered(Disc, c, t * 1.1f, color); // center dot
         }
 
         /// <summary>A ring of dots around <paramref name="center"/> from angle a0 to a1 (radians, 0 = up, clockwise), lit up to <paramref name="fill"/>.</summary>
