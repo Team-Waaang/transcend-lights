@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f5a9582076aca040bd99e64e3dd3dcc, type: 3}
+  m_Name: GraphicsConfig
+  m_EditorClassIdentifier: Assembly-CSharp::Waaang.GraphicsConfig
+  tier: 0
+  upgradeShadowedLights: 1
+  extraShadowedLights: 0
+  cameraDithering: 1
+  highQualityBloom: 1
+  toonShadowBlur: 0.22
+  toonShadowStrength: 0.8
+  toonReceiveShadows: 0.85
+  toonOutlineScale: 0.7

@@ -57,6 +57,7 @@ namespace Waaang
                         material.SetColor("_Color", color);
                 }
                 renderer.sharedMaterial = material;
+                GraphicsConfig.OnToonMaterialCreated(material);
             }
         }
     }
