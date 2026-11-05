@@ -1,0 +1,596 @@
+{
+  "source_audio_modified": false,
+  "effects": [
+    {
+      "name": "ui_connect",
+      "previous_gain": 0.43,
+      "gain": 0.2013,
+      "source_mean_dbfs": -13.2,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "ui_ready",
+      "previous_gain": 0.43,
+      "gain": 0.3227,
+      "source_mean_dbfs": -17.3,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "ui_disconnect",
+      "previous_gain": 0.43,
+      "gain": 0.3082,
+      "source_mean_dbfs": -16.9,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "ui_confirm",
+      "previous_gain": 0.43,
+      "gain": 0.4719,
+      "source_mean_dbfs": -20.6,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "parchment_open",
+      "previous_gain": 0.38,
+      "gain": 0.6979,
+      "source_mean_dbfs": -24.0,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "parchment_close",
+      "previous_gain": 0.32,
+      "gain": 0.6439,
+      "source_mean_dbfs": -23.3,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "title_chime",
+      "previous_gain": 0.43,
+      "gain": 0.4404,
+      "source_mean_dbfs": -20.0,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "transition",
+      "previous_gain": 0.43,
+      "gain": 0.3792,
+      "source_mean_dbfs": -18.7,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "period_clear",
+      "previous_gain": 0.66,
+      "gain": 0.69,
+      "source_mean_dbfs": -20.9,
+      "estimated_bus_mean_dbfs": -28.0
+    },
+    {
+      "name": "game_complete",
+      "previous_gain": 0.66,
+      "gain": 0.6821,
+      "source_mean_dbfs": -20.8,
+      "estimated_bus_mean_dbfs": -28.0
+    },
+    {
+      "name": "magic_ignite",
+      "previous_gain": 0.43,
+      "gain": 0.4884,
+      "source_mean_dbfs": -20.9,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "beam_start",
+      "previous_gain": 0.32,
+      "gain": 0.5608,
+      "source_mean_dbfs": -22.1,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "beam_loop",
+      "previous_gain": 0.13,
+      "gain": 0.2392,
+      "source_mean_dbfs": -23.7,
+      "estimated_bus_mean_dbfs": -40.0
+    },
+    {
+      "name": "beam_stop",
+      "previous_gain": 0.2,
+      "gain": 0.2182,
+      "source_mean_dbfs": -13.9,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "rune_trace_loop",
+      "previous_gain": 0.16,
+      "gain": 0.1458,
+      "source_mean_dbfs": -18.4,
+      "estimated_bus_mean_dbfs": -39.0
+    },
+    {
+      "name": "rune_success",
+      "previous_gain": 0.43,
+      "gain": 0.622,
+      "source_mean_dbfs": -21.0,
+      "estimated_bus_mean_dbfs": -29.0
+    },
+    {
+      "name": "rune_fail",
+      "previous_gain": 0.43,
+      "gain": 0.6365,
+      "source_mean_dbfs": -23.2,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "rune_change",
+      "previous_gain": 0.43,
+      "gain": 0.4941,
+      "source_mean_dbfs": -22.0,
+      "estimated_bus_mean_dbfs": -32.0
+    },
+    {
+      "name": "torch_loop",
+      "previous_gain": 0.09,
+      "gain": 0.1967,
+      "source_mean_dbfs": -25.0,
+      "estimated_bus_mean_dbfs": -43.0
+    },
+    {
+      "name": "magic_reveal",
+      "previous_gain": 0.43,
+      "gain": 0.3663,
+      "source_mean_dbfs": -18.4,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "petrify",
+      "previous_gain": 0.43,
+      "gain": 0.72,
+      "source_mean_dbfs": -26.5,
+      "estimated_bus_mean_dbfs": -33.23
+    },
+    {
+      "name": "petrify_loop",
+      "previous_gain": 0.12,
+      "gain": 0.24,
+      "source_mean_dbfs": -25.4,
+      "estimated_bus_mean_dbfs": -41.67
+    },
+    {
+      "name": "curse_charge",
+      "previous_gain": 0.43,
+      "gain": 0.4829,
+      "source_mean_dbfs": -21.8,
+      "estimated_bus_mean_dbfs": -32.0
+    },
+    {
+      "name": "orb_launch",
+      "previous_gain": 0.32,
+      "gain": 0.706,
+      "source_mean_dbfs": -25.1,
+      "estimated_bus_mean_dbfs": -32.0
+    },
+    {
+      "name": "orb_break",
+      "previous_gain": 0.43,
+      "gain": 0.72,
+      "source_mean_dbfs": -24.0,
+      "estimated_bus_mean_dbfs": -30.73
+    },
+    {
+      "name": "curse_impact",
+      "previous_gain": 0.43,
+      "gain": 0.3418,
+      "source_mean_dbfs": -15.8,
+      "estimated_bus_mean_dbfs": -29.0
+    },
+    {
+      "name": "spell_hit",
+      "previous_gain": 0.18,
+      "gain": 0.3,
+      "source_mean_dbfs": -24.2,
+      "estimated_bus_mean_dbfs": -38.53
+    },
+    {
+      "name": "ward_raise",
+      "previous_gain": 0.43,
+      "gain": 0.3792,
+      "source_mean_dbfs": -18.7,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "ward_loop",
+      "previous_gain": 0.15,
+      "gain": 0.1158,
+      "source_mean_dbfs": -17.4,
+      "estimated_bus_mean_dbfs": -40.0
+    },
+    {
+      "name": "ward_hit",
+      "previous_gain": 0.24,
+      "gain": 0.2108,
+      "source_mean_dbfs": -16.6,
+      "estimated_bus_mean_dbfs": -34.0
+    },
+    {
+      "name": "ward_break",
+      "previous_gain": 0.66,
+      "gain": 0.5805,
+      "source_mean_dbfs": -18.4,
+      "estimated_bus_mean_dbfs": -27.0
+    },
+    {
+      "name": "ward_expire",
+      "previous_gain": 0.43,
+      "gain": 0.4254,
+      "source_mean_dbfs": -19.7,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "teleport",
+      "previous_gain": 0.43,
+      "gain": 0.4303,
+      "source_mean_dbfs": -19.8,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "summon",
+      "previous_gain": 0.43,
+      "gain": 0.72,
+      "source_mean_dbfs": -27.8,
+      "estimated_bus_mean_dbfs": -34.53
+    },
+    {
+      "name": "clone_appear",
+      "previous_gain": 0.43,
+      "gain": 0.2623,
+      "source_mean_dbfs": -15.5,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "clone_break",
+      "previous_gain": 0.43,
+      "gain": 0.5418,
+      "source_mean_dbfs": -21.8,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "chain_bind",
+      "previous_gain": 0.43,
+      "gain": 0.72,
+      "source_mean_dbfs": -23.3,
+      "estimated_bus_mean_dbfs": -30.03
+    },
+    {
+      "name": "chain_loop",
+      "previous_gain": 0.12,
+      "gain": 0.24,
+      "source_mean_dbfs": -24.3,
+      "estimated_bus_mean_dbfs": -40.57
+    },
+    {
+      "name": "chain_break",
+      "previous_gain": 0.43,
+      "gain": 0.72,
+      "source_mean_dbfs": -21.7,
+      "estimated_bus_mean_dbfs": -28.43
+    },
+    {
+      "name": "qte_start",
+      "previous_gain": 0.66,
+      "gain": 0.4016,
+      "source_mean_dbfs": -17.2,
+      "estimated_bus_mean_dbfs": -29.0
+    },
+    {
+      "name": "qte_tap",
+      "previous_gain": 0.29,
+      "gain": 0.242,
+      "source_mean_dbfs": -16.8,
+      "estimated_bus_mean_dbfs": -33.0
+    },
+    {
+      "name": "qte_retry",
+      "previous_gain": 0.43,
+      "gain": 0.5056,
+      "source_mean_dbfs": -21.2,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "resonance",
+      "previous_gain": 0.66,
+      "gain": 0.6665,
+      "source_mean_dbfs": -20.6,
+      "estimated_bus_mean_dbfs": -28.0
+    },
+    {
+      "name": "qte_loop",
+      "previous_gain": 0.19,
+      "gain": 0.24,
+      "source_mean_dbfs": -24.6,
+      "estimated_bus_mean_dbfs": -40.87
+    },
+    {
+      "name": "ultimate",
+      "previous_gain": 0.66,
+      "gain": 0.72,
+      "source_mean_dbfs": -24.1,
+      "estimated_bus_mean_dbfs": -30.83
+    },
+    {
+      "name": "blast",
+      "previous_gain": 0.66,
+      "gain": 0.3012,
+      "source_mean_dbfs": -13.7,
+      "estimated_bus_mean_dbfs": -28.0
+    },
+    {
+      "name": "purify",
+      "previous_gain": 0.66,
+      "gain": 0.4719,
+      "source_mean_dbfs": -18.6,
+      "estimated_bus_mean_dbfs": -29.0
+    },
+    {
+      "name": "ominous_pulse",
+      "previous_gain": 0.38,
+      "gain": 0.2563,
+      "source_mean_dbfs": -15.3,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "blackout",
+      "previous_gain": 0.43,
+      "gain": 0.5356,
+      "source_mean_dbfs": -21.7,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "cutscene_slam",
+      "previous_gain": 0.43,
+      "gain": 0.4353,
+      "source_mean_dbfs": -19.9,
+      "estimated_bus_mean_dbfs": -31.0
+    },
+    {
+      "name": "classroom_ambience",
+      "previous_gain": 0.17,
+      "gain": 0.169,
+      "source_mean_dbfs": -22.5,
+      "estimated_bus_mean_dbfs": -49.0
+    },
+    {
+      "name": "dark_hall_ambience",
+      "previous_gain": 0.2,
+      "gain": 0.28,
+      "source_mean_dbfs": -31.7,
+      "estimated_bus_mean_dbfs": -53.81
+    },
+    {
+      "name": "arena_ambience",
+      "previous_gain": 0.19,
+      "gain": 0.1729,
+      "source_mean_dbfs": -22.7,
+      "estimated_bus_mean_dbfs": -49.0
+    }
+  ],
+  "voices": [
+    {
+      "name": "아멜리아 2교시 시작 대사",
+      "gain": 1.0703,
+      "integrated_lufs": -20.02,
+      "true_peak_dbtp": -2.59
+    },
+    {
+      "name": "아멜리아 QTE 성공 ",
+      "gain": 0.6531,
+      "integrated_lufs": -14.3,
+      "true_peak_dbtp": -1.56
+    },
+    {
+      "name": "아멜리아 QTE 실패",
+      "gain": 0.9594,
+      "integrated_lufs": -17.64,
+      "true_peak_dbtp": -3.65
+    },
+    {
+      "name": "아멜리아 공격 명중 실패",
+      "gain": 0.9183,
+      "integrated_lufs": -17.26,
+      "true_peak_dbtp": -2.09
+    },
+    {
+      "name": "아멜리아 룬 제작 성공",
+      "gain": 0.7754,
+      "integrated_lufs": -15.79,
+      "true_peak_dbtp": -1.89
+    },
+    {
+      "name": "아멜리아 룬 제작 실패",
+      "gain": 1.3,
+      "integrated_lufs": -22.3,
+      "true_peak_dbtp": -6.88
+    },
+    {
+      "name": "아멜리아 룬 제작 실패2",
+      "gain": 1.3,
+      "integrated_lufs": -21.1,
+      "true_peak_dbtp": -5.16
+    },
+    {
+      "name": "아멜리아 마력 안정",
+      "gain": 0.8872,
+      "integrated_lufs": -16.96,
+      "true_peak_dbtp": -1.83
+    },
+    {
+      "name": "아멜리아 방어",
+      "gain": 0.872,
+      "integrated_lufs": -16.81,
+      "true_peak_dbtp": -2.1
+    },
+    {
+      "name": "아멜리아 보스 처치",
+      "gain": 0.9441,
+      "integrated_lufs": -17.5,
+      "true_peak_dbtp": -2.81
+    },
+    {
+      "name": "아멜리아 색적",
+      "gain": 0.68,
+      "integrated_lufs": -14.65,
+      "true_peak_dbtp": -2.97
+    },
+    {
+      "name": "아멜리아 스킬",
+      "gain": 0.8337,
+      "integrated_lufs": -16.42,
+      "true_peak_dbtp": -3.36
+    },
+    {
+      "name": "아멜리아 적 연속 처치",
+      "gain": 1.058,
+      "integrated_lufs": -18.49,
+      "true_peak_dbtp": -2.88
+    },
+    {
+      "name": "아멜리아 피격 short",
+      "gain": 1.135,
+      "integrated_lufs": -22.11,
+      "true_peak_dbtp": -3.1
+    },
+    {
+      "name": "아멜리아 피격",
+      "gain": 1.0328,
+      "integrated_lufs": -21.37,
+      "true_peak_dbtp": -2.28
+    },
+    {
+      "name": "아멜리아 회피 QTE 이전 대사",
+      "gain": 1.0447,
+      "integrated_lufs": -18.38,
+      "true_peak_dbtp": -3.44
+    },
+    {
+      "name": "빌런 2페이즈각성",
+      "gain": 0.3793,
+      "integrated_lufs": -9.58,
+      "true_peak_dbtp": -0.37
+    },
+    {
+      "name": "빌런 아자자자자잣",
+      "gain": 0.6592,
+      "integrated_lufs": -14.38,
+      "true_peak_dbtp": -1.42
+    },
+    {
+      "name": "빌런 킄",
+      "gain": 1.1614,
+      "integrated_lufs": -21.05,
+      "true_peak_dbtp": -3.3
+    },
+    {
+      "name": "빌런 킄킄킄",
+      "gain": 1.3,
+      "integrated_lufs": -22.58,
+      "true_peak_dbtp": -4.4
+    },
+    {
+      "name": "빌런 패배",
+      "gain": 0.6494,
+      "integrated_lufs": -14.25,
+      "true_peak_dbtp": -2.24
+    },
+    {
+      "name": "어르또메이또비이이이임",
+      "gain": 0.5476,
+      "integrated_lufs": -12.77,
+      "true_peak_dbtp": -2.18
+    },
+    {
+      "name": "카엘라 1교시 강화",
+      "gain": 1.3,
+      "integrated_lufs": -22.93,
+      "true_peak_dbtp": -5.03
+    },
+    {
+      "name": "카엘라 2교시 강화",
+      "gain": 1.1272,
+      "integrated_lufs": -19.04,
+      "true_peak_dbtp": -4.13
+    },
+    {
+      "name": "카엘라 2교시 진입",
+      "gain": 1.1844,
+      "integrated_lufs": -20.24,
+      "true_peak_dbtp": -3.47
+    },
+    {
+      "name": "카엘라 qte 성공",
+      "gain": 1.0257,
+      "integrated_lufs": -18.22,
+      "true_peak_dbtp": -2.41
+    },
+    {
+      "name": "카엘라 QTE 시작",
+      "gain": 0.9183,
+      "integrated_lufs": -17.26,
+      "true_peak_dbtp": -2.9
+    },
+    {
+      "name": "카엘라 qte실패",
+      "gain": 0.9215,
+      "integrated_lufs": -17.29,
+      "true_peak_dbtp": -1.91
+    },
+    {
+      "name": "카엘라 궁극기 전 대사",
+      "gain": 1.0058,
+      "integrated_lufs": -18.05,
+      "true_peak_dbtp": -2.77
+    },
+    {
+      "name": "카엘라 룬 실패",
+      "gain": 1.0221,
+      "integrated_lufs": -18.19,
+      "true_peak_dbtp": -3.23
+    },
+    {
+      "name": "카엘라 룬 제작 성공",
+      "gain": 0.9047,
+      "integrated_lufs": -17.13,
+      "true_peak_dbtp": -3.84
+    },
+    {
+      "name": "카엘라 룬 제작",
+      "gain": 1.2882,
+      "integrated_lufs": -20.53,
+      "true_peak_dbtp": -4.2
+    },
+    {
+      "name": "카엘라 색적",
+      "gain": 1.1803,
+      "integrated_lufs": -20.97,
+      "true_peak_dbtp": -3.44
+    },
+    {
+      "name": "카엘라 승리",
+      "gain": 0.9638,
+      "integrated_lufs": -17.68,
+      "true_peak_dbtp": -2.35
+    },
+    {
+      "name": "카엘라 연속처치",
+      "gain": 0.9365,
+      "integrated_lufs": -17.43,
+      "true_peak_dbtp": -2.85
+    },
+    {
+      "name": "카엘라 피격",
+      "gain": 1.0629,
+      "integrated_lufs": -20.5,
+      "true_peak_dbtp": -2.53
+    }
+  ],
+  "voice_assignments": 36,
+  "unique_voice_clips_measured": 36
+}

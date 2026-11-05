@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "track": "bgm_rune_class",
+  "musicBefore": 0.415999979,
+  "musicDuringVoice": 0.124800004,
+  "musicAfter": 0.414175957,
+  "loopBefore": 0.153088,
+  "loopDuringVoice": 0.1071616,
+  "outputPeak": 0.332194179,
+  "maxMusicSources": 1,
+  "frame": 25847
+}

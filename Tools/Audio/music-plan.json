@@ -1,0 +1,179 @@
+{
+  "provider": "elevenlabs",
+  "model": "music_v1",
+  "jobs": [
+    {
+      "id": "rune_class",
+      "request": {
+        "model_id": "music_v1",
+        "prompt": "Warm whimsical magical academy rune lesson, 100 BPM, D major, 4/4. Intimate chamber ensemble: soft celesta, pizzicato strings, felt piano and gentle wooden percussion. A memorable four-note D-A-C-sharp-F-sharp motif with playful little answers, curious and friendly, light buoyant rhythm, not childish. Seventeen bars of repeating classroom exploration music, final bar leads back into the opening. Instrumental only, no vocals, choir, chanting, speech, sound effects, abrupt silence, trailer booms or piercing treble. Clear space in the midrange for spoken dialogue and game effects. Consistent gentle production, restrained dynamics, ready-to-loop repeating phrases, no long intro and no fade to silence.",
+        "music_length_ms": 40800,
+        "force_instrumental": true
+      }
+    },
+    {
+      "id": "dark_hall",
+      "request": {
+        "model_id": "music_v1",
+        "prompt": "Mysterious quiet magical school gallery exploration, 80 BPM, D dorian, 4/4. Sparse glass marimba and low warm strings with brushed frame drum and airy woodwind fragments. Widely spaced notes and gentle swaying pulse, wonder in the darkness rather than horror. Subtle descending D-A-C-F motif in long values. Seventeen bars, final bar wraps gently back to the opening texture. Instrumental only, no vocals, choir, chanting, speech, sound effects, abrupt silence, trailer booms or piercing treble. Clear space in the midrange for spoken dialogue and game effects. Consistent gentle production, restrained dynamics, ready-to-loop repeating phrases, no long intro and no fade to silence.",
+        "music_length_ms": 51000,
+        "force_instrumental": true
+      }
+    },
+    {
+      "id": "boss_suite",
+      "request": {
+        "model_id": "music_v1",
+        "respect_sections_durations": true,
+        "composition_plan": {
+          "positive_global_styles": [
+            "instrumental fantasy academy chamber-orchestra combat underscore",
+            "120 BPM, D minor, 4/4, same tempo and tonic across every section",
+            "one recurring four-note D-A-C-F magic-school motif",
+            "continuous coherent three-variation suite, not three unrelated songs",
+            "elegant ominous playful sorcery, no horror",
+            "transparent dialogue-friendly mids and restrained bass",
+            "seventeen bars per section: sixteen-bar pattern plus one wraparound bar"
+          ],
+          "negative_global_styles": [
+            "vocals",
+            "lyrics",
+            "choir",
+            "chanting",
+            "speech",
+            "heavy metal",
+            "EDM drop",
+            "trailer booms",
+            "piercing treble",
+            "large loudness changes"
+          ],
+          "sections": [
+            {
+              "section_name": "Phase 1 - The Curse Seal",
+              "duration_ms": 34000,
+              "positive_local_styles": [
+                "sparse low string ostinato",
+                "plucked cello pulse and soft frame drums",
+                "muted celesta plays the shared four-note motif",
+                "controlled tension, medium energy, steady pulse, no giant accents",
+                "final bar naturally leads into its own first bar"
+              ],
+              "negative_local_styles": [
+                "vocals",
+                "choir",
+                "sound effects",
+                "long pauses",
+                "fade-out"
+              ],
+              "lines": []
+            },
+            {
+              "section_name": "Phase 2 - Fractured Seal",
+              "duration_ms": 34000,
+              "positive_local_styles": [
+                "same motif, key, tempo and harmonic foundation as phase 1",
+                "more urgent sixteenth-note string variations",
+                "add restrained low toms, brighter celesta doubling and warm low brass",
+                "stronger forward momentum and intensity without louder mastering",
+                "final bar naturally leads into its own first bar"
+              ],
+              "negative_local_styles": [
+                "vocals",
+                "choir",
+                "sound effects",
+                "long pauses",
+                "fade-out"
+              ],
+              "lines": []
+            },
+            {
+              "section_name": "Resonance - Two Lights",
+              "duration_ms": 34000,
+              "positive_local_styles": [
+                "same motif, key, tempo and harmonic foundation",
+                "driving co-op finale variation, interlocking pizzicato and high string ostinato",
+                "restrained taiko-like tom pattern, warm brass motif in longer values",
+                "hopeful rising harmony over the dark tonic pedal, urgent but clear",
+                "no final hit or ending: final bar leads back to the opening pulse"
+              ],
+              "negative_local_styles": [
+                "vocals",
+                "choir",
+                "sound effects",
+                "long pauses",
+                "fade-out"
+              ],
+              "lines": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "victory",
+      "request": {
+        "model_id": "music_v1",
+        "prompt": "Peaceful cooperative magic-school victory and school-day results, 120 BPM but half-time relaxed feel, D major, 4/4. Warm piano, celesta, tender legato strings, small harp arpeggios, light confident resolution of a D-A-C-sharp-F-sharp motif, optimistic and grateful without a bombastic fanfare. A flowing seventeen-bar repeating passage. Instrumental only, no vocals, choir, chanting, speech, sound effects, abrupt silence, trailer booms or piercing treble. Clear space in the midrange for spoken dialogue and game effects. Consistent gentle production, restrained dynamics, ready-to-loop repeating phrases, no long intro and no fade to silence.",
+        "music_length_ms": 34000,
+        "force_instrumental": true
+      }
+    }
+  ],
+  "assets": [
+    {
+      "kind": "bgm",
+      "file": "bgm_rune_class.ogg",
+      "job": "rune_class",
+      "start": 0,
+      "seconds": 40.8,
+      "crossfade": 2.4,
+      "role": "Connection and period 1 rune class"
+    },
+    {
+      "kind": "bgm",
+      "file": "bgm_dark_hall.ogg",
+      "job": "dark_hall",
+      "start": 0,
+      "seconds": 51,
+      "crossfade": 3,
+      "role": "Period 2 light hunt"
+    },
+    {
+      "kind": "bgm",
+      "file": "bgm_boss_phase1.ogg",
+      "job": "boss_suite",
+      "start": 0,
+      "seconds": 34,
+      "crossfade": 2,
+      "role": "Boss entrance, title and phase 1"
+    },
+    {
+      "kind": "bgm",
+      "file": "bgm_boss_phase2.ogg",
+      "job": "boss_suite",
+      "start": 34,
+      "seconds": 34,
+      "crossfade": 2,
+      "role": "Boss awakening cutscene and phase 2"
+    },
+    {
+      "kind": "bgm",
+      "file": "bgm_boss_resonance.ogg",
+      "job": "boss_suite",
+      "start": 68,
+      "seconds": 34,
+      "crossfade": 2,
+      "role": "Final beam-clash cutscene and live QTE"
+    },
+    {
+      "kind": "bgm",
+      "file": "bgm_victory.ogg",
+      "job": "victory",
+      "start": 0,
+      "seconds": 34,
+      "crossfade": 2,
+      "role": "Purification and final results"
+    }
+  ],
+  "runtime_format": "44.1 kHz stereo Ogg Vorbis 128 kbps, exact sample-count loops for Unity streaming"
+}

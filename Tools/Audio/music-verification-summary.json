@@ -1,0 +1,92 @@
+{
+  "music_assets": 6,
+  "sfx_rebalanced": 53,
+  "voice_clips_measured": 36,
+  "provider": "ElevenLabs Music",
+  "model": "music_v1",
+  "music_source_bytes": 3083159,
+  "combined_source_bytes": 10036973,
+  "source_voice_audio_modified": false,
+  "subjective_listening_approved": false,
+  "music_file_audit_passed": 6,
+  "compilation_errors": 0,
+  "runtime_game_errors": 0,
+  "mix": {
+    "passed": true,
+    "track": "bgm_rune_class",
+    "musicBefore": 0.415999979,
+    "musicDuringVoice": 0.124800004,
+    "musicAfter": 0.414175957,
+    "loopBefore": 0.153088,
+    "loopDuringVoice": 0.1071616,
+    "outputPeak": 0.332194179,
+    "maxMusicSources": 1,
+    "frame": 25847
+  },
+  "flow": {
+    "passed": true,
+    "format": "Ogg Vorbis, exact sample counts",
+    "tracks": [
+      "bgm_rune_class",
+      "bgm_dark_hall",
+      "bgm_boss_phase1",
+      "bgm_boss_phase2",
+      "bgm_boss_resonance",
+      "bgm_victory"
+    ],
+    "events": [
+      {
+        "scene": "Period1Cutscene",
+        "track": "bgm_rune_class",
+        "frame": 3613
+      },
+      {
+        "scene": "Period2Cutscene",
+        "track": "bgm_dark_hall",
+        "frame": 3772
+      },
+      {
+        "scene": "Period3",
+        "track": "bgm_boss_phase1",
+        "frame": 4166
+      },
+      {
+        "scene": "Period3",
+        "track": "bgm_boss_phase2",
+        "frame": 4667
+      },
+      {
+        "scene": "Period3",
+        "track": "bgm_boss_resonance",
+        "frame": 5137
+      },
+      {
+        "scene": "Period3",
+        "track": "bgm_victory",
+        "frame": 6076
+      }
+    ],
+    "maxMusicSources": 2,
+    "qteRetryKeptMusicPosition": true,
+    "outputPeak": 0.6012512,
+    "victoryLoopWrapped": true,
+    "purificationRegressedDuringUnload": false,
+    "listeners": 1,
+    "services": 1,
+    "frame": 10524
+  },
+  "remaining_checks": [
+    "Subjective listening on target speakers/headphones.",
+    "Physical two-phone play and Android APK packaging were not tested."
+  ],
+  "latest_main_title_integration": {
+    "passed": true,
+    "scene": "Title",
+    "track": "bgm_rune_class",
+    "CurrentGain": 0.415999979,
+    "PlayingSources": 1,
+    "listeners": 1,
+    "outputPeak": 0.142444775,
+    "frame": 2270
+  }
+}

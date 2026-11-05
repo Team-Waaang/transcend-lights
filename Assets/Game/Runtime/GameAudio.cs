@@ -35,6 +35,12 @@ namespace AiHackathon.Game
         public static float MasterVolume { get; set; } = 0.8f;
         public static float EffectsVolume { get; set; } = 0.8f;
         public static float AmbienceVolume { get; set; } = 0.45f;
+        public static float MusicVolume { get; set; } = 0.52f;
+        public static float VoiceVolume { get; set; } = 0.95f;
+        float dialogue, voiceHoldUntil = -1f, eventHoldUntil = -1f, eventDuck = 1f;
+        public static float DialogueAmount => instance != null ? instance.dialogue : 0f;
+        public static float MusicGain => Mathf.Clamp01(MasterVolume) * Mathf.Clamp01(MusicVolume) *
+            Mathf.Lerp(1f, AudioMixSettings.Current.musicVoiceDuck, DialogueAmount) * (instance != null ? instance.eventDuck : 1f);
 
         readonly Dictionary<string, Cue> cues = new Dictionary<string, Cue>();
         readonly Dictionary<string, AudioClip> clips = new Dictionary<string, AudioClip>();
@@ -43,6 +49,8 @@ namespace AiHackathon.Game
         readonly List<(EntityId, string)> finished = new List<(EntityId, string)>();
         readonly HashSet<string> missing = new HashSet<string>();
         readonly AudioSource[] shots = new AudioSource[OneShotCount];
+        readonly Cue[] shotCues = new Cue[OneShotCount];
+        readonly float[] shotLevels = new float[OneShotCount];
 
         public int ActiveLoops => loops.Count;
         public int PlayedCount { get; private set; }
@@ -57,6 +65,8 @@ namespace AiHackathon.Game
             MasterVolume = 0.8f;
             EffectsVolume = 0.8f;
             AmbienceVolume = 0.45f;
+            MusicVolume = 0.52f;
+            VoiceVolume = 0.95f;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -84,10 +94,17 @@ namespace AiHackathon.Game
 
         void Awake()
         {
+            var mix = AudioMixSettings.Current;
+            MasterVolume = mix.master;
+            EffectsVolume = mix.effects;
+            AmbienceVolume = mix.ambience;
+            MusicVolume = mix.music;
+            VoiceVolume = mix.voice;
             var json = Resources.Load<TextAsset>("Audio/SfxCatalog");
             if (json != null)
                 foreach (var cue in JsonUtility.FromJson<Catalog>(json.text).cues) cues[cue.name] = cue;
             for (int i = 0; i < shots.Length; i++) shots[i] = MakeSource("One Shot " + i);
+            gameObject.AddComponent<GameMusic>();
         }
 
         static void SceneLoaded(Scene scene, LoadSceneMode mode)
@@ -130,8 +147,23 @@ namespace AiHackathon.Game
             return clip;
         }
 
-        static float Gain(Cue cue) => Mathf.Clamp01(MasterVolume) *
-            Mathf.Clamp01(cue.ambience ? AmbienceVolume : EffectsVolume) * cue.volume;
+        static float Gain(Cue cue)
+        {
+            var mix = AudioMixSettings.Current;
+            float duck = cue.ambience ? mix.ambienceVoiceDuck : cue.priority <= 32 ? mix.importantEffectsVoiceDuck : mix.effectsVoiceDuck;
+            return Mathf.Clamp01(MasterVolume) * Mathf.Clamp01(cue.ambience ? AmbienceVolume : EffectsVolume) *
+                cue.volume * Mathf.Lerp(1f, duck, DialogueAmount);
+        }
+
+        public static float VoiceGain(AudioClip clip)
+        {
+            Ensure();
+            float gain = 1f;
+            if (clip != null)
+                foreach (var level in AudioMixSettings.Current.voiceLevels)
+                    if (level.name == clip.name) { gain = level.gain; break; }
+            return Mathf.Clamp01(Mathf.Clamp01(MasterVolume) * Mathf.Clamp01(VoiceVolume) * gain);
+        }
 
         public static void Play(string id, Transform at = null, float volume = 1f, float pitch = 1f)
         {
@@ -162,6 +194,10 @@ namespace AiHackathon.Game
             chosen.loop = false;
             chosen.clip = clip;
             chosen.volume = Gain(cue) * Mathf.Clamp01(volume);
+            int slot = Array.IndexOf(audio.shots, chosen);
+            audio.shotCues[slot] = cue;
+            audio.shotLevels[slot] = Mathf.Clamp01(volume);
+            if (cue.priority <= 32) audio.eventHoldUntil = now + Mathf.Clamp(clip.length, 0.45f, 1.2f);
             chosen.pitch = Mathf.Clamp(pitch, 0.75f, 1.35f);
             chosen.priority = cue.priority;
             chosen.spatialBlend = at != null && cue.spatial ? 0.5f : 0f;
@@ -201,6 +237,19 @@ namespace AiHackathon.Game
         void Update()
         {
             float now = Time.unscaledTime;
+            var mix = AudioMixSettings.Current;
+            if (Voice.Speaking) voiceHoldUntil = now + mix.voiceHold;
+            float wantDialogue = now < voiceHoldUntil ? 1f : 0f;
+            float time = wantDialogue > dialogue ? mix.voiceAttack : mix.voiceRelease;
+            dialogue = Mathf.Lerp(dialogue, wantDialogue, 1f - Mathf.Exp(-Time.unscaledDeltaTime / Mathf.Max(0.01f, time)));
+            eventDuck = Mathf.Lerp(eventDuck, now < eventHoldUntil ? mix.musicEventDuck : 1f,
+                1f - Mathf.Exp(-Time.unscaledDeltaTime / (now < eventHoldUntil ? 0.04f : 0.4f)));
+            int activeShots = 0;
+            foreach (var source in shots) if (source.isPlaying) activeShots++;
+            float density = 1f / Mathf.Sqrt(Mathf.Max(1f, activeShots / 4f));
+            for (int i = 0; i < shots.Length; i++)
+                if (shots[i].isPlaying && shotCues[i] != null)
+                    shots[i].volume = Gain(shotCues[i]) * shotLevels[i] * (shotCues[i].priority <= 32 ? 1f : density);
             foreach (var pair in loops)
             {
                 var voice = pair.Value;
