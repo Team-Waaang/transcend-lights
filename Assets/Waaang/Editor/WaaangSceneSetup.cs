@@ -88,7 +88,141 @@ namespace Waaang.EditorTools
             rigObject.AddComponent<SecondCaster>().primary = rig;
 
             ApplyCutsceneLook(character.transform, camera, rig);
+            AddNox(rig);
             return Save(scene, "Assets/Scenes/Game.unity");
+        }
+
+        // ---------- 2P: Nox ----------
+
+        static readonly Color NoxColor = new Color(0.45f, 0.75f, 1f); // matches the 2P crosshair
+
+        [MenuItem("Waaang/Add Nox 2P To Open Game Scene")]
+        public static void AddNoxToOpenScene()
+        {
+            var primary = GameObject.Find("Wand Pointer");
+            var rig = primary != null ? primary.GetComponent<WandPointerRig>() : null;
+            if (rig == null || rig.character == null)
+            {
+                Debug.LogError("Open Assets/Scenes/Game.unity first (needs the 1P \"Wand Pointer\" rig).");
+                return;
+            }
+            AddNox(rig);
+            EditorSceneManager.MarkSceneDirty(rig.gameObject.scene);
+        }
+
+        // Builds Nox, her own wand and a full 2P rig into the scene, switched off. SecondCaster switches them on
+        // when a second phone connects. Built here because aligning the wand needs its mesh, which is not
+        // readable at runtime.
+        static void AddNox(WandPointerRig primary)
+        {
+            foreach (var old in new[] { "Nox", "Wand Pointer 2", "Laser 2", "Hit Marker 2", "Hit Light 2" })
+            {
+                var existing = FindInScene(old);
+                if (existing != null)
+                    Object.DestroyImmediate(existing);
+            }
+
+            var caster = primary.GetComponent<SecondCaster>();
+            if (caster == null)
+                caster = primary.gameObject.AddComponent<SecondCaster>();
+            var amelia = primary.character;
+
+            var nox = CreateCharacter(NoxFbx, "Nox", "Nox.mat");
+            nox.transform.rotation = amelia.rotation;
+            float floorY = nox.transform.position.y;
+            Vector3 place = amelia.position + amelia.right * caster.sideOffset;
+            nox.transform.position = new Vector3(place.x, floorY, place.z);
+            var staff = CreateStaff(nox.transform, NoxWandFbx, NoxWandMat, "NoxWand.mat");
+            var tipLight = staff.transform.Find("Staff Tip").GetComponent<Light>();
+            if (tipLight != null)
+                tipLight.color = Color.Lerp(NoxColor, Color.white, 0.3f);
+
+            var pose = nox.AddComponent<CasterPose>();
+            pose.idle = FindClip(MageFbx, "Idle stance");
+            var body = nox.GetComponentInChildren<SkinnedMeshRenderer>();
+            if (body != null)
+                body.sharedMaterial = RimToon("Nox_Rim.mat", body.sharedMaterial);
+
+            var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            marker.name = "Hit Marker 2";
+            marker.transform.localScale = Vector3.one * 0.08f;
+            Object.DestroyImmediate(marker.GetComponent<Collider>());
+            marker.GetComponent<Renderer>().sharedMaterial = Solid("Hit2.mat", NoxColor);
+
+            var lightObject = new GameObject("Hit Light 2");
+            var hitLight = lightObject.AddComponent<Light>();
+            hitLight.type = LightType.Point;
+            hitLight.color = NoxColor;
+            hitLight.intensity = 6f;
+            hitLight.range = 3.2f;
+            hitLight.shadows = LightShadows.None;
+            hitLight.enabled = false;
+            AddLightData(lightObject);
+
+            var beam = CreateBeam();
+            beam[0].gameObject.name = "Laser 2";
+
+            var rigObject = new GameObject("Wand Pointer 2");
+            var rig = rigObject.AddComponent<WandPointerRig>();
+            rig.phoneSlot = 1;
+            rig.mouseMode = false;
+            rig.viewCamera = primary.viewCamera;
+            rig.character = nox.transform;
+            rig.staff = staff.transform;
+            rig.rightGrip = staff.transform.Find("Right Grip");
+            rig.leftGrip = staff.transform.Find("Left Grip");
+            rig.hitMarker = marker.transform;
+            rig.hitLight = hitLight;
+            rig.aimLine = beam[0];
+            rig.glowLine = beam[1];
+            rig.roomMask = primary.roomMask;
+            rig.lightSurfaceOffset = primary.lightSurfaceOffset;
+            rig.beamPrefab = primary.beamPrefab;
+            SecondCaster.CopySettings(primary, rig);
+            rig.beamTint = new Color(0.55f, 0.65f, 1f, 1f);
+            rig.trailColor = new Color(0.45f, 0.85f, 1.6f, 1f);
+
+            caster.primary = primary;
+            caster.second = rig;
+            FrameBoth(caster, primary.viewCamera, amelia, nox.transform);
+
+            nox.SetActive(false);
+            rigObject.SetActive(false);
+            beam[0].gameObject.SetActive(false);
+            marker.SetActive(false);
+            EditorUtility.SetDirty(caster);
+            EditorUtility.SetDirty(rig);
+        }
+
+        // Duo shot: centred behind both players and a little higher, so Amelia's back sits lower-left, Nox's
+        // lower-right and the room they aim into fills the middle.
+        public static Vector3 DuoCamBack = new Vector3(0f, 0.3f, -1.45f);
+        public static float DuoCamPitch = 5f;
+        public static float DuoCamFov = 62f;
+
+        static void FrameBoth(SecondCaster caster, Camera camera, Transform first, Transform second)
+        {
+            var headA = Find(first, "Head");
+            var headB = Find(second, "Head");
+            Vector3 a = headA != null ? headA.position : first.position + Vector3.up * 1.4f;
+            Vector3 b = headB != null ? headB.position : second.position + Vector3.up * 1.4f;
+            Vector3 mid = (a + b) * 0.5f;
+            Vector3 forward = first.forward;
+            Vector3 right = first.right;
+            caster.duoCameraPosition = mid + right * DuoCamBack.x + Vector3.up * DuoCamBack.y + forward * DuoCamBack.z;
+            caster.duoCameraEuler = (Quaternion.LookRotation(forward) * Quaternion.Euler(DuoCamPitch, 0f, 0f)).eulerAngles;
+            caster.duoCameraFov = DuoCamFov;
+        }
+
+        static GameObject FindInScene(string name)
+        {
+            var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+            for (int i = 0; i < roots.Length; i++)
+            {
+                if (roots[i].name == name)
+                    return roots[i];
+            }
+            return null;
         }
 
         // ---------- Cutscene look (Assets/Cutscene/Editor/CutsceneKit.cs) ----------
@@ -253,12 +387,27 @@ namespace Waaang.EditorTools
             Box("Crate Yellow", new Vector3(2.2f, 0.25f, 2.6f), new Vector3(0.5f, 0.5f, 0.5f), Solid("CrateYellow.mat", new Color(0.85f, 0.72f, 0.18f)));
         }
 
+        const string AmeliaFbx = "Assets/TripoModels/amelia_polaris_3d_model/amelia_polaris_3d_model.fbx";
+        const string AmeliaWandFbx = "Assets/TripoModels/amelia_weapon/amelia_weapon.fbx";
+        const string AmeliaWandMat = "Assets/TripoModels/amelia_weapon/Materials/magical_wand_3d_model.mat";
+        const string NoxFbx = "Assets/TripoModels/nox/nox.fbx";
+        const string NoxWandFbx = "Assets/TripoModels/nox_weapon/twisted_magic_wand_3d_model.fbx";
+        const string NoxWandMat = "Assets/TripoModels/nox_weapon/Materials/twisted_magic_wand_3d_model.mat";
+
         static GameObject CreateCharacter()
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/TripoModels/amelia_polaris_3d_model/amelia_polaris_3d_model.fbx");
+            var character = CreateCharacter(AmeliaFbx, "Amelia", "Amelia.mat");
+            var placed = character.transform.position;
+            character.transform.position = new Vector3(-1.23f, placed.y, 3.84f);
+            return character;
+        }
+
+        // Instantiates a Tripo character at 1.5x, turned to face +Z and standing on the floor (y = 0 at its feet).
+        static GameObject CreateCharacter(string fbx, string name, string materialFile)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(fbx);
             var character = Object.Instantiate(prefab);
-            character.name = "Amelia";
+            character.name = name;
             character.transform.localScale = Vector3.one * 1.5f;
 
             var head = Find(character.transform, "Head");
@@ -276,7 +425,7 @@ namespace Waaang.EditorTools
             if (renderer != null)
             {
                 var texture = renderer.sharedMaterial != null ? renderer.sharedMaterial.mainTexture : null;
-                var lit = Solid("Amelia.mat", Color.white);
+                var lit = Solid(materialFile, Color.white);
                 if (texture != null)
                 {
                     lit.mainTexture = texture;
@@ -286,13 +435,15 @@ namespace Waaang.EditorTools
                 float lift = -renderer.bounds.min.y;
                 character.transform.position += new Vector3(0f, lift, 0f);
             }
-
-            var placed = character.transform.position;
-            character.transform.position = new Vector3(-1.23f, placed.y, 3.84f);
             return character;
         }
 
         static GameObject CreateStaff(Transform character)
+        {
+            return CreateStaff(character, AmeliaWandFbx, AmeliaWandMat, "Wand.mat");
+        }
+
+        static GameObject CreateStaff(Transform character, string wandFbx, string wandSourceMaterial, string wandMaterialFile)
         {
             var chest = Find(character, "Chest");
             Vector3 chestLocal = chest != null
@@ -304,18 +455,16 @@ namespace Waaang.EditorTools
             staff.transform.localPosition = chestLocal + new Vector3(0.03f, -0.04f, 0.15f);
             staff.transform.localRotation = Quaternion.identity;
 
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/TripoModels/amelia_weapon/amelia_weapon.fbx");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(wandFbx);
             var model = Object.Instantiate(prefab, staff.transform, false);
             model.name = "Magical Wand";
             float scale = Mathf.Max(0.001f, character.lossyScale.y);
             model.transform.localScale = Vector3.one / scale;
             Vector3 tipLocal = AlignWand(model.transform);
 
-            var source = AssetDatabase.LoadAssetAtPath<Material>(
-                "Assets/TripoModels/amelia_weapon/Materials/magical_wand_3d_model.mat");
+            var source = AssetDatabase.LoadAssetAtPath<Material>(wandSourceMaterial);
             var texture = source != null ? source.mainTexture : null;
-            var wandMaterial = Solid("Wand.mat", Color.white);
+            var wandMaterial = Solid(wandMaterialFile, Color.white);
             if (texture != null)
             {
                 wandMaterial.mainTexture = texture;

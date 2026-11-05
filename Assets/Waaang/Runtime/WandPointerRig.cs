@@ -51,6 +51,16 @@ namespace Waaang
         public float impactSize = 0.06f;
         [Tooltip("레이저가 지팡이 끝에서 얼마나 떨어져서 시작할지(m).")]
         public float beamStartGap = 0.04f;
+        [Tooltip("레이저 이펙트 색. 알파가 0이면 원본 색을 씁니다.")]
+        public Color beamTint = new Color(0f, 0f, 0f, 0f);
+        [Tooltip("벽에 남는 흔적 색 (HDR).")]
+        [ColorUsage(false, true)] public Color trailColor = new Color(1.5f, 0.78f, 0.28f, 1f);
+        [Tooltip("오른손이 지팡이를 잡는 위치. 0=손잡이 끝, 1=지팡이 끝. 클수록 지팡이가 뒤로 들어갑니다.")]
+        [Range(0.05f, 0.7f)] public float gripAlongStaff = 0.32f;
+        [Tooltip("손을 어깨 높이에서 얼마나 내려 쥘지(m). 지팡이 뒤끝이 머리에 걸리지 않게 합니다.")]
+        public float holdDrop = 0.16f;
+        [Tooltip("손을 몸 바깥(오른쪽)으로 얼마나 빼서 쥘지(m).")]
+        public float holdSide = 0.06f;
         [Tooltip("오른손 손가락을 지팡이에 감는 정도.")]
         [Range(0f, 1.5f)] public float fingerCurl = 1f;
 
@@ -121,6 +131,52 @@ namespace Waaang
             ToonLook.ApplyScene();
         }
 
+        // Recolour one layer to tint, keeping each layer's own alpha and fades (CutsceneKit.Tint).
+        static void Tint(ParticleSystem system, Color tint)
+        {
+            var main = system.main;
+            var start = main.startColor;
+            Color c = start.mode == ParticleSystemGradientMode.Color ? start.color : start.colorMax;
+            main.startColor = new Color(tint.r, tint.g, tint.b, c.a);
+            var overLife = system.colorOverLifetime;
+            if (overLife.enabled && overLife.color.mode == ParticleSystemGradientMode.Gradient && overLife.color.gradient != null)
+            {
+                var gradient = overLife.color.gradient;
+                var colorKeys = gradient.colorKeys;
+                for (int i = 0; i < colorKeys.Length; i++)
+                    colorKeys[i].color = Color.white;
+                var recoloured = new Gradient();
+                recoloured.SetKeys(colorKeys, gradient.alphaKeys);
+                overLife.color = recoloured;
+            }
+        }
+
+        // Slide the staff back through the hands: the right grip sits gripAlongStaff of the way from the butt to
+        // the tip, so more of the shaft is behind the hands and less sticks out in front.
+        void PlaceGrip()
+        {
+            if (staff == null || rightGrip == null)
+                return;
+            var tip = staff.Find("Staff Tip");
+            if (tip != null)
+                rightGrip.localPosition = tip.localPosition * gripAlongStaff;
+        }
+
+        // A second caster is switched off when its phone leaves: hide everything it drew outside its own object.
+        void OnDisable()
+        {
+            trail = null;
+            if (beamInstance != null)
+                beamInstance.SetActive(false);
+            if (impactRoot != null)
+                impactRoot.gameObject.SetActive(false);
+            if (hitMarker != null)
+                hitMarker.gameObject.SetActive(false);
+            if (hitLight != null)
+                hitLight.enabled = false;
+            SetBeamActive(false);
+        }
+
         void OnDestroy()
         {
             // The asset beam lives at the scene root, so a despawned second caster would leave it behind.
@@ -168,6 +224,8 @@ namespace Waaang
                 }
                 system.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
                 var main = system.main;
+                if (beamTint.a > 0f)
+                    Tint(system, beamTint);
                 main.loop = true;
                 main.duration = beamLoopPeriod;
                 main.playOnAwake = true;
@@ -204,6 +262,7 @@ namespace Waaang
         void BindBones()
         {
             boundCharacter = character;
+            PlaceGrip();
             rightUpper = FindBone("Right_UpperArm");
             rightLower = FindBone("Right_LowerArm");
             rightHand = FindBone("Right_Hand");
@@ -383,6 +442,9 @@ namespace Waaang
             if (reach < 0.05f)
                 reach = Mathf.Max(0.2f, armLength * 0.9f);
             Vector3 hold = shoulder + aimDir * reach;
+            // Hold it a little under the shoulder line: with the staff slid back through the hands, a grip at eye
+            // level ran the butt through the head when aiming across the body.
+            hold += -up * holdDrop + bodyRight * holdSide;
             AimStaff(aim, hold);
 
             Vector3 axis = staff.up;
@@ -551,7 +613,7 @@ namespace Waaang
         void BeginTrail(Vector3 point)
         {
             if (trailMaterial == null)
-                trailMaterial = CreateTrailMaterial();
+                trailMaterial = CreateTrailMaterial(trailColor);
             var lineObject = new GameObject("Scorch Line");
             lineObject.transform.SetParent(trailRoot, false);
             trail = lineObject.AddComponent<LineRenderer>();
@@ -578,11 +640,10 @@ namespace Waaang
             }
         }
 
-        static Material CreateTrailMaterial()
+        static Material CreateTrailMaterial(Color color)
         {
             var shader = Shader.Find("Universal Render Pipeline/Unlit");
             var material = new Material(shader);
-            var color = new Color(1.5f, 0.78f, 0.28f, 1f);
             material.color = color;
             material.SetColor("_BaseColor", color);
             return material;
