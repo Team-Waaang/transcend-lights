@@ -62,6 +62,9 @@ namespace Waaang
             copy.glowLine = lines[1];
             copy.roomMask = primary.roomMask;
             copy.lightSurfaceOffset = primary.lightSurfaceOffset;
+            copy.beamPrefab = primary.beamPrefab;
+            copy.useLeftHand = true;
+            copy.staffUpright = 0f;
             copy.holdOffset = primary.holdOffset;
             copy.holdReach = primary.holdReach;
             copy.staffUpright = primary.staffUpright;

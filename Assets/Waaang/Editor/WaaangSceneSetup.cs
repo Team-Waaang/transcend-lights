@@ -38,6 +38,7 @@ namespace Waaang.EditorTools
             receiver.MaxPhones = 1;
             var view = host.AddComponent<PhonePointer.PhonePointerRegistrationView>();
             view.Receiver = receiver;
+            view.enabled = false;
             var link = host.AddComponent<PhoneLink>();
             link.Receiver = receiver;
             link.requiredPhones = 1;

@@ -9,6 +9,19 @@ namespace Waaang
         public string gameSceneName = "Game";
         bool loading;
 
+        void Awake()
+        {
+            var receiver = GetComponent<PhonePointer.PhonePointerReceiver>();
+            var combined = GetComponent<PhonePointer.PhonePointerRegistrationView>();
+            if (combined != null)
+                combined.enabled = false;
+            if (GetComponent<RegistrationBoard>() == null)
+            {
+                var board = gameObject.AddComponent<RegistrationBoard>();
+                board.Receiver = receiver;
+            }
+        }
+
         void Update()
         {
             var link = PhoneLink.Instance;

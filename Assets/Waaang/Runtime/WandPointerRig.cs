@@ -31,7 +31,7 @@ namespace Waaang
         [Tooltip("조준 방향으로 쥔 손이 얼마나 따라 나가는지(m).")]
         public float holdReach = 0.04f;
         [Tooltip("지팡이를 조준 방향 대신 위로 세우는 비율. 0이면 조준점을 정확히 가리킵니다.")]
-        [Range(0f, 0.9f)] public float staffUpright = 0.4f;
+        [Range(0f, 0.9f)] public float staffUpright;
         [Tooltip("몸통(척추~윗가슴)이 조준 방향으로 돌아가는 비율.")]
         [Range(0f, 1f)] public float bodyFollow = 0.55f;
         [Tooltip("머리가 나머지 조준 각도를 따라가는 비율.")]
@@ -40,8 +40,9 @@ namespace Waaang
         public float maxPitch = 35f;
         [Tooltip("조준 흔들림을 줄이는 속도. 클수록 빠르게 따라갑니다.")]
         public float aimSharpness = 12f;
-        [Tooltip("켜면 왼손도 지팡이를 잡습니다. 끄면 왼팔은 대기 애니메이션을 따릅니다.")]
-        public bool useLeftHand;
+        [Tooltip("켜면 왼손도 지팡이를 잡습니다.")]
+        public bool useLeftHand = true;
+        public GameObject beamPrefab;
         [Tooltip("오른손 손가락을 지팡이에 감는 정도.")]
         [Range(0f, 1.5f)] public float fingerCurl = 1f;
 
@@ -78,6 +79,8 @@ namespace Waaang
         Vector3 lastTrailPoint;
         bool trailHasPoint;
         const int MaxTrails = 16;
+        GameObject beamInstance;
+        const float AssetBeamLength = 20f;
 
         void Awake()
         {
@@ -102,7 +105,21 @@ namespace Waaang
             trailRoot = new GameObject("Laser Trails").transform;
             trailRoot.SetParent(transform, false);
             SetBeamActive(false);
+            EnsureAssetBeam();
             ToonLook.ApplyScene();
+        }
+
+        void EnsureAssetBeam()
+        {
+            if (beamInstance != null)
+                return;
+            if (beamPrefab == null)
+                beamPrefab = Resources.Load<GameObject>("HCFX_Beam_03");
+            if (beamPrefab == null)
+                return;
+            beamInstance = Instantiate(beamPrefab);
+            beamInstance.name = "Asset Laser";
+            beamInstance.SetActive(false);
         }
 
         // Also called later when character is assigned after AddComponent (SecondCaster).
@@ -227,9 +244,14 @@ namespace Waaang
 
             var tip = staff.Find("Staff Tip");
             Vector3 tipPosition = tip != null ? tip.position : staff.TransformPoint(Vector3.up);
-            SetBeamActive(firing);
-            SetBeam(aimLine, tipPosition, aimPoint);
-            SetBeam(glowLine, tipPosition, aimPoint);
+            if (beamInstance != null)
+                UpdateAssetBeam(firing, tipPosition, aimPoint);
+            else
+            {
+                SetBeamActive(firing);
+                SetBeam(aimLine, tipPosition, aimPoint);
+                SetBeam(glowLine, tipPosition, aimPoint);
+            }
         }
 
         void PoseCaster(Vector3 aim)
@@ -261,31 +283,32 @@ namespace Waaang
             Twist(upperChest, 0.4f, bodyYaw, bodyPitch);
             Twist(head, 1f, (yaw - bodyYaw) * headFollow, (pitch - bodyPitch) * headFollow);
 
-            // Staff held out at the right side, scepter style, leaning a little toward where it points.
+            // Both arms reach straight toward the pointer. The right hand is nearer the tip, the left hand behind it on the shaft.
             Vector3 bodyForward = Quaternion.AngleAxis(bodyYaw, up) * character.forward;
             Vector3 bodyRight = Vector3.Cross(up, bodyForward);
             Vector3 shoulder = rightUpper != null ? rightUpper.position : from;
-            Vector3 hold = shoulder + bodyRight * holdOffset.x + up * holdOffset.y + bodyForward * holdOffset.z;
-            Vector3 lean = aim - hold;
-            if (lean.sqrMagnitude > 0.0001f)
-                hold += lean.normalized * holdReach;
-            // Keep the grip where the arm can actually close on it, with the elbow a little bent.
-            float reach = armLength * 0.97f - FistOffset().magnitude;
-            if (reach > 0f && (hold - shoulder).sqrMagnitude > reach * reach)
-                hold = shoulder + (hold - shoulder).normalized * reach;
+            Vector3 aimDir = aim - shoulder;
+            if (aimDir.sqrMagnitude < 0.0001f)
+                aimDir = bodyForward;
+            aimDir.Normalize();
+            float reach = armLength * 0.98f - FistOffset().magnitude;
+            if (reach < 0.05f)
+                reach = Mathf.Max(0.2f, armLength * 0.9f);
+            Vector3 hold = shoulder + aimDir * reach;
             AimStaff(aim, hold);
 
             Vector3 axis = staff.up;
-            Vector3 rightPole = shoulder + bodyRight * 0.35f - up * 0.5f - bodyForward * 0.15f;
+            Vector3 rightPole = shoulder + bodyRight * 0.12f - up * 0.08f;
             if (rightGrip != null)
             {
                 ArmIk.SolveGrip(rightUpper, rightLower, rightHand, rightGrip.position, axis, rightPole, acrossLocal, FistOffset());
                 CurlFingers();
             }
 
-            if (useLeftHand && leftGrip != null && leftUpper != null)
+            if (useLeftHand && leftGrip != null && leftUpper != null && rightGrip != null)
             {
-                Vector3 leftPole = leftUpper.position - bodyRight * 0.35f - up * 0.5f - bodyForward * 0.15f;
+                leftGrip.position = rightGrip.position - axis * 0.16f;
+                Vector3 leftPole = leftUpper.position - bodyRight * 0.12f - up * 0.08f;
                 ArmIk.Solve(leftUpper, leftLower, leftHand, leftGrip.position, leftPole);
             }
         }
@@ -343,7 +366,7 @@ namespace Waaang
         void AimStaff(Vector3 aim, Vector3 hold, bool place)
         {
             Vector3 direction = aim - hold;
-            if (place && direction.sqrMagnitude > 0.0001f)
+            if (place && direction.sqrMagnitude > 0.0001f && staffUpright > 0f)
                 direction = Vector3.Slerp(direction.normalized, Vector3.up, staffUpright);
             if (direction.sqrMagnitude > 0.0001f)
             {
@@ -364,6 +387,30 @@ namespace Waaang
             if (phoneSlot == 0 && mouseMode)
                 return Mouse.current != null && Mouse.current.leftButton.isPressed;
             return false;
+        }
+
+        void UpdateAssetBeam(bool firing, Vector3 tip, Vector3 aimPoint)
+        {
+            beamInstance.SetActive(firing);
+            if (aimLine != null)
+                aimLine.enabled = false;
+            if (glowLine != null)
+                glowLine.enabled = false;
+            if (!firing)
+                return;
+            Vector3 along = tip - aimPoint;
+            float length = along.magnitude;
+            if (length < 0.05f)
+                return;
+            beamInstance.transform.SetPositionAndRotation(
+                aimPoint, Quaternion.FromToRotation(Vector3.up, along / length));
+            beamInstance.transform.localScale = Vector3.one * (length / AssetBeamLength);
+            if (!wasFiring)
+            {
+                var systems = beamInstance.GetComponentsInChildren<ParticleSystem>(true);
+                for (int i = 0; i < systems.Length; i++)
+                    systems[i].Play(true);
+            }
         }
 
         void SetBeamActive(bool active)
