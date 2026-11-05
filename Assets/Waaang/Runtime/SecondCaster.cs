@@ -146,6 +146,15 @@ namespace Waaang
             to.gripAlongStaff = from.gripAlongStaff;
             to.holdDrop = from.holdDrop;
             to.holdSide = from.holdSide;
+            to.armExtension = from.armExtension;
+            to.softReach = from.softReach;
+            to.elbowDrop = from.elbowDrop;
+            to.elbowOut = from.elbowOut;
+            to.gripOblique = from.gripOblique;
+            to.supportGripOblique = from.supportGripOblique;
+            to.forearmTwist = from.forearmTwist;
+            to.supportGap = from.supportGap;
+            to.supportFingerCurl = from.supportFingerCurl;
             to.beamLoopPeriod = from.beamLoopPeriod;
             to.beamThickness = from.beamThickness;
             to.impactSize = from.impactSize;

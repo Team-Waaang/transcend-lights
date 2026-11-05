@@ -31,6 +31,8 @@ namespace Waaang
         public bool mouseAimWhileFiring;
         [Tooltip("시작할 때 씬 전체를 lilToon으로 바꿉니다. 자체 재질을 쓰는 씬(컷씬 교실 등)에서는 끄세요.")]
         public bool toonScene = true;
+        [Tooltip("지정하면 휴대폰/마우스 포인터 대신 이 대상을 겨눕니다 (테스트 씬용).")]
+        public Transform aimTarget;
 
         [Header("Pose / IK")]
         [Tooltip("오른쪽 어깨 기준 지팡이를 쥐는 위치(m). x=오른쪽, y=위, z=앞.")]
@@ -83,9 +85,29 @@ namespace Waaang
         [Tooltip("오른손 손가락을 지팡이에 감는 정도.")]
         [Range(0f, 1.5f)] public float fingerCurl = 1f;
 
+        [Header("Arm IK")]
+        [Tooltip("어깨에서 지팡이 쥔 손까지의 거리 (팔 길이 비율). 1에 가까울수록 팔이 쭉 펴집니다.")]
+        [Range(0.6f, 1f)] public float armExtension = 0.86f;
+        [Tooltip("팔이 다 펴지기 전에 부드럽게 멈추기 시작하는 지점 (팔 길이 비율). 팔꿈치가 펴졌다 굽혔다 튀지 않게 합니다.")]
+        [Range(0.8f, 1f)] public float softReach = 0.9f;
+        [Tooltip("팔꿈치를 아래로 내리는 정도 (팔 길이 배율).")]
+        public float elbowDrop = 0.7f;
+        [Tooltip("팔꿈치를 몸 바깥으로 빼는 정도 (팔 길이 배율).")]
+        public float elbowOut = 0.35f;
+        [Tooltip("지팡이가 손바닥을 대각선으로 지나갈 수 있는 최대 각도. 클수록 손목이 덜 꺾입니다.")]
+        [Range(0f, 75f)] public float gripOblique = 50f;
+        [Tooltip("손 비틀림 중 아래팔이 나눠 갖는 비율. 트위스트 본이 없어 손목 피부가 꼬이는 것을 줄입니다.")]
+        [Range(0f, 1f)] public float forearmTwist = 0.5f;
+        [Tooltip("받치는 손에서 지팡이가 손바닥을 대각선으로 지나가는 각도.")]
+        [Range(0f, 75f)] public float supportGripOblique = 15f;
+        [Tooltip("받치는 손이 앞손에서 지팡이를 따라 얼마나 뒤에 있는지(m).")]
+        public float supportGap = 0.16f;
+        [Tooltip("받치는 손 손가락을 지팡이에 감는 정도.")]
+        [Range(0f, 1.5f)] public float supportFingerCurl = 0.9f;
+
         static readonly string[] FingerNames = { "Index", "Middle", "Ring", "Pinky" };
         static readonly string[] JointNames = { "Proximal", "Intermediate", "Distal" };
-        static readonly float[] JointCurl = { 55f, 80f, 55f };
+        static readonly float[] JointCurl = { 68f, 90f, 60f };
 
         Transform rightUpper, rightLower, rightHand;
         Transform leftUpper, leftLower, leftHand;
@@ -101,6 +123,16 @@ namespace Waaang
         Quaternion[] fingerRest;
         Transform thumb;
         Quaternion thumbRest;
+        // The support hand's grip frame and finger chain, same layout as the lead hand's above.
+        Vector3 supportFingerLocal = Vector3.up, supportAcrossLocal = Vector3.forward, supportPalmLocal = Vector3.left;
+        Transform[] supportFingerBones;
+        Quaternion[] supportFingerRest;
+        Transform supportThumb;
+        Quaternion supportThumbRest;
+        float supportHandLength = 0.07f;
+        // Elbow hinges and straight-wrist hand rotations taken from the skin's bind pose (see BindArm).
+        ArmIk.Limits leadLimits = ArmIk.Limits.Default;
+        ArmIk.Limits supportLimits = ArmIk.Limits.Default;
         float handLength = 0.07f;
         float armLength;
         Vector3 smoothedAim;
@@ -353,11 +385,86 @@ namespace Waaang
                 fingerRest[i] = fingerBones[i] != null ? fingerBones[i].localRotation : Quaternion.identity;
             thumb = FindBone(lead + "ThumbProximal");
             thumbRest = thumb != null ? thumb.localRotation : Quaternion.identity;
+
+            // Support hand: same grip frame from its own finger bones. It is the other side, so its palm sign flips.
+            var supportMiddle = FindBone(support + "MiddleProximal");
+            var supportIndex = FindBone(support + "IndexProximal");
+            var supportPinky = FindBone(support + "PinkyProximal");
+            if (leftHand != null && supportMiddle != null)
+                supportHandLength = Vector3.Distance(leftHand.position, supportMiddle.position);
+            if (leftHand != null && supportMiddle != null && supportIndex != null && supportPinky != null)
+            {
+                Quaternion toLocal = Quaternion.Inverse(leftHand.rotation);
+                supportFingerLocal = (toLocal * (supportMiddle.position - leftHand.position)).normalized;
+                supportAcrossLocal = Vector3.ProjectOnPlane(toLocal * (supportIndex.position - supportPinky.position), supportFingerLocal).normalized;
+                supportPalmLocal = Vector3.Cross(supportFingerLocal, supportAcrossLocal) * (leftHanded ? 1f : -1f);
+            }
+            supportFingerBones = new Transform[FingerNames.Length * JointNames.Length];
+            for (int f = 0; f < FingerNames.Length; f++)
+                for (int j = 0; j < JointNames.Length; j++)
+                    supportFingerBones[f * JointNames.Length + j] = FindBone(support + FingerNames[f] + JointNames[j]);
+            supportFingerRest = new Quaternion[supportFingerBones.Length];
+            for (int i = 0; i < supportFingerBones.Length; i++)
+                supportFingerRest[i] = supportFingerBones[i] != null ? supportFingerBones[i].localRotation : Quaternion.identity;
+            supportThumb = FindBone(support + "ThumbProximal");
+            supportThumbRest = supportThumb != null ? supportThumb.localRotation : Quaternion.identity;
+
+            leadLimits = BindArm(rightUpper, rightLower, rightHand);
+            supportLimits = BindArm(leftUpper, leftLower, leftHand);
             twistBones = new[] { spine, chest, upperChest, head, rightUpper, rightLower, rightHand, leftUpper, leftLower, leftHand };
             restRotations = new Quaternion[twistBones.Length];
             for (int i = 0; i < twistBones.Length; i++)
                 restRotations[i] = twistBones[i] != null ? twistBones[i].localRotation : Quaternion.identity;
             pose = character != null ? character.GetComponent<CasterPose>() : null;
+        }
+
+        // Elbow hinge (upper-arm space) and straight-wrist hand rotation (forearm space) from the skin's bind pose,
+        // so they do not depend on whatever pose the idle clip or the scene left the arm in. A straight bind arm
+        // bends its forearm toward the character's front, like an elbow from a T-pose.
+        ArmIk.Limits BindArm(Transform upper, Transform lower, Transform hand)
+        {
+            var limits = ArmIk.Limits.Default;
+            if (upper == null || lower == null || hand == null)
+                return limits;
+            if (!BindPose(upper, out Vector3 upperPos, out Quaternion upperRot)
+                || !BindPose(lower, out Vector3 lowerPos, out Quaternion lowerRot)
+                || !BindPose(hand, out Vector3 handPos, out Quaternion handRot))
+                return limits;
+            Vector3 upperDir = lowerPos - upperPos;
+            Vector3 lowerDir = handPos - lowerPos;
+            Vector3 hinge = Vector3.Angle(upperDir, lowerDir) > 10f
+                ? Vector3.Cross(upperDir, lowerDir)
+                : Vector3.Cross(upperDir, Vector3.forward);
+            if (hinge.sqrMagnitude > 0.000001f)
+                limits.hingeLocal = Quaternion.Inverse(upperRot) * hinge.normalized;
+            limits.handBindLocal = Quaternion.Inverse(lowerRot) * handRot;
+            limits.hasHandBind = true;
+            limits.lowerBindLocal = Quaternion.Inverse(upperRot) * lowerRot;
+            limits.hasLowerBind = true;
+            return limits;
+        }
+
+        // Bone position/rotation at bind time in character space, from the first skin that uses it.
+        bool BindPose(Transform bone, out Vector3 position, out Quaternion rotation)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
+            if (character == null)
+                return false;
+            foreach (var skin in character.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                if (skin.sharedMesh == null)
+                    continue;
+                int index = System.Array.IndexOf(skin.bones, bone);
+                var bindposes = skin.sharedMesh.bindposes;
+                if (index < 0 || index >= bindposes.Length)
+                    continue;
+                Matrix4x4 m = character.worldToLocalMatrix * skin.transform.localToWorldMatrix * bindposes[index].inverse;
+                position = m.GetColumn(3);
+                rotation = Quaternion.LookRotation(m.GetColumn(2), m.GetColumn(1));
+                return true;
+            }
+            return false;
         }
 
         Transform FindBone(string boneName)
@@ -388,7 +495,12 @@ namespace Waaang
             // The pointer only steers the caster. The laser itself leaves the staff tip along the staff, so it
             // sweeps with the arms (and their damping) instead of snapping to the pointer.
             Vector3 aimPoint;
-            if (Physics.Raycast(ray, out RaycastHit pointerHit, 40f, roomMask, QueryTriggerInteraction.Ignore))
+            if (aimTarget != null)
+            {
+                aimPoint = aimTarget.position;
+                hitName = aimTarget.name;
+            }
+            else if (Physics.Raycast(ray, out RaycastHit pointerHit, 40f, roomMask, QueryTriggerInteraction.Ignore))
             {
                 aimPoint = pointerHit.point;
                 hitName = pointerHit.collider.name;
@@ -504,9 +616,9 @@ namespace Waaang
             if (aimDir.sqrMagnitude < 0.0001f)
                 aimDir = bodyForward;
             aimDir.Normalize();
-            float reach = armLength * 0.98f - FistOffset().magnitude;
-            if (reach < 0.05f)
-                reach = Mathf.Max(0.2f, armLength * 0.9f);
+            // Keep the elbow comfortably bent: a grip at full reach locked the arm straight and left the forearm
+            // running along the staff, which folded the wrist back.
+            float reach = armLength > 0.01f ? armLength * armExtension : 0.4f;
             Vector3 hold = shoulder + aimDir * reach;
             // Hold it a little under the shoulder line: with the staff slid back through the hands, a grip at eye
             // level ran the butt through the head when aiming across the body.
@@ -514,48 +626,73 @@ namespace Waaang
             AimStaff(aim, hold);
 
             Vector3 axis = staff.up;
-            Vector3 rightPole = shoulder + bodyRight * 0.12f - up * 0.08f;
+            float poleScale = Mathf.Max(armLength, 0.2f);
+            // Elbows hang down and a little out and back, far enough from the shoulder that the hint never sits on
+            // the shoulder-wrist line (which is what made the elbow flip when aiming down or across).
+            Vector3 rightPole = shoulder + (-up * elbowDrop + bodyRight * elbowOut - bodyForward * 0.15f) * poleScale;
+            leadLimits.softReach = softReach;
+            leadLimits.maxOblique = gripOblique;
+            leadLimits.forearmTwist = forearmTwist;
             if (rightGrip != null)
             {
-                ArmIk.SolveGrip(rightUpper, rightLower, rightHand, rightGrip.position, axis, rightPole, acrossLocal, FistOffset());
+                ArmIk.SolveGrip(rightUpper, rightLower, rightHand, rightGrip.position, axis, rightPole, acrossLocal,
+                    FistOffset(), fingerLocal, leadLimits);
                 CurlFingers();
             }
 
             if (useLeftHand && leftGrip != null && leftUpper != null && rightGrip != null)
             {
-                leftGrip.position = rightGrip.position - axis * 0.16f;
-                Vector3 leftPole = leftUpper.position - bodyRight * 0.12f - up * 0.08f;
-                ArmIk.Solve(leftUpper, leftLower, leftHand, leftGrip.position, leftPole);
+                leftGrip.position = rightGrip.position - axis * supportGap;
+                Vector3 leftPole = leftUpper.position
+                    + (-up * elbowDrop - bodyRight * elbowOut * 0.6f - bodyForward * 0.15f) * poleScale;
+                supportLimits.softReach = softReach;
+                supportLimits.maxOblique = supportGripOblique;
+                supportLimits.forearmTwist = forearmTwist;
+                ArmIk.SolveGrip(leftUpper, leftLower, leftHand, leftGrip.position, axis, leftPole, supportAcrossLocal,
+                    SupportFistOffset(), supportFingerLocal, supportLimits);
+                CurlHand(leftHand, supportFingerLocal, supportPalmLocal, supportFingerBones, supportFingerRest,
+                    supportThumb, supportThumbRest, supportFingerCurl, !leftHanded);
             }
+        }
+
+        Vector3 SupportFistOffset()
+        {
+            return (supportFingerLocal * 0.8f + supportPalmLocal * 0.5f) * supportHandLength;
         }
 
         // Where the staff passes through the closed fist, in hand space: past the knuckles, off the palm.
         Vector3 FistOffset()
         {
-            return (fingerLocal * 0.85f + palmLocal * 0.35f) * handLength;
+            return (fingerLocal * 0.8f + palmLocal * 0.5f) * handLength;
         }
 
         // Close the right hand around the staff. Starts from the rest pose every frame so it never accumulates.
         void CurlFingers()
         {
-            if (rightHand == null || fingerBones == null)
+            CurlHand(rightHand, fingerLocal, palmLocal, fingerBones, fingerRest, thumb, thumbRest, fingerCurl, leftHanded);
+        }
+
+        static void CurlHand(Transform hand, Vector3 fingerLocal, Vector3 palmLocal, Transform[] bones, Quaternion[] rest,
+            Transform thumb, Quaternion thumbRest, float curl, bool leftSide)
+        {
+            if (hand == null || bones == null || rest == null)
                 return;
             // A positive turn about finger x palm swings the fingertips toward the palm, for either hand.
-            Vector3 curlAxis = rightHand.rotation * Vector3.Cross(fingerLocal, palmLocal);
-            for (int i = 0; i < fingerBones.Length; i++)
+            Vector3 curlAxis = hand.rotation * Vector3.Cross(fingerLocal, palmLocal);
+            for (int i = 0; i < bones.Length; i++)
             {
-                var bone = fingerBones[i];
+                var bone = bones[i];
                 if (bone == null)
                     continue;
-                bone.localRotation = fingerRest[i];
-                float angle = JointCurl[i % JointNames.Length] * fingerCurl;
+                bone.localRotation = rest[i];
+                float angle = JointCurl[i % JointNames.Length] * curl;
                 bone.rotation = Quaternion.AngleAxis(angle, curlAxis) * bone.rotation;
             }
             if (thumb != null)
             {
                 thumb.localRotation = thumbRest;
-                float thumbTurn = 35f * fingerCurl * (leftHanded ? -1f : 1f);
-                thumb.rotation = Quaternion.AngleAxis(thumbTurn, rightHand.rotation * fingerLocal) * thumb.rotation;
+                float thumbTurn = 35f * curl * (leftSide ? -1f : 1f);
+                thumb.rotation = Quaternion.AngleAxis(thumbTurn, hand.rotation * fingerLocal) * thumb.rotation;
             }
         }
 
