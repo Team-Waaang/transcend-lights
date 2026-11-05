@@ -18,10 +18,11 @@ namespace Waaang.EditorTools
             AssetDatabase.Refresh();
             var connection = BuildConnection();
             var game = BuildGame();
-            var scenes = new EditorBuildSettingsScene[2];
-            scenes[0] = new EditorBuildSettingsScene(connection, true);
-            scenes[1] = new EditorBuildSettingsScene(game, true);
-            EditorBuildSettings.scenes = scenes;
+            // Connection first, Game listed; every other scene already in Build Settings (the periods) stays.
+            var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene> { new EditorBuildSettingsScene(connection, true), new EditorBuildSettingsScene(game, true) };
+            foreach (var existing in EditorBuildSettings.scenes)
+                if (existing.path != connection && existing.path != game) scenes.Add(existing);
+            EditorBuildSettings.scenes = scenes.ToArray();
             AssetDatabase.SaveAssets();
             Debug.Log("Built " + connection + " and " + game);
         }
@@ -35,13 +36,13 @@ namespace Waaang.EditorTools
 
             var host = new GameObject("Phone Link");
             var receiver = host.AddComponent<PhonePointer.PhonePointerReceiver>();
-            receiver.MaxPhones = 1;
+            receiver.MaxPhones = 2;
             var view = host.AddComponent<PhonePointer.PhonePointerRegistrationView>();
             view.Receiver = receiver;
             view.enabled = false;
             var link = host.AddComponent<PhoneLink>();
             link.Receiver = receiver;
-            link.requiredPhones = 1;
+            link.requiredPhones = 2;
             host.AddComponent<ConnectionFlow>();
 
             return Save(scene, "Assets/Scenes/Connection.unity");

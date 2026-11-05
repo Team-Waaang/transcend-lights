@@ -143,6 +143,30 @@ static class PlayProbe
         return failed.Count == 0 ? "deleted" : "failed: " + string.Join(", ", failed);
     }
 
+    /// <summary>What Enter does on the connection screen.</summary>
+    public static string StartDay()
+    {
+        var flow = Object.FindAnyObjectByType<Waaang.ConnectionFlow>();
+        if (flow == null) return "no connection flow";
+        typeof(Waaang.ConnectionFlow).GetField("started", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(flow, true);
+        Waaang.RegistrationBoard.StartedWith = 0;
+        return "next: " + AiHackathon.Game.PeriodFlow.Next();
+    }
+
+    public static string NextPeriod() => "next: " + AiHackathon.Game.PeriodFlow.Next();
+
+    /// <summary>Marks the rune lanes done as if both players had traced every rune.</summary>
+    public static string ClearRunes()
+    {
+        var period = Object.FindAnyObjectByType<RunePeriod>();
+        if (period == null) return "no rune period";
+        foreach (var lane in period.lanes) { lane.done = true; lane.index = lane.sequence.Length; }
+        typeof(RunePeriod).GetMethod("CheckCleared", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(period, null);
+        return "cleared " + period.Cleared;
+    }
+
+    public static string Scene() => SceneManager.GetActiveScene().path;
+
     public static string Errors()
     {
         return "see Editor.log";

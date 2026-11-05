@@ -78,6 +78,8 @@ namespace AiHackathon.Game
         Transform[] chestTargets = new Transform[0];
 
         float chip = 1f, chipHoldUntil;
+        float clearedAt = -10f;
+        bool lastPeriod;
         float lastHp = -1f;
         float stageShown = -10f;
 
@@ -143,6 +145,16 @@ namespace AiHackathon.Game
             if (playCutscenes) yield return PlayCutscene(defeatScene);
             Current = Stage.Cleared;
             fade = 1f;
+            clearedAt = Time.unscaledTime;
+            // Next period if there is one; otherwise the day is over and Enter starts it again.
+            yield return new WaitForSecondsRealtime(5f);
+            lastPeriod = !PeriodFlow.Next();
+            while (lastPeriod)
+            {
+                var kb = Keyboard.current;
+                if (kb != null && (kb.enterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame)) { PeriodFlow.Restart(); break; }
+                yield return null;
+            }
         }
 
         /// <summary>The boss flinches, the frame slows a moment and fades to black.</summary>
@@ -326,6 +338,12 @@ namespace AiHackathon.Game
                 GameGui.DrawCentered(GameGui.Soft, new Vector2(Screen.width * 0.5f, Screen.height * 0.38f + 55f * s), 900f * s, new Color(1f, 0.75f, 0.35f, 0.18f));
                 GameGui.GlowLabel(new Rect(0f, Screen.height * 0.38f, Screen.width, 110f * s), "3교시 클리어!", GameGui.Style(92, TextAnchor.MiddleCenter), new Color(1f, 0.9f, 0.62f), new Color(1f, 0.7f, 0.3f));
                 GameGui.Label(new Rect(0f, Screen.height * 0.38f + 110f * s, Screen.width, 50f * s), "저주가 풀렸다. 두 사람의 빛으로.", GameGui.Style(34, TextAnchor.MiddleCenter, false), Color.white);
+                if (lastPeriod)
+                {
+                    float a = Mathf.Clamp01((Time.unscaledTime - clearedAt - 5f) / 0.6f);
+                    GameGui.GlowLabel(new Rect(0f, Screen.height * 0.62f, Screen.width, 60f * s), "오늘의 수업 끝", GameGui.Style(48, TextAnchor.MiddleCenter), new Color(0.95f, 0.9f, 1f), new Color(0.7f, 0.5f, 1f), a);
+                    GameGui.Label(new Rect(0f, Screen.height * 0.62f + 64f * s, Screen.width, 40f * s), "Enter: 처음부터", GameGui.Style(24, TextAnchor.MiddleCenter, false), new Color(1f, 1f, 1f, 0.6f + 0.3f * Mathf.Sin(Time.unscaledTime * 3f)), a);
+                }
             }
         }
 

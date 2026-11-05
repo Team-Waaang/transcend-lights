@@ -421,7 +421,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Waaang.PhoneLink
   Receiver: {fileID: 1677414578}
   displaySizeMeters: {x: 0.53, y: 0.3}
-  requiredPhones: 1
+  requiredPhones: 2
 --- !u!114 &1677414577
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -449,7 +449,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65b8b408a0475104cbb24ffad9c43c1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PhonePointer.Runtime::PhonePointer.PhonePointerReceiver
-  MaxPhones: 1
+  MaxPhones: 2
   Settings: {fileID: 0}
   Options:
     poseStaleSeconds: 0.25

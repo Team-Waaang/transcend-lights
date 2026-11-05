@@ -5,6 +5,16 @@ Players use their phones as air mice (`PhonePointerSDK`) to aim wand lasers; wit
 drives both (left click = P1 Amelia, right click = P2 Nox). The game runs in periods (교시):
 1교시 rune class, 2교시 (TBD), 3교시 boss fight (`Assets/Game/Period3/Period3.unity`, see `Docs/Period3.md`).
 
+## The school day
+
+`Connection` (QR + registration image, waits for 2 phones; Enter starts with whoever is in, the rest on the mouse)
+→ 1교시 `Assets/Cutscene/Period1/Period1Cutscene.unity` → 2교시 `Assets/Game/Period2/Period2.unity` (not built yet;
+skipped until it is in Build Settings) → 3교시 `Assets/Game/Period3/Period3.unity` → "오늘의 수업 끝", Enter restarts.
+`PeriodFlow` (Assets/Game/Runtime) holds the order and does the fade + period card; a period calls `PeriodFlow.Next()`
+when cleared (RunePeriod, BossPeriod do). `Tools/Periods/Set Up School Day` puts Build Settings in that order and
+creates the HUD font asset (`Assets/Game/Resources/GameGuiFonts.asset`). A new period: add it to `PeriodFlow.Periods`,
+call `PeriodFlow.Next()` on clear, rerun the setup menu. All HUDs draw with `GameGui` (IMGUI kit, GowunBatang font).
+
 ## Layout
 
 - `Assets/Cutscene/Editor/`: scene builders. `CutsceneKit` (shared shots/VFX/volumes/Timeline helpers),

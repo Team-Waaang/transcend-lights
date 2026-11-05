@@ -9,10 +9,32 @@ namespace AiHackathon.Game
     /// </summary>
     public static class GameGui
     {
-        /// <summary>Serif font for titles and call-outs (set by the HUD components; falls back to the default).</summary>
-        public static Font TitleFont;
+        static Font titleFont, bodyFont;
+        static bool fontsLoaded;
+
+        /// <summary>Serif font for titles and call-outs (Resources/GameGuiFonts unless a HUD sets it).</summary>
+        public static Font TitleFont
+        {
+            get { LoadFonts(); return titleFont; }
+            set => titleFont = value;
+        }
+
         /// <summary>Font for smaller text.</summary>
-        public static Font BodyFont;
+        public static Font BodyFont
+        {
+            get { LoadFonts(); return bodyFont; }
+            set => bodyFont = value;
+        }
+
+        static void LoadFonts()
+        {
+            if (fontsLoaded) return;
+            fontsLoaded = true;
+            var fonts = Resources.Load<GameGuiFonts>("GameGuiFonts");
+            if (fonts == null) return;
+            if (titleFont == null) titleFont = fonts.title;
+            if (bodyFont == null) bodyFont = fonts.body;
+        }
 
         static Texture2D ring, disc, soft, stripe, diamond, banner;
         static readonly Dictionary<long, Texture2D> gradients = new Dictionary<long, Texture2D>();

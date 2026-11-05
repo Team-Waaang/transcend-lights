@@ -64,6 +64,8 @@ namespace Waaang
         public float trailLifetime = 10f;
         [Tooltip("레이저가 닿은 곳에 흔적을 남깁니다. 움직이는 대상을 쏘는 전투에서는 끕니다.")]
         public bool drawTrails = true;
+        [Tooltip("조준점 옆에 맞은 콜라이더 이름을 표시합니다 (디버그).")]
+        public bool showHitLabel;
         [Tooltip("흔적이 사라지는 데 걸리는 시간(초).")]
         public float trailFade = 1.2f;
         [Tooltip("벽에 남는 흔적 색 (HDR).")]
@@ -829,15 +831,12 @@ namespace Waaang
 
             float x = pointerUv.x * Screen.width;
             float y = (1f - pointerUv.y) * Screen.height;
-            Color previous = GUI.color;
-            GUI.color = phoneSlot == 0
-                ? new Color(1f, 0.82f, 0.2f, 1f)
-                : new Color(0.45f, 0.75f, 1f, 1f);
-            GUI.DrawTexture(new Rect(x - 14f, y - 1.5f, 28f, 3f), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(x - 1.5f, y - 14f, 3f, 28f), Texture2D.whiteTexture);
-            GUI.DrawTexture(new Rect(x - 3f, y - 3f, 6f, 6f), Texture2D.whiteTexture);
-            GUI.color = previous;
-            if (!string.IsNullOrEmpty(hitName))
+            var color = phoneSlot == 0 ? new Color(1f, 0.82f, 0.3f, 1f) : new Color(0.45f, 0.75f, 1f, 1f);
+            // Tightens and brightens while firing.
+            float size = (Firing ? 34f : 42f) * AiHackathon.Game.GameGui.Scale;
+            if (!Firing) color.a = 0.8f;
+            AiHackathon.Game.GameGui.Crosshair(pointerUv, color, size);
+            if (showHitLabel && !string.IsNullOrEmpty(hitName))
                 GUI.Label(new Rect(x + 16f, y - 10f, 240f, 24f), hitName);
         }
     }
