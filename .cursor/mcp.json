@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "unity": {
+      "command": "/Users/sleeeppy/.unity/bin/unity",
+      "args": [
+        "mcp",
+        "--project-path",
+        "/Users/sleeeppy/UnityProjects/ai-hackathon"
+      ]
+    }
+  }
+}
