@@ -104,7 +104,8 @@ Shader "AiHackathon/Petrify"
         }
 
         // Stone mask (1 = stone) and seam band for an object-space position.
-        void PetrifyMask(float3 positionOS, out half stone, out half seam)
+        // Stay in float: half outputs here make the D3D11 compiler emit a min-precision opcode it then rejects.
+        void PetrifyMask(float3 positionOS, out float stone, out float seam)
         {
             float h = saturate((dot(positionOS, _UpOS.xyz) - _HeightMin) / max(1e-4, _HeightMax - _HeightMin));
             float jag = (Fbm(positionOS * _NoiseScale) - 0.5) * 0.22;
@@ -131,7 +132,8 @@ Shader "AiHackathon/Petrify"
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
-            #pragma multi_compile _ _LIGHT_LAYERS
+            // _LIGHT_LAYERS is left off. Every light in this project uses the default layer, and that variant
+            // makes the D3D11 compiler reject the fragment (min-precision opcode where it expects an integer).
             #pragma multi_compile_fog
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -169,7 +171,7 @@ Shader "AiHackathon/Petrify"
             half4 Frag(Varyings i) : SV_Target
             {
                 half4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv) * _BaseColor;
-                half stone, seam;
+                float stone, seam;
                 PetrifyMask(i.positionOS, stone, seam);
 
                 // Stone keeps the texture's light and dark (so the shapes still read) in grey, mottled, with dark
