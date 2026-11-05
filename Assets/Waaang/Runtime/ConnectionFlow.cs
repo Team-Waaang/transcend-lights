@@ -3,10 +3,10 @@ using UnityEngine.SceneManagement;
 
 namespace Waaang
 {
-    // Shows the SDK pairing marker, then opens the game once the phone is registered.
+    // Shows the pairing marker, then opens the first period once the phones are ready.
     public sealed class ConnectionFlow : MonoBehaviour
     {
-        public string gameSceneName = "Game";
+        public string gameSceneName = "Period1Cutscene";
         bool loading;
 
         void Awake()

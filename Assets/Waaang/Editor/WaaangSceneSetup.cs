@@ -18,9 +18,10 @@ namespace Waaang.EditorTools
             AssetDatabase.Refresh();
             var connection = BuildConnection();
             var game = BuildGame();
-            var scenes = new EditorBuildSettingsScene[2];
+            var scenes = new EditorBuildSettingsScene[3];
             scenes[0] = new EditorBuildSettingsScene(connection, true);
-            scenes[1] = new EditorBuildSettingsScene(game, true);
+            scenes[1] = new EditorBuildSettingsScene("Assets/Cutscene/Period1/Period1Cutscene.unity", true);
+            scenes[2] = new EditorBuildSettingsScene(game, true);
             EditorBuildSettings.scenes = scenes;
             AssetDatabase.SaveAssets();
             Debug.Log("Built " + connection + " and " + game);
@@ -39,6 +40,8 @@ namespace Waaang.EditorTools
             var view = host.AddComponent<PhonePointer.PhonePointerRegistrationView>();
             view.Receiver = receiver;
             view.enabled = false;
+            var board = host.AddComponent<RegistrationBoard>();
+            board.Receiver = receiver;
             var link = host.AddComponent<PhoneLink>();
             link.Receiver = receiver;
             link.requiredPhones = 1;
