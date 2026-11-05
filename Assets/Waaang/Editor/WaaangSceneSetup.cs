@@ -470,17 +470,28 @@ namespace Waaang.EditorTools
         }
 
         /// <summary>
-        /// Caster toon shading (look D of Waaang/Toon Lookbook): a soft lavender cel shadow, rim shade darkening the
+        /// Caster toon shading (look D of Waaang/Toon Lookbook, warmed for the magic-school grade, with look F's
+        /// outline): a soft rose-lavender cel shadow with a warm terminator, rim shade darkening the
         /// edges toward purple for volume, the rim light following the light direction and a cool indirect rim on
         /// the shadow side. Nox's rim shade and indirect rim are weaker, like her rim (thin hair strands).
         /// </summary>
         internal static void ApplyToonShading(Material m, bool nox)
         {
+            // Storybook anime: a thin warm-plum outline round the silhouette (lilToon's outline variant) so the girls
+            // read against busy, glowing rooms, and a cel shadow that is rose-lavender rather than grey-blue, with a
+            // warm band at its edge like light through skin.
+            var outline = Shader.Find("Hidden/lilToonOutline");
+            if (outline != null && m.shader != outline) m.shader = outline;
+            m.SetFloat("_OutlineWidth", nox ? 0.1f : 0.13f);
+            m.SetColor("_OutlineColor", new Color(0.24f, 0.15f, 0.25f, 1f));
+            m.SetFloat("_OutlineEnableLighting", 0.55f);
             m.SetFloat("_UseShadow", 1f);
             m.SetFloat("_ShadowStrength", 0.75f);
             m.SetFloat("_ShadowBorder", 0.45f);
             m.SetFloat("_ShadowBlur", 0.25f);
-            m.SetColor("_ShadowColor", new Color(0.78f, 0.72f, 0.92f, 1f));
+            m.SetColor("_ShadowColor", new Color(0.86f, 0.75f, 0.88f, 1f));
+            m.SetColor("_ShadowBorderColor", new Color(0.98f, 0.5f, 0.42f, 1f));
+            m.SetFloat("_ShadowBorderRange", 0.07f);
             m.SetFloat("_ShadowMainStrength", 0f);
             m.SetColor("_Shadow2ndColor", new Color(0.68f, 0.66f, 0.79f, 0f)); // alpha 0 = no second tone
             m.SetFloat("_ShadowReceive", 0.5f);

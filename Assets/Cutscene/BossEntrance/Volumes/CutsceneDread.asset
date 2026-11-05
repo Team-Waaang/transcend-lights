@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: CutsceneDread
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 278960924215959524}
-  - {fileID: 8146857706987318814}
---- !u!114 &278960924215959524
+  - {fileID: 1345645319814172490}
+  - {fileID: 4573494491063418866}
+--- !u!114 &1345645319814172490
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -43,7 +43,7 @@ MonoBehaviour:
   saturation:
     m_OverrideState: 1
     m_Value: -55
---- !u!114 &8146857706987318814
+--- !u!114 &4573494491063418866
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}

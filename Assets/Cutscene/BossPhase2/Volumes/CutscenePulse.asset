@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-5827705229611860387
+--- !u!114 &-7763153029601194426
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -28,7 +28,7 @@ MonoBehaviour:
   rounded:
     m_OverrideState: 0
     m_Value: 0
---- !u!114 &-470266468873429449
+--- !u!114 &-4653056187490885320
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -57,5 +57,5 @@ MonoBehaviour:
   m_Name: CutscenePulse
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: -5827705229611860387}
-  - {fileID: -470266468873429449}
+  - {fileID: -7763153029601194426}
+  - {fileID: -4653056187490885320}
