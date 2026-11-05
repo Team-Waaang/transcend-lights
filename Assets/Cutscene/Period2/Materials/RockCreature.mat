@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RockCreature
+  m_Shader: {fileID: 4800000, guid: 64a043be53f9547a9a9030c1820aa4e4, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: a309c8d67682144d0820a3768a12ab3c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CrackDensity: 3
+    - _CrystalPulse: 0.5
+    - _EdgeWidth: 0.06
+    - _Flash: 0
+    - _HeightMax: 1
+    - _HeightMin: 0
+    - _Lit: 0
+    - _NoiseScale: 7
+    - _Petrify: 0
+    - _Smoothness: 0.3
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CrystalColor: {r: 1.6, g: 0.25, b: 1.8, a: 1}
+    - _EdgeColor: {r: 2.4, g: 1.5, b: 0.55, a: 1}
+    - _RimColor: {r: 1.4, g: 1.1, b: 0.7, a: 1}
+    - _StoneColor: {r: 0.56, g: 0.53999996, b: 0.5, a: 1}
+    - _StoneDark: {r: 0.25999996, g: 0.24999997, b: 0.23999995, a: 1}
+    - _UpOS: {r: 0, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

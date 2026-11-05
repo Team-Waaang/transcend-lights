@@ -12,11 +12,13 @@ using static AiHackathon.Cutscene.Editor.CutsceneKit;
 namespace AiHackathon.Cutscene.Editor
 {
     /// <summary>
-    /// Period 2 ("암흑"): the same classroom, mid-lesson. The sun flickers and the lights cut out; Amelia flinches and
-    /// looks into the dark, Nox calmly lights the tip of her wand and sweeps the room with it, Amelia steadies herself
-    /// and lights hers. With only the two wand lights left, the parchment card unrolls over the stones, their runes
-    /// glow once and fade, and the camera rises into play: <see cref="RunePeriod"/> in memory mode shows each rune,
-    /// lets it go dark, and the players trace it from memory by wand light.
+    /// Period 2 ("암흑"): a lesson in the academy's old stone gallery (<see cref="StoneHallBuilder"/>). The sun
+    /// flickers and the lights cut out; Amelia flinches and looks into the dark, Nox calmly lights the tip of her wand
+    /// and sweeps the room with it, Amelia steadies herself and lights hers. With only the two wand lights left the
+    /// parchment card unrolls over the dark hall, where the rubble that lay about by day has crystals glowing in it,
+    /// and the camera rises into play: <see cref="LightHuntPeriod"/>. Each player shines her wand light where she
+    /// points; the rock creatures roaming the dark startle and scurry from it, and one kept lit for about three
+    /// seconds turns to stone (<see cref="StoneCreature"/>, Petrify shader).
     /// </summary>
     public static class Period2CutsceneBuilder
     {
@@ -39,8 +41,24 @@ namespace AiHackathon.Cutscene.Editor
         const float TEnd = 17.8f;
 
         static readonly Color Moon = new Color(0.55f, 0.66f, 1f);
-        static readonly Color NightGlass = new Color(0.07f, 0.09f, 0.18f);
+        // The panes carry the night-sky art: by day it burns out white, by night it shows, dimmed.
+        static readonly Color NightGlass = new Color(0.55f, 0.6f, 0.8f);
         static readonly Color DayGlass = new Color(1.9f, 1.75f, 1.45f);
+
+        const string CreatureFbx = "Assets/TripoModels/rocky_creature_3d_model/rocky_creature_3d_model.fbx";
+        const string CreatureTexture = "Assets/TripoModels/rocky_creature_3d_model/rocky_creature_3d_model.fbm/rocky_creature_3d_model_BaseColor.jpg";
+        const float CreatureHeight = 0.72f;
+        // Turns the model so it walks along its +Z.
+        const float CreatureYaw = 0f;
+        // Where they lie (as rubble, by day) and start from; facing (degrees).
+        static readonly Vector4[] CreatureSpawns =
+        {
+            new Vector4(-1.5f, 0f, 4.1f, 150f), new Vector4(1.9f, 0f, 5.6f, 220f), new Vector4(-4.4f, 0f, 7.0f, 100f),
+            new Vector4(4.6f, 0f, 9.3f, 260f), new Vector4(0.4f, 0f, 9.4f, 180f),
+        };
+        static readonly Vector2 HuntMin = new Vector2(-5.9f, 3.3f);
+        static readonly Vector2 HuntMax = new Vector2(5.9f, 10.6f);
+        static readonly Color[] WandLightColors = { new Color(1f, 0.83f, 0.58f), new Color(0.62f, 0.82f, 1f) };
 
         [MenuItem("Tools/Cutscene/Build Period 2 Cutscene")]
         static void BuildFromMenu()
@@ -54,20 +72,23 @@ namespace AiHackathon.Cutscene.Editor
         public static void Build(bool keepOpenScenes)
         {
             // Lane offset 1: each player meets a different first rune than in Period 1.
-            var c = PeriodSceneKit.Begin(Root, TimelinePath, 1, keepOpenScenes);
+            drawn.Clear();
+            var c = PeriodSceneKit.Begin(Root, TimelinePath, 1, keepOpenScenes, StoneHallBuilder.Build, false);
             var timeline = c.timeline;
             var director = c.director;
+            // The hall's outer shell does not shadow the sun and moon (they would never get in otherwise); the
+            // columns, rubble and statues still do.
+            foreach (var r in c.room.root.GetComponentsInChildren<Renderer>())
+                if (r.name.StartsWith("Wall") || r.name == "Ceiling" || r.name.StartsWith("Cornice") || r.name.StartsWith("Plinth Course"))
+                    r.shadowCastingMode = ShadowCastingMode.Off;
 
             c.intro.title = "암흑";
-            c.intro.subtitle = "빛이 꺼져도 지팡이 끝은 기억한다.";
+            c.intro.subtitle = "어둠 속에서 움직이는 것을 빛으로 붙잡아라.";
             c.intro.showAt = TCardIn;
             c.intro.hideAt = TCardOut;
             c.intro.skipTo = TReady;
-            c.period.memory = true;
-            // In the dark the stones (paint and all) sink to this, so the rune has to be remembered; the lit rune
-            // shows only while RunePeriod reveals it.
-            c.period.darkShade = 0.22f;
-            c.period.clearedText = "2교시 통과!";
+
+            BuildHunt(c);
 
             var fx = BuildFx(c, out var controlled);
 
@@ -107,11 +128,6 @@ namespace AiHackathon.Cutscene.Editor
                 clip.duration = TEnd - lightAt[i];
             }
 
-            var stoneGroup = timeline.CreateTrack<GroupTrack>(null, "Rune Stones");
-            var stoneClip = BuildStoneClip();
-            for (int i = 0; i < 2; i++)
-                AddAnimation(timeline, stoneGroup, director, "Stone " + c.profiles[i].displayName, c.stones[i].gameObject.AddComponent<Animator>(), stoneClip, TEnd);
-
             // Windows go from daylight to night; the sun shafts go with the sun.
             var windowAnimator = c.room.windows.gameObject.AddComponent<Animator>();
             AddAnimation(timeline, timeline.CreateTrack<GroupTrack>(null, "Room"), director, "Windows", windowAnimator, BuildWindowClip(c.room.windows), TEnd);
@@ -125,13 +141,13 @@ namespace AiHackathon.Cutscene.Editor
             AddShots(timeline, director, c.cam, new[]
             {
                 // From the other window corner: the class in daylight; the lights die inside this shot.
-                new Shot { Name = "A_Classroom", Start = 0f, End = 3.6f, From = new Vector3(2.9f, 2.6f, 4.6f), To = new Vector3(2.5f, 2.35f, 4.2f), LookPoint = new Vector3(0f, 0.9f, 0.6f), Fov = 50f, Shake = 0.06f, Kicks = new[] { TBlackout }, KickPeak = 0.5f, KickDecay = 0.6f },
+                new Shot { Name = "A_Hall", Start = 0f, End = 3.6f, From = new Vector3(2.2f, 2.5f, 5.6f), To = new Vector3(1.9f, 2.3f, 5.1f), LookPoint = new Vector3(0f, 0.8f, 0.4f), Fov = 52f, Shake = 0.06f, Kicks = new[] { TBlackout }, KickPeak = 0.5f, KickDecay = 0.6f },
                 new Shot { Name = "B_Amelia", Start = 3.5f, End = 6.5f, From = new Vector3(-1.0f, 1.32f, 1.85f), To = new Vector3(-0.95f, 1.3f, 1.62f), LookPoint = new Vector3(-0.78f, 1.28f, 0f), Fov = 38f, Shake = 0.05f },
                 new Shot { Name = "C_Nox", Start = 6.4f, End = 9.4f, From = new Vector3(1.0f, 1.3f, 1.78f), To = new Vector3(0.95f, 1.33f, 1.56f), LookPoint = new Vector3(0.7f, 1.32f, -0.08f), Fov = 40f, Shake = 0.05f },
                 // Both in front of the stones, their two lights in the dark.
                 new Shot { Name = "D_Both", Start = 9.3f, End = 12.1f, From = new Vector3(0f, 1.0f, 2.0f), To = new Vector3(0f, 1.05f, 1.75f), LookPoint = new Vector3(0f, 1.25f, 0f), Fov = 58f, Shake = 0.05f },
-                // The dark stones; their runes glow once under the title card and fade, to be remembered.
-                new Shot { Name = "E_Stones", Start = 12.0f, End = 16.0f, From = new Vector3(0f, 1.12f, -0.45f), To = new Vector3(0f, 1.05f, 0.15f), LookPoint = new Vector3(0f, 0.82f, 2.3f), Fov = 44f, Shake = 0.05f },
+                // Low into the dark hall under the title card: the "rubble" glints with crystals and breathes.
+                new Shot { Name = "E_Dark", Start = 12.0f, End = 16.0f, From = new Vector3(0.3f, 0.9f, 1.0f), To = new Vector3(0.1f, 0.78f, 2.0f), LookPoint = new Vector3(-0.6f, 0.35f, 6.0f), Fov = 44f, Shake = 0.05f },
                 new Shot { Name = "F_ToGame", Start = 15.4f, End = TEnd, From = new Vector3(0f, 1.3f, -0.3f), To = c.playCam, LookPoint = c.playCamLook, Fov = 50f, FovTo = PeriodSceneKit.PlayCamFov, Shake = 0.03f },
             });
 
@@ -141,6 +157,441 @@ namespace AiHackathon.Cutscene.Editor
             AddControlled(timeline, fxGroup, director, controlled);
 
             PeriodSceneKit.Finish(c, ScenePath);
+        }
+
+        // ------------------------------------------------------------------ the hunt
+
+        /// <summary>
+        /// Play for this period: the rigs aim without lasers, a <see cref="WandLight"/> on each, the rock creatures
+        /// lying about the hall, and the <see cref="LightHuntPeriod"/> that ties them together.
+        /// </summary>
+        static LightHuntPeriod BuildHunt(PeriodSceneKit.Context c)
+        {
+            var coneMat = new Material(Shader.Find("AiHackathon/LightCone"));
+            coneMat.SetFloat("_DustAmount", 0.4f);
+            coneMat = SaveMaterial(coneMat, "WandBeamShaft");
+
+            var lights = new WandLight[2];
+            for (int i = 0; i < 2; i++)
+            {
+                var rig = c.rigs[i];
+                rig.showBeam = false;
+                var light = rig.gameObject.AddComponent<WandLight>();
+                light.rig = rig;
+                light.color = WandLightColors[i];
+                light.coneMaterial = coneMat;
+                lights[i] = light;
+
+                // Play opens with each light aimed into the hall either side of the runner.
+                var aim = new GameObject(c.profiles[i].displayName + " Start Aim").transform;
+                aim.position = new Vector3(i == 0 ? -1.4f : 1.4f, 0.3f, 6.5f);
+                c.game.players[i].startAim = aim;
+                EditorUtility.SetDirty(rig);
+            }
+
+            var hunt = c.game.gameObject.AddComponent<LightHuntPeriod>();
+            hunt.game = c.game;
+            hunt.lights = lights;
+            hunt.creatures = BuildCreatures();
+            hunt.clearedText = "2교시 통과!";
+            return hunt;
+        }
+
+        static Material SaveMaterial(Material m, string name)
+        {
+            var path = $"{Root}/Materials/{name}.mat";
+            AssetDatabase.DeleteAsset(path);
+            AssetDatabase.CreateAsset(m, path);
+            return m;
+        }
+
+        static StoneCreature[] BuildCreatures()
+        {
+            var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(CreatureFbx);
+            if (fbx == null)
+            {
+                Debug.LogError("[Cutscene] Missing " + CreatureFbx);
+                return new StoneCreature[0];
+            }
+            var mat = new Material(Shader.Find("AiHackathon/Petrify"));
+            mat.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(CreatureTexture));
+            mat = SaveMaterial(mat, "RockCreature");
+
+            // Model-space bounds, to stand it on its feet at the root and scale it to CreatureHeight.
+            var probe = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
+            probe.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            // From the meshes themselves: a skinned renderer's bounds are padded.
+            var bounds = new Bounds();
+            bool any = false;
+            foreach (var r in probe.GetComponentsInChildren<Renderer>())
+            {
+                var mesh = r is SkinnedMeshRenderer smr ? smr.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
+                if (mesh == null) continue;
+                var mb = mesh.bounds;
+                for (int k = 0; k < 8; k++)
+                {
+                    var corner = r.transform.TransformPoint(mb.center + Vector3.Scale(mb.extents, new Vector3((k & 1) == 0 ? -1 : 1, (k & 2) == 0 ? -1 : 1, (k & 4) == 0 ? -1 : 1)));
+                    if (!any) { bounds = new Bounds(corner, Vector3.zero); any = true; }
+                    else bounds.Encapsulate(corner);
+                }
+            }
+            Object.DestroyImmediate(probe);
+            float scale = CreatureHeight / Mathf.Max(0.01f, bounds.size.y);
+            float radius = Mathf.Max(bounds.extents.x, bounds.extents.z) * scale * 0.85f;
+
+            var root = new GameObject("Rock Creatures").transform;
+            var list = new List<StoneCreature>();
+            for (int i = 0; i < CreatureSpawns.Length; i++)
+            {
+                var spawn = CreatureSpawns[i];
+                var go = new GameObject("Rock Creature " + (i + 1));
+                go.transform.SetParent(root);
+                go.transform.SetPositionAndRotation(new Vector3(spawn.x, 0f, spawn.z), Quaternion.Euler(0f, spawn.w, 0f));
+                var body = new GameObject("Body").transform;
+                body.SetParent(go.transform, false);
+                var yaw = new GameObject("Facing").transform;
+                yaw.SetParent(body, false);
+                yaw.localRotation = Quaternion.Euler(0f, CreatureYaw, 0f);
+                var model = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
+                model.transform.SetParent(yaw, false);
+                model.transform.localScale = Vector3.one * scale;
+                model.transform.localPosition = -scale * new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+                var renderers = model.GetComponentsInChildren<Renderer>();
+                foreach (var r in renderers)
+                {
+                    var mats = new Material[r.sharedMaterials.Length];
+                    for (int k = 0; k < mats.Length; k++) mats[k] = mat;
+                    r.sharedMaterials = mats;
+                    r.shadowCastingMode = ShadowCastingMode.On;
+                }
+                foreach (var col in model.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(col);
+
+                var creature = go.AddComponent<StoneCreature>();
+                creature.body = body;
+                creature.renderers = renderers;
+                creature.height = CreatureHeight;
+                creature.radius = radius;
+                creature.areaMin = HuntMin;
+                creature.areaMax = HuntMax;
+                // Inside the play camera's view (16:9): the horizontal half-angle's tangent, less a little.
+                float halfTan = Mathf.Tan(PeriodSceneKit.PlayCamFov * 0.5f * Mathf.Deg2Rad) * 16f / 9f;
+                creature.viewSlope = halfTan * 0.85f;
+                creature.viewApex = new Vector2(0f, PeriodSceneKit.PlayCamBack.z);
+                creature.viewMargin = 0.5f;
+                // A little variety in pace.
+                creature.wanderSpeed = 0.36f + 0.04f * (i % 3);
+                creature.fleeSpeed = 0.95f + 0.07f * (i % 3);
+
+                creature.alertFx = Vfx(go.transform, "HCFX_Sign_ExclamationMark", new Vector3(0f, CreatureHeight + 0.3f, 0f), 0.12f);
+                // Its rising rainbow bubbles read as more magic than alarm.
+                Mute(creature.alertFx, "particle_up");
+                creature.petrifyFx = PetrifyBurst(go.transform, radius);
+                creature.crumbleDust = Grit(go.transform, radius);
+                creature.stepDust = StepPuff(go.transform, radius);
+                var glow = Light(go.transform, "Petrify Glow", LightType.Point, new Color(1f, 0.78f, 0.45f), 0f, 2.6f);
+                glow.transform.localPosition = new Vector3(0f, CreatureHeight * 0.6f, 0f);
+                glow.shadows = LightShadows.None;
+                creature.flashLight = glow;
+                list.Add(creature);
+            }
+            return list.ToArray();
+        }
+
+        /// <summary>
+        /// The moment it sets: a soft cloud of stone dust puffs off the body and settles, a ring of dust rolls out
+        /// along the floor, and a few gold glints rise where the light sealed it. One shot; switching the object on
+        /// plays it. (The grit chips come from <see cref="StoneCreature.crumbleDust"/>.)
+        /// </summary>
+        static GameObject PetrifyBurst(Transform parent, float radius)
+        {
+            var root = new GameObject("Petrify FX");
+            root.transform.SetParent(parent, false);
+            var dust = new Color(0.58f, 0.55f, 0.5f);
+
+            var cloud = BurstSystem(root.transform, "Dust Cloud", new Vector3(0f, CreatureHeight * 0.45f, 0f), 14,
+                new ParticleSystem.MinMaxCurve(1.6f, 2.4f), new ParticleSystem.MinMaxCurve(0.12f, 0.4f), new ParticleSystem.MinMaxCurve(0.3f, 0.55f),
+                dust, 0.45f, LitParticle());
+            var cloudShape = cloud.shape;
+            cloudShape.shapeType = ParticleSystemShapeType.Sphere;
+            cloudShape.radius = radius * 0.8f;
+            var cloudMain = cloud.main;
+            cloudMain.gravityModifier = -0.015f;
+            Settle(cloud, 1.8f, 0.6f, 1.5f);
+
+            var ring = BurstSystem(root.transform, "Dust Ring", new Vector3(0f, 0.04f, 0f), 18,
+                new ParticleSystem.MinMaxCurve(1.0f, 1.5f), new ParticleSystem.MinMaxCurve(0.45f, 0.8f), new ParticleSystem.MinMaxCurve(0.16f, 0.3f),
+                dust, 0.5f, LitParticle());
+            var ringShape = ring.shape;
+            ringShape.shapeType = ParticleSystemShapeType.Circle;
+            ringShape.radius = radius * 0.5f;
+            ringShape.radiusThickness = 0f;
+            ringShape.rotation = new Vector3(90f, 0f, 0f);
+            Settle(ring, 2.5f, 0.5f, 2.2f);
+
+            var soft = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).defaultParticleMaterial;
+            var glintMat = PeriodSceneKit.Additive("PetrifyGlint", soft != null ? soft.GetTexture("_BaseMap") : null, Color.white);
+            var glints = BurstSystem(root.transform, "Glints", new Vector3(0f, CreatureHeight * 0.5f, 0f), 10,
+                new ParticleSystem.MinMaxCurve(0.7f, 1.3f), new ParticleSystem.MinMaxCurve(0.05f, 0.2f), new ParticleSystem.MinMaxCurve(0.012f, 0.026f),
+                new Color(2.2f, 1.6f, 0.8f), 1f, glintMat);
+            var glintShape = glints.shape;
+            glintShape.shapeType = ParticleSystemShapeType.Sphere;
+            glintShape.radius = radius * 0.7f;
+            var glintMain = glints.main;
+            glintMain.gravityModifier = -0.06f;
+
+            root.SetActive(false);
+            return root;
+        }
+
+        static ParticleSystem BurstSystem(Transform parent, string name, Vector3 at, int count, ParticleSystem.MinMaxCurve life,
+            ParticleSystem.MinMaxCurve speed, ParticleSystem.MinMaxCurve size, Color color, float alpha, Material material)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = at;
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = ps.main;
+            main.loop = false;
+            main.playOnAwake = true;
+            main.duration = 0.5f;
+            main.startLifetime = life;
+            main.startSpeed = speed;
+            main.startSize = size;
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startColor = new Color(color.r, color.g, color.b, 1f);
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = count * 2;
+            var emission = ps.emission;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)count) });
+            var rotation = ps.rotationOverLifetime;
+            rotation.enabled = true;
+            rotation.z = new ParticleSystem.MinMaxCurve(-0.4f, 0.4f);
+            var colour = ps.colorOverLifetime;
+            colour.enabled = true;
+            var fade = new Gradient();
+            fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(alpha, 0.12f), new GradientAlphaKey(alpha * 0.6f, 0.5f), new GradientAlphaKey(0f, 1f) });
+            colour.color = fade;
+            if (material.GetTexture("_BaseMap") is Texture2D t && t.name == "dust_puffs") RandomCell(ps);
+            var r = go.GetComponent<ParticleSystemRenderer>();
+            r.sharedMaterial = material;
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            return ps;
+        }
+
+        // Dust slows as it spreads and swells as it thins out.
+        static void Settle(ParticleSystem ps, float drag, float sizeFrom, float sizeTo)
+        {
+            var limit = ps.limitVelocityOverLifetime;
+            limit.enabled = true;
+            limit.drag = drag;
+            limit.multiplyDragByParticleSize = false;
+            limit.multiplyDragByParticleVelocity = true;
+            var size = ps.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, sizeFrom), new Keyframe(1f, sizeTo)));
+        }
+
+        /// <summary>Stone grit shed while it hardens, and the burst when it sets: chips falling off the body.</summary>
+        static ParticleSystem Grit(Transform parent, float radius)
+        {
+            var go = new GameObject("Grit");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = new Vector3(0f, CreatureHeight * 0.55f, 0f);
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = ps.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 0.9f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.2f, 0.9f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.012f, 0.035f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.55f, 0.52f, 0.48f), new Color(0.82f, 0.78f, 0.7f));
+            main.gravityModifier = 1.4f;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 200;
+            var emission = ps.emission;
+            emission.rateOverTime = 0f;
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = radius * 0.8f;
+            var col = ps.collision;
+            col.enabled = true;
+            col.type = ParticleSystemCollisionType.World;
+            col.mode = ParticleSystemCollisionMode.Collision3D;
+            col.quality = ParticleSystemCollisionQuality.Low;
+            col.bounce = 0.3f;
+            col.dampen = 0.5f;
+            RandomCell(ps);
+            var r = go.GetComponent<ParticleSystemRenderer>();
+            r.sharedMaterial = GritMaterial();
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            return ps;
+        }
+
+        /// <summary>A puff of dust at the feet each time a foot comes down.</summary>
+        static ParticleSystem StepPuff(Transform parent, float radius)
+        {
+            var go = new GameObject("Step Dust");
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = new Vector3(0f, 0.03f, 0f);
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = ps.main;
+            main.loop = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 0.9f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.05f, 0.25f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.16f);
+            main.startColor = new Color(0.5f, 0.47f, 0.44f, 0.35f);
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.maxParticles = 60;
+            main.playOnAwake = true;
+            var emission = ps.emission;
+            emission.rateOverTime = 0f;
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = radius * 0.7f;
+            shape.rotation = new Vector3(90f, 0f, 0f);
+            var size = ps.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.5f), new Keyframe(1f, 1.4f)));
+            var colour = ps.colorOverLifetime;
+            colour.enabled = true;
+            var fade = new Gradient();
+            fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.15f), new GradientAlphaKey(0f, 1f) });
+            colour.color = fade;
+            RandomCell(ps);
+            var r = go.GetComponent<ParticleSystemRenderer>();
+            r.sharedMaterial = LitParticle();
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            return ps;
+        }
+
+        // Lit so grit and dust only show where a light is on them, like the creatures.
+        static readonly HashSet<string> drawn = new HashSet<string>();
+
+        static Material LitParticle() => DustMaterial("StoneDust", PuffSheet(Root + "/Textures/dust_puffs.png", false), 0.45f);
+        static Material GritMaterial() => DustMaterial("StoneGrit", PuffSheet(Root + "/Textures/grit_chips.png", true), 0f);
+
+        /// <summary>
+        /// Lit, alpha-blended particles (so dust only shows where a light falls on it) with a 2x2 sheet of shapes
+        /// picked at random per particle, fading softly where they meet the floor.
+        /// </summary>
+        static Material DustMaterial(string name, Texture2D sheet, float softFade)
+        {
+            var path = $"{Root}/Materials/{name}.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(Shader.Find("Universal Render Pipeline/Particles/Lit"));
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.SetFloat("_Surface", 1f);
+            m.SetFloat("_Blend", 0f);
+            m.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            m.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            m.SetFloat("_ZWrite", 0f);
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.renderQueue = (int)RenderQueue.Transparent;
+            m.SetTexture("_BaseMap", sheet);
+            // Plain alpha blending: in premultiplied mode the lighting's specular and reflections are added over the
+            // whole quad, transparent corners included, and every puff showed as a faint square.
+            // URP turns alpha blending into premultiplied when "preserve specular" is on; switch that off.
+            m.SetFloat("_BlendModePreserveSpecular", 0f);
+            m.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            m.DisableKeyword("_ALPHAMODULATE_ON");
+            m.SetFloat("_Smoothness", 0f);
+            m.SetFloat("_Metallic", 0f);
+            m.SetFloat("_SpecularHighlights", 0f);
+            m.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+            m.SetFloat("_EnvironmentReflections", 0f);
+            m.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
+            m.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            m.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            if (softFade > 0f)
+            {
+                m.SetFloat("_SoftParticlesEnabled", 1f);
+                m.SetFloat("_SoftParticlesNearFadeDistance", 0f);
+                m.SetFloat("_SoftParticlesFarFadeDistance", softFade);
+                m.SetVector("_SoftParticleFadeParams", new Vector4(0f, 1f / softFade, 0f, 0f));
+                m.EnableKeyword("_SOFTPARTICLES_ON");
+            }
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>Picks one of the four cells of the 2x2 sheet per particle.</summary>
+        static void RandomCell(ParticleSystem ps)
+        {
+            var sheet = ps.textureSheetAnimation;
+            sheet.enabled = true;
+            sheet.numTilesX = 2;
+            sheet.numTilesY = 2;
+            sheet.animation = ParticleSystemAnimationType.WholeSheet;
+            sheet.frameOverTime = new ParticleSystem.MinMaxCurve(0f);
+            sheet.startFrame = new ParticleSystem.MinMaxCurve(0f, 3.999f);
+            sheet.cycleCount = 1;
+        }
+
+        /// <summary>
+        /// Draws a 2x2 sheet: soft, lumpy puffs of dust (wispy edges, denser core), or for <paramref name="chips"/>
+        /// small irregular stone fragments with a lit top edge.
+        /// </summary>
+        static Texture2D PuffSheet(string path, bool chips)
+        {
+            // Drawn once per build; every creature shares it.
+            if (!drawn.Add(path)) return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            const int cell = 128, n = cell * 2;
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, true);
+            var px = new Color[n * n];
+            for (int c = 0; c < 4; c++)
+            {
+                int ox = (c % 2) * cell, oy = (c / 2) * cell;
+                float seed = 13.7f * (c + 1);
+                for (int y = 0; y < cell; y++)
+                for (int x = 0; x < cell; x++)
+                {
+                    float u = (x + 0.5f) / cell * 2f - 1f, v = (y + 0.5f) / cell * 2f - 1f;
+                    float r = Mathf.Sqrt(u * u + v * v);
+                    float ang = Mathf.Atan2(v, u);
+                    float a;
+                    float shade = 1f;
+                    if (!chips)
+                    {
+                        // Lumpy outline from a few angular lobes, wispy noise inside, falling off softly.
+                        float lobes = 0.06f * Mathf.Sin(ang * 3f + seed) + 0.04f * Mathf.Sin(ang * 5f + seed * 1.7f);
+                        float edge = Mathf.Clamp01(1f - r / (0.82f + lobes));
+                        float noise = Mathf.PerlinNoise(u * 2.6f + seed, v * 2.6f + seed * 0.5f) * 0.65f
+                                      + Mathf.PerlinNoise(u * 6f + seed * 2f, v * 6f - seed) * 0.35f;
+                        a = Mathf.Pow(edge, 1.6f) * Mathf.Lerp(0.45f, 1.1f, noise);
+                        shade = Mathf.Lerp(0.85f, 1.05f, noise);
+                    }
+                    else
+                    {
+                        // A chunk: a jagged polygon-ish outline, opaque, lighter on its upper side.
+                        float jag = 0.18f * Mathf.Sin(ang * 4f + seed) + 0.1f * Mathf.Sin(ang * 7f + seed * 2.3f);
+                        float edge = (0.62f + jag) - r;
+                        a = Mathf.Clamp01(edge * 14f);
+                        shade = Mathf.Lerp(0.7f, 1.1f, Mathf.Clamp01(0.5f + v * 0.6f)) * Mathf.Lerp(0.85f, 1f, Mathf.PerlinNoise(u * 5f + seed, v * 5f));
+                    }
+                    px[(oy + y) * n + ox + x] = new Color(shade, shade, shade, Mathf.Clamp01(a));
+                }
+            }
+            tex.SetPixels(px);
+            tex.Apply();
+            System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.alphaIsTransparency = true;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.mipmapEnabled = true;
+            importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
         /// <summary>
@@ -186,17 +637,6 @@ namespace AiHackathon.Cutscene.Editor
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             go.SetActive(false);
             return go;
-        }
-
-        static AnimationClip BuildStoneClip()
-        {
-            var clip = new AnimationClip { name = "RuneStone_Period2" };
-            // Dark through the intro; under the card the runes surface once, hold, and sink away. Play starts dark
-            // and RunePeriod shows each rune itself.
-            Bind(clip, "", typeof(RuneStoneFx), "cutsceneGlow", Smooth(0f, 0f, TCardIn - 0.1f, 0f, TCardIn + 0.5f, 0.55f,
-                13.6f, 0.85f, 14.6f, 0.55f, TCardOut, 0f, TEnd, 0f));
-            Bind(clip, "", typeof(RuneStoneFx), "cutsceneHover", Lin(0f, 0f, TEnd, 0f));
-            return SaveClip(clip);
         }
 
         // Flicker as multipliers on the lit value: stutters, dips, a last flare, then out.

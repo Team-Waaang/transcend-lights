@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-5259530071492511828
+--- !u!114 &-8291289001319535579
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -28,7 +28,7 @@ MonoBehaviour:
   rounded:
     m_OverrideState: 0
     m_Value: 0
---- !u!114 &-2125121152049988129
+--- !u!114 &-7053717776784962889
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -87,10 +87,10 @@ MonoBehaviour:
   m_Name: Period1Card
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 8825384874034960334}
-  - {fileID: -5259530071492511828}
-  - {fileID: -2125121152049988129}
---- !u!114 &8825384874034960334
+  - {fileID: 4753178688901776570}
+  - {fileID: -8291289001319535579}
+  - {fileID: -7053717776784962889}
+--- !u!114 &4753178688901776570
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}

@@ -71,12 +71,21 @@ namespace AiHackathon.Cutscene.Editor
         /// <summary>
         /// Bakes the runes and clips, opens a new scene (additively when <paramref name="keepOpenScenes"/>), and
         /// builds everything the periods share. Lane i starts its rune sequence at (i + laneOffset).
+        /// <paramref name="buildRoom"/> replaces the rune classroom (it gets the texture folder);
+        /// without <paramref name="runeStones"/> there are no stones and no <see cref="RunePeriod"/>: the period
+        /// brings its own game (and sets each player's <see cref="GameManager.Player.startAim"/>).
         /// </summary>
-        internal static Context Begin(string root, string timelinePath, int laneOffset, bool keepOpenScenes)
+        internal static Context Begin(string root, string timelinePath, int laneOffset, bool keepOpenScenes,
+            System.Func<string, Classroom> buildRoom = null, bool runeStones = true)
         {
             PeriodPoseClips.Build();
-            var runePaths = RuneStoneBaker.BakeAll().ConvertAll(AssetDatabase.GetAssetPath);
-            RuneStoneBaker.BuildStonePrefab();
+            // Only periods with stones bake them (baking rewrites the stone prefab and rune materials).
+            var runePaths = new List<string>();
+            if (runeStones)
+            {
+                runePaths = RuneStoneBaker.BakeAll().ConvertAll(AssetDatabase.GetAssetPath);
+                RuneStoneBaker.BuildStonePrefab();
+            }
             EnsureProfiles();
             AssetDatabase.SaveAssets();
 
@@ -95,7 +104,7 @@ namespace AiHackathon.Cutscene.Editor
                 AssetDatabase.LoadAssetAtPath<CasterProfile>(ProfileDir + "/Amelia.asset"),
                 AssetDatabase.LoadAssetAtPath<CasterProfile>(ProfileDir + "/Nox.asset"),
             };
-            c.room = BuildClassroom(root + "/Textures");
+            c.room = buildRoom != null ? buildRoom(root + "/Textures") : BuildClassroom(root + "/Textures");
             c.cam = BuildCamera();
             c.cam.backgroundColor = c.room.fog;
 
@@ -121,12 +130,13 @@ namespace AiHackathon.Cutscene.Editor
             }
 
             // A stone ahead of each player; each lane walks the runes from a different start.
-            c.stones = new RuneStoneFx[2];
-            c.runeCenters = new Vector3[2];
-            c.runeColors = new Color[2];
+            int stoneCount = runeStones ? 2 : 0;
+            c.stones = new RuneStoneFx[stoneCount];
+            c.runeCenters = new Vector3[stoneCount];
+            c.runeColors = new Color[stoneCount];
             var sequences = new RuneDefinition[2][];
             var aims = new Transform[2];
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < stoneCount; i++)
             {
                 var seq = new RuneDefinition[runes.Count];
                 for (int k = 0; k < runes.Count; k++) seq[k] = runes[(k + i + laneOffset) % runes.Count];
@@ -161,10 +171,13 @@ namespace AiHackathon.Cutscene.Editor
                     profile = c.profiles[i], character = c.rigs[i].character, rig = c.rigs[i], pose = c.rigs[i].character.GetComponent<CasterPose>(),
                     cutsceneAnimator = c.animators[i], staff = c.rigs[i].staff, startAim = aims[i],
                 };
-            c.period = gameGo.AddComponent<RunePeriod>();
-            c.period.game = c.game;
-            c.period.lanes = new RunePeriod.Lane[2];
-            for (int i = 0; i < 2; i++) c.period.lanes[i] = new RunePeriod.Lane { stone = c.stones[i], sequence = sequences[i] };
+            if (runeStones)
+            {
+                c.period = gameGo.AddComponent<RunePeriod>();
+                c.period.game = c.game;
+                c.period.lanes = new RunePeriod.Lane[2];
+                for (int i = 0; i < 2; i++) c.period.lanes[i] = new RunePeriod.Lane { stone = c.stones[i], sequence = sequences[i] };
+            }
 
             // The last shot of every intro lands on this camera, so play starts from that view.
             float headY = FindBone(c.Amelia.transform, "Head").position.y;

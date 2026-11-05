@@ -50,6 +50,8 @@ namespace Waaang
         [Tooltip("켜면 왼손도 지팡이를 잡습니다.")]
         public bool useLeftHand = true;
         public GameObject beamPrefab;
+        [Tooltip("끄면 레이저(이펙트, 벽 흔적, 맞은 자리 빛)를 그리지 않고 조준만 합니다. 2교시처럼 지팡이 빛으로 노는 교시용.")]
+        public bool showBeam = true;
         [Tooltip("누르고 있는 동안 레이저 이펙트를 다시 쏘는 주기(초).")]
         public float beamLoopPeriod = 0.45f;
         [Tooltip("레이저 굵기. 거리와 상관없이 일정합니다 (이펙트 원본 대비 배율).")]
@@ -153,6 +155,9 @@ namespace Waaang
         public bool HasHit { get; private set; }
         public Vector3 HitPoint { get; private set; }
         public Collider HitCollider { get; private set; }
+        /// <summary>Where the beam leaves the wand (just past its tip) and the way it points (along the staff).</summary>
+        public Vector3 BeamOrigin { get; private set; }
+        public Vector3 BeamDirection { get; private set; } = Vector3.forward;
 
         /// <summary>Points the caster at a screen position (0..1) until the phone or mouse moves it.</summary>
         public void SetPointer(Vector2 uv)
@@ -421,6 +426,10 @@ namespace Waaang
             HasHit = hit;
             HitPoint = hit ? info.point : beamEnd;
             HitCollider = hit ? info.collider : null;
+            BeamOrigin = beamStart;
+            BeamDirection = staffAxis;
+            // Without the laser the rig only aims: nothing is drawn, scorched or lit here.
+            firing &= showBeam;
             if (firing && hit)
                 ExtendTrail(info);
             else
