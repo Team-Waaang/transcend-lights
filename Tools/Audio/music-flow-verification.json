@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "format": "Ogg Vorbis, exact sample counts",
+  "tracks": [
+    "bgm_rune_class",
+    "bgm_dark_hall",
+    "bgm_boss_phase1",
+    "bgm_boss_phase2",
+    "bgm_boss_resonance",
+    "bgm_victory"
+  ],
+  "events": [
+    {
+      "scene": "Period1Cutscene",
+      "track": "bgm_rune_class",
+      "frame": 3613
+    },
+    {
+      "scene": "Period2Cutscene",
+      "track": "bgm_dark_hall",
+      "frame": 3772
+    },
+    {
+      "scene": "Period3",
+      "track": "bgm_boss_phase1",
+      "frame": 4166
+    },
+    {
+      "scene": "Period3",
+      "track": "bgm_boss_phase2",
+      "frame": 4667
+    },
+    {
+      "scene": "Period3",
+      "track": "bgm_boss_resonance",
+      "frame": 5137
+    },
+    {
+      "scene": "Period3",
+      "track": "bgm_victory",
+      "frame": 6076
+    }
+  ],
+  "maxMusicSources": 2,
+  "qteRetryKeptMusicPosition": true,
+  "outputPeak": 0.6012512,
+  "victoryLoopWrapped": true,
+  "purificationRegressedDuringUnload": false,
+  "listeners": 1,
+  "services": 1,
+  "frame": 10524
+}

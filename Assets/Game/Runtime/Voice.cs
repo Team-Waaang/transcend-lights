@@ -32,6 +32,7 @@ namespace AiHackathon.Game
 
         /// <summary>Someone is talking or waiting to.</summary>
         public static bool Talking => instance != null && (instance.source.isPlaying || instance.queue.Count > 0);
+        public static bool Speaking => instance != null && instance.source != null && instance.source.isPlaying;
 
         /// <summary>Player 0 is Amelia, player 1 Kaela.</summary>
         public static VoiceLine? ForPlayer(int player, VoiceLine amelia, VoiceLine kaela) =>
@@ -121,6 +122,7 @@ namespace AiHackathon.Game
 
         void Update()
         {
+            if (source.clip != null) source.volume = (bank != null ? bank.volume : 1f) * GameAudio.VoiceGain(source.clip);
             if (source.isPlaying || Time.unscaledTime < nextAt) return;
             while (queue.Count > 0)
             {
@@ -135,7 +137,7 @@ namespace AiHackathon.Game
         void Play(VoiceLine line, AudioClip clip, float skip = 0f)
         {
             source.clip = clip;
-            source.volume = bank != null ? bank.volume : 1f;
+            source.volume = (bank != null ? bank.volume : 1f) * GameAudio.VoiceGain(clip);
             source.Play();
             source.time = skip;
             lastPlayed[line] = Time.unscaledTime;
