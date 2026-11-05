@@ -24,6 +24,15 @@ namespace Waaang
 
         void Awake()
         {
+            // Outside the editor SampleAnimation only works on a non-legacy clip with an Animator on the object.
+            // Without it the pose never resets in a build, and CasterMotion's additive turns pile up every frame
+            // until the caster spins (the boss scene's casters have no cutscene Animator).
+            if (GetComponent<Animator>() == null)
+            {
+                var animator = gameObject.AddComponent<Animator>();
+                animator.applyRootMotion = false;
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            }
             var armature = transform.Find("Armature");
             bones = (armature != null ? armature : transform).GetComponentsInChildren<Transform>(true);
             restPositions = new Vector3[bones.Length];
