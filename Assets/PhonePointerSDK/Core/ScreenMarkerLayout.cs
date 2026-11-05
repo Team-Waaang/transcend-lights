@@ -48,8 +48,11 @@ namespace PhonePointer
             float cx = width * .5f, cy = height * .5f;
             float rx = profile.referenceX + profile.referenceWidth * .5f;
             float ry = profile.referenceY + profile.referenceHeight * .5f;
-            float top = profile.sequential ? height * .15f : Mathf.Min(120f, height * .12f);
-            float bottom = profile.sequential ? height * .19f : Mathf.Min(170f, height * .35f);
+            // Shown on its own (sequential), the slab takes nearly the whole height. The display square has an empty
+            // border of about a tenth round the stone, so it may run a little past the top edge; the bottom keeps
+            // room for the player slots.
+            float top = profile.sequential ? height * -.03f : Mathf.Min(120f, height * .12f);
+            float bottom = profile.sequential ? height * .06f : Mathf.Min(170f, height * .35f);
             float right = profile.sequential ? width - 24f : QrRect(width, height).xMin - 24f;
             float scale = Mathf.Min((cx - 24f) / rx, (right - cx) / (profile.displayWidth - rx));
             scale = Mathf.Min(scale, (cy - top) / ry, (height - bottom - cy) / (profile.displayHeight - ry));
