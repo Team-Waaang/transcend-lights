@@ -12,7 +12,7 @@ namespace AiHackathon.Cutscene.Editor
     /// hand, Nox (left-handed, as in the game) in the left.
     /// Positions are in model units (the bind pose stands ~1.1 tall; scenes scale the characters 1.5x like the game).
     /// </summary>
-    public static class PeriodPoseClips
+    public static partial class PeriodPoseClips
     {
         internal const string AnimDir = "Assets/Cutscene/Periods/Anim";
         internal const string AmeliaFbx = "Assets/TripoModels/amelia_polaris_3d_model/amelia_polaris_3d_model.fbx";

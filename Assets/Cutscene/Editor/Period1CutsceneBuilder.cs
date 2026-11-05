@@ -296,7 +296,7 @@ namespace AiHackathon.Cutscene.Editor
         /// Moves the game rig's staff into the lead fist for the intro, where the keyed clips close the hand: the
         /// lead grip on the fist, the shaft along it. GameManager hands it back to the rig when play starts.
         /// </summary>
-        static void HoldStaff(Transform character, Transform staff, string fbx, string side, float staffScale)
+        internal static void HoldStaff(Transform character, Transform staff, string fbx, string side, float staffScale)
         {
             PeriodPoseClips.HandGrip(fbx, side, out var point, out var axis);
             var hand = FindBone(character, side + "Hand");

@@ -62,6 +62,8 @@ namespace Waaang
         public Color beamTint = new Color(0f, 0f, 0f, 0f);
         [Tooltip("벽에 남은 흔적이 이 시간(초)이 지나면 가늘어지며 사라집니다. 0이면 계속 남습니다.")]
         public float trailLifetime = 10f;
+        [Tooltip("레이저가 닿은 곳에 흔적을 남깁니다. 움직이는 대상을 쏘는 전투에서는 끕니다.")]
+        public bool drawTrails = true;
         [Tooltip("흔적이 사라지는 데 걸리는 시간(초).")]
         public float trailFade = 1.2f;
         [Tooltip("벽에 남는 흔적 색 (HDR).")]
@@ -421,7 +423,7 @@ namespace Waaang
             HasHit = hit;
             HitPoint = hit ? info.point : beamEnd;
             HitCollider = hit ? info.collider : null;
-            if (firing && hit)
+            if (firing && hit && drawTrails)
                 ExtendTrail(info);
             else
                 trail = null;

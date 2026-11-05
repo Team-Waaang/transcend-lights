@@ -11,5 +11,17 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Game.unity
     guid: 08ef240f1399c1849ba568509dd21cc1
+  - enabled: 1
+    path: Assets/Game/Period3/Period3.unity
+    guid: 86c14c80f68b75d46b53c0c230df09c1
+  - enabled: 1
+    path: Assets/Cutscene/BossEntrance/BossEntranceCutscene.unity
+    guid: 892e01b0d718740f68e74e2d9afe9635
+  - enabled: 1
+    path: Assets/Cutscene/BossPhase2/BossPhase2Cutscene.unity
+    guid: 658cbb7a712bb43b0b1f48007534a2c0
+  - enabled: 1
+    path: Assets/Cutscene/BossDefeatCutscene.unity
+    guid: 95302613b4ff146019b12d581815fd02
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

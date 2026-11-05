@@ -44,7 +44,7 @@ namespace AiHackathon.Cutscene.Editor
             AssetRoot = Root;
             PrepareFolders();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            BuildEnvironment();
+            var envLoops = BuildEnvironment();
 
             var boss = SpawnCharacter(HoodedFbx, "Boss_Hooded", false);
             var body = boss.GetComponentInChildren<SkinnedMeshRenderer>(true);
@@ -63,6 +63,7 @@ namespace AiHackathon.Cutscene.Editor
             boss.gameObject.SetActive(false);
 
             var fx = BuildFx(tip, headPos, out var controlled);
+            foreach (var loop in envLoops) controlled.Add((loop, 0f, TEnd));
             var cam = BuildCamera();
             var ui = BuildUi(cam);
 
@@ -97,6 +98,13 @@ namespace AiHackathon.Cutscene.Editor
             AddAnimation(timeline, fxGroup, director, "Lights Grading", fx, BuildFxClip(), TEnd);
             AddAnimation(timeline, fxGroup, director, "Fade Flash", ui, BuildUiClip(), TEnd);
             AddControlled(timeline, fxGroup, director, controlled);
+            // The arena wakes with him: the seal lights as he rises, and seal, curse-fire and crystals flare when the curse answers.
+            BossArena.AddTimelineClip(timeline, fxGroup, director, "Arena_BossEntrance", TEnd, clip =>
+            {
+                BossArena.SealCurve(clip, Smooth(0f, 0.08f, TAppear - 0.2f, 0.08f, TAppear + 0.1f, 0.4f, 4.5f, 0.2f, TSummonPeak - 0.1f, 0.2f, TSummonPeak + 0.15f, 0.7f, TEnd, 0.45f));
+                BossArena.FireCurve(clip, Smooth(0f, 0.6f, TSummonPeak, 0.6f, TSummonPeak + 0.3f, 2.4f, TEnd, 1.8f));
+                BossArena.CrystalCurve(clip, Smooth(0f, 0.3f, TSummonPeak, 0.4f, TSummonPeak + 0.4f, 1.4f, TEnd, 1.1f));
+            });
 
             AssetDatabase.SaveAssets();
             director.time = 0;
