@@ -109,6 +109,12 @@ namespace AiHackathon.Game
         public event Action<int, bool> Chained;
         /// <summary>The chain on player i held to the end (it was not broken).</summary>
         public event Action<int> ChainHeld;
+        /// <summary>He starts an attack pattern (orbs, summon, clones, chain).</summary>
+        public event Action SkillUsed;
+        /// <summary>His ward goes up.</summary>
+        public event Action WardRaised;
+        /// <summary>Player i shot a false copy.</summary>
+        public event Action<int> DecoyShot;
 
         /// <summary>Where the orbs fly: the players' chests (set by the period).</summary>
         public Transform[] targets = new Transform[0];
@@ -353,6 +359,7 @@ namespace AiHackathon.Game
         IEnumerator Volley(int count, Tuning t, bool fromAbove)
         {
             Message?.Invoke(fromAbove ? "저주의 비! 전부 쏴서 떨어뜨려!" : "저주 구슬! 레이저로 쏴서 막아!");
+            SkillUsed?.Invoke();
             Play(fromAbove ? "Summon" : "Cast", 0.2f, fromAbove ? 0.4f : 0.5f);
             if (castFx != null && wandTip != null)
             {
@@ -424,6 +431,7 @@ namespace AiHackathon.Game
         {
             if (minionTemplate == null || targets.Length == 0 || t.minions <= 0) yield break;
             Message?.Invoke("돌정령 소환! 다가오기 전에 레이저로 부숴!");
+            SkillUsed?.Invoke();
             Play("Summon", 0.2f, 0.4f);
             yield return new WaitForSeconds(0.9f);
             for (int i = 0; i < t.minions; i++)
@@ -484,6 +492,7 @@ namespace AiHackathon.Game
         {
             if (decoyTemplate == null || t.decoys <= 0) yield break;
             Message?.Invoke("분신! 진짜를 찾아 쏴! (가짜는 가끔 일렁여)");
+            SkillUsed?.Invoke();
             var spots = new List<Vector3>();
             int count = t.decoys + 1;
             for (int i = 0; i < count; i++)
@@ -530,6 +539,7 @@ namespace AiHackathon.Game
             FxUtil.Burst(orbPopFx, at);
             FxUtil.Burst(blinkOutFx, decoy.transform.position);
             Message?.Invoke("가짜다! 반격이 온다!");
+            DecoyShot?.Invoke(shooter);
             var target = targets.Length > 0 ? targets[Mathf.Clamp(shooter, 0, targets.Length - 1)] : null;
             if (target != null)
                 for (int k = 0; k < 2; k++) SpawnOrbFrom(at + Vector3.forward * (k - 0.5f) * 0.3f, target, t);
@@ -572,6 +582,7 @@ namespace AiHackathon.Game
         {
             if (crystalTemplate == null || targets.Length < 2 || t.chainTime <= 0f) yield break;
             int p = UnityEngine.Random.Range(0, targets.Length);
+            SkillUsed?.Invoke();
             Play("Cast", 0.2f, 0.5f);
             yield return new WaitForSeconds(0.7f);
             var target = targets[p];
@@ -623,6 +634,7 @@ namespace AiHackathon.Game
             yield return new WaitForSeconds(0.35f);
             wardMax = wardHp = t.wardHp;
             if (ward != null) ward.Raise();
+            WardRaised?.Invoke();
             float end = Time.time + t.wardTime;
             while (Time.time < end && wardHp > 0f) yield return null;
             if (wardHp <= 0f)

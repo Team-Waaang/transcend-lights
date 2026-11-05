@@ -26,6 +26,12 @@ namespace AiHackathon.Game
         public string clearedSubtitle = "어둠 속의 돌정령을 모두 잠재웠다";
         [Tooltip("Seconds the clear screen stays before the next period loads (PeriodFlow). Negative: stay.")]
         public float advanceAfter = 4f;
+        [Tooltip("Kill count at which Amelia's streak line plays.")]
+        public int ameliaStreakAt = 2;
+        [Tooltip("Kill count at which Kaela's streak line plays (it counts \"하나 둘 셋\").")]
+        public int kaelaStreakAt = 3;
+        [Tooltip("Seconds without a kill before someone mutters that she is still searching.")]
+        public float searchChatter = 18f;
 
         public UnityEvent onCleared = new UnityEvent();
         public bool Cleared { get; private set; }
@@ -35,6 +41,8 @@ namespace AiHackathon.Game
         bool started;
         string message;
         float messageTime = -10f;
+        float lastProgress;
+        int searcher;
 
         void Start()
         {
@@ -52,6 +60,13 @@ namespace AiHackathon.Game
                 started = true;
                 foreach (var c in creatures) if (c != null) c.Wake();
                 Say("빛을 비춰 찾아요!");
+                StartCoroutine(OpeningLines());
+            }
+            if (!Cleared && Time.time - lastProgress > searchChatter && !Voice.Talking)
+            {
+                Voice.Bark(Voice.ForPlayer(searcher, VoiceLine.AmeliaSearch, VoiceLine.KaelaSearch), searchChatter);
+                searcher = 1 - searcher;
+                lastProgress = Time.time;
             }
 
             foreach (var c in creatures)
@@ -90,18 +105,36 @@ namespace AiHackathon.Game
             }
         }
 
+        // The two of them come into the dark, then start looking; each pair goes Amelia first.
+        IEnumerator OpeningLines()
+        {
+            Voice.Say(VoiceLine.AmeliaPeriod2Start, 10f);
+            Voice.Say(VoiceLine.KaelaPeriod2Start, 16f);
+            yield return null;
+            while (Voice.Talking) yield return null;
+            Voice.Say(VoiceLine.AmeliaSearch, 4f);
+            Voice.Say(VoiceLine.KaelaSearch, 8f);
+            lastProgress = Time.time;
+        }
+
         void OnPetrified(StoneCreature c)
         {
             left--;
-            if (c.LastLighter >= 0 && c.LastLighter < scores.Length)
+            lastProgress = Time.time;
+            int who = c.LastLighter;
+            if (who >= 0 && who < scores.Length)
             {
-                scores[c.LastLighter]++;
-                if (c.LastLighter < scoredAt.Length) scoredAt[c.LastLighter] = Time.unscaledTime;
+                scores[who]++;
+                if (who < scoredAt.Length) scoredAt[who] = Time.unscaledTime;
+                if (who == 0 && scores[who] == ameliaStreakAt) Voice.Say(VoiceLine.AmeliaStreak, 4f);
+                else if (who == 1 && scores[who] == kaelaStreakAt) Voice.Say(VoiceLine.KaelaStreak, 4f);
+                else if (who == 0) Voice.Say(VoiceLine.AmeliaSkill, 4f, 6f);
             }
             if (left <= 0)
             {
                 Cleared = true;
                 clearedAt = Time.unscaledTime;
+                Voice.Say(VoiceLine.KaelaPowerUp2, 10f);
                 onCleared.Invoke();
                 if (advanceAfter >= 0f) StartCoroutine(Advance());
             }

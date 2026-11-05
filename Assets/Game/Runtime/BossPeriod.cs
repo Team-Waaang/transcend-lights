@@ -65,6 +65,20 @@ namespace AiHackathon.Game
         [Tooltip("Dev keys: F1 = to the phase 2 cutscene, F2 = to the defeat cutscene.")]
         public bool devKeys = true;
 
+        [Header("Voice cues (cutscene seconds)")]
+        [Tooltip("Phase 2 cutscene: the villain's awakening line, just before the eruption (9.05).")]
+        public float phase2RoarAt = 8.6f;
+        [Tooltip("Defeat cutscene: the villain shouts as he pushes the clash back.")]
+        public float bossPushAt = 3.8f;
+        [Tooltip("Defeat cutscene: the blast that beats him; his defeat line, then Amelia's.")]
+        public float bossBlastAt = 17.65f;
+        [Tooltip("Shared resonance at which Kaela calls the ultimate.")]
+        [Range(0f, 1f)] public float ultimateCallAt = 0.6f;
+        [Tooltip("Lead-in silence of the ultimate clip, skipped so the call is not late.")]
+        public float ultimateVoiceSkip = 0.15f;
+        [Tooltip("Two orbs landing on the same player within this many seconds count as a heavy hit.")]
+        public float heavyHitWindow = 1.5f;
+
         public enum Stage { Entrance, Title, Phase1, Phase2Cutscene, Phase2, DefeatCutscene, Cleared }
         public Stage Current { get; private set; } = Stage.Entrance;
 
@@ -88,6 +102,17 @@ namespace AiHackathon.Game
         bool lastPeriod;
         float lastHp = -1f;
         float stageShown = -10f;
+        readonly float[] orbHits = { -10f, -10f };
+        bool chainHeld;
+        int wardBreaks;
+
+        /// <summary>Something to run when a cutscene reaches <see cref="at"/>; skipped if it is jumped past by more than <see cref="late"/>.</summary>
+        struct Cue
+        {
+            public float at, late;
+            public System.Action run;
+            public Cue(float at, float late, System.Action run) { this.at = at; this.late = late; this.run = run; }
+        }
 
         void Awake()
         {
@@ -106,6 +131,9 @@ namespace AiHackathon.Game
                 boss.MinionReached += OnMinionReached;
                 boss.Chained += OnChained;
                 boss.ChainHeld += OnChainHeld;
+                boss.SkillUsed += () => Voice.Say(VoiceLine.VillainSkill, 1f, 5f);
+                boss.WardRaised += () => Voice.Say(VoiceLine.VillainShield, 1f, 5f);
+                boss.DecoyShot += i => { if (i == 0) Voice.Say(VoiceLine.AmeliaMiss, 1f, 10f); };
             }
             Stats = new PlayerStats[game != null ? game.players.Length : 2];
             for (int i = 0; i < Stats.Length; i++) Stats[i] = new PlayerStats();
@@ -139,7 +167,8 @@ namespace AiHackathon.Game
             yield return EndPhase();
 
             Current = Stage.Phase2Cutscene;
-            if (playCutscenes) yield return PlayCutscene(phase2Scene);
+            if (playCutscenes) yield return PlayCutscene(phase2Scene, new Cue(phase2RoarAt, float.MaxValue, () => Voice.Say(VoiceLine.VillainPhase2, 2f)));
+            else Voice.Say(VoiceLine.VillainPhase2, 2f);
             EnterPlay();
             SetPhase2Look(true);
             Current = Stage.Phase2;
@@ -153,10 +182,18 @@ namespace AiHackathon.Game
             yield return EndPhase();
 
             Current = Stage.DefeatCutscene;
-            if (playCutscenes) yield return PlayCutscene(defeatScene);
+            if (playCutscenes)
+                yield return PlayCutscene(defeatScene,
+                    new Cue(bossPushAt, 0.5f, () => Voice.Say(VoiceLine.VillainPush, 0.5f)),
+                    new Cue(bossBlastAt, float.MaxValue, () =>
+                    {
+                        Voice.Say(VoiceLine.VillainDefeat, 6f);
+                        Voice.Say(VoiceLine.AmeliaBossDown, 14f);
+                    }));
             Current = Stage.Cleared;
             fade = 1f;
             clearedAt = Time.unscaledTime;
+            Voice.Say(VoiceLine.KaelaVictory, 16f);
             // The results stay up until Enter / Space / a click, then the next period if there is one (it also moves on
             // by itself after a while); after the last period the same press starts the day again.
             lastPeriod = PeriodFlow.NextIndex() < 0;
@@ -205,8 +242,9 @@ namespace AiHackathon.Game
             if (curseVolume != null) curseVolume.weight = on ? 0.4f : 1f;
         }
 
-        IEnumerator PlayCutscene(string path)
+        IEnumerator PlayCutscene(string path, params Cue[] cues)
         {
+            var cueList = new System.Collections.Generic.List<Cue>(cues);
             fade = 1f;
             if (playRoot != null) playRoot.SetActive(false);
             if (!Application.CanStreamedLevelBeLoaded(path))
@@ -228,21 +266,54 @@ namespace AiHackathon.Game
             if (director != null)
             {
                 var qte = director.GetComponent<ResonanceQte>();
-                if (qte != null) qte.mouseTest = game == null || game.mouseTest;
+                bool ultimateCalled = false;
+                if (qte != null)
+                {
+                    qte.mouseTest = game == null || game.mouseTest;
+                    cueList.Add(new Cue(qte.introAt, 0.5f, () =>
+                    {
+                        Voice.Say(VoiceLine.AmeliaQteReady, 2f);
+                        Voice.Say(VoiceLine.KaelaQteStart, 6f);
+                    }));
+                    qte.onRetry.AddListener(() => Voice.Say(qte.Retries % 2 == 1 ? VoiceLine.AmeliaQteFail : VoiceLine.KaelaQteFail, 1.5f));
+                    qte.onSuccess.AddListener(() => Voice.Cut(VoiceLine.Ultimate, ultimateVoiceSkip));
+                }
                 while (director != null && director.time < director.duration - 0.05)
                 {
+                    RunCues(cueList, (float)director.time);
+                    if (qte != null && !ultimateCalled && qte.Current == ResonanceQte.State.Live && qte.Shared >= ultimateCallAt)
+                    {
+                        ultimateCalled = true;
+                        Voice.Say(VoiceLine.KaelaBeforeUltimate, 2f);
+                    }
                     var kb = Keyboard.current;
                     // Space / Enter skip a plain cutscene; the QTE cutscene handles its own skipping.
                     if (qte == null && kb != null && (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame))
                         director.time = director.duration - 0.05;
                     yield return null;
                 }
+                if (director != null) RunCues(cueList, (float)director.duration);
             }
             fade = 1f;
             yield return null;
             var unload = SceneManager.UnloadSceneAsync(scene);
             while (unload != null && !unload.isDone) yield return null;
         }
+
+        static void RunCues(System.Collections.Generic.List<Cue> cues, float time)
+        {
+            for (int i = cues.Count - 1; i >= 0; i--)
+            {
+                var c = cues[i];
+                if (time < c.at) continue;
+                cues.RemoveAt(i);
+                if (time - c.at <= c.late) c.run();
+            }
+        }
+
+        int PlayerOf(Transform target) => target != null ? System.Array.IndexOf(chestTargets, target) : -1;
+
+        void HitLine(int player) => Voice.Say(Voice.ForPlayer(player, VoiceLine.AmeliaHitShort, VoiceLine.KaelaHit), 0.8f, 3f);
 
         IEnumerator Fade(float to, float seconds)
         {
@@ -272,6 +343,15 @@ namespace AiHackathon.Game
                 var motion = p.character != null ? p.character.GetComponent<CasterMotion>() : null;
                 if (motion != null) motion.Flinch(0.9f);
             }
+            // Only the player the orb flew at speaks. A second orb on her close behind the first is a heavy hit
+            // (Amelia's long line).
+            int who = PlayerOf(orb.Target);
+            if (who < 0 || who >= orbHits.Length) return;
+            float now = Time.unscaledTime;
+            bool heavy = now - orbHits[who] < heavyHitWindow;
+            orbHits[who] = now;
+            if (heavy && who == 0) Voice.Say(VoiceLine.AmeliaHit, 2f, 20f);
+            else HitLine(who);
         }
 
         string NameOf(int i) => game != null && i >= 0 && i < game.players.Length && game.players[i].profile != null
@@ -291,6 +371,7 @@ namespace AiHackathon.Game
             shake = Mathf.Max(shake, 0.09f);
             flash = Mathf.Max(flash, 0.3f);
             Flinch(i, 0.8f);
+            HitLine(i);
             Say(NameOf(i) + "에게 돌정령이 부딪혔다! 보스가 회복한다");
         }
 
@@ -299,19 +380,25 @@ namespace AiHackathon.Game
             if (game == null || i < 0 || i >= game.players.Length) return;
             var rig = game.players[i].rig;
             if (rig != null) rig.fireBlocked = on;
+            int other = (i + 1) % game.players.Length;
             if (on)
             {
-                int other = (i + 1) % game.players.Length;
+                chainHeld = false;
                 Say(NameOf(i) + "이(가) 저주 사슬에 묶였다! " + NameOf(other) + ", 수정을 쏴서 풀어줘!");
                 Flinch(i, 0.7f);
             }
+            // Let go without holding to the end (and not because the fight stopped): the other one broke it.
+            else if (boss.Fighting && !chainHeld)
+                Voice.Say(Voice.ForPlayer(other, VoiceLine.AmeliaQteSuccess, VoiceLine.KaelaQteSuccess), 1.5f);
         }
 
         void OnChainHeld(int i)
         {
+            chainHeld = true;
             shake = Mathf.Max(shake, 0.1f);
             flash = Mathf.Max(flash, 0.35f);
             Flinch(i, 1f);
+            HitLine(i);
         }
 
         void OnWardBroken()
@@ -319,6 +406,8 @@ namespace AiHackathon.Game
             shake = Mathf.Max(shake, 0.1f);
             flash = Mathf.Max(flash, 0.25f);
             StartCoroutine(HitStop(0.12f, 0.15f));
+            // Broken by both of them together; they take turns saying so.
+            Voice.Say(wardBreaks++ % 2 == 0 ? VoiceLine.AmeliaQteSuccess : VoiceLine.KaelaQteSuccess, 1.5f);
         }
 
         IEnumerator HitStop(float scale, float seconds)
@@ -339,7 +428,7 @@ namespace AiHackathon.Game
             }
             if (boss == null || !boss.Fighting || game == null) { resonating = false; return; }
 
-            int onBoss = 0, onWard = 0;
+            int onBoss = 0, onWard = 0, wardShooter = -1;
             Vector3 wardPoint = Vector3.zero;
             float dt = Time.deltaTime;
             var hitters = new Color[game.players.Length];
@@ -350,7 +439,11 @@ namespace AiHackathon.Game
                 if (rig == null || !rig.isActiveAndEnabled || !rig.Firing || !rig.HasHit || rig.HitCollider == null) continue;
                 var col = rig.HitCollider;
                 var orb = col.GetComponentInParent<CurseOrb>();
-                if (orb != null) { if (orb.Damage(dt)) Stats[i].orbs++; continue; }
+                if (orb != null)
+                {
+                    if (orb.Damage(dt)) Stats[i].orbs++;
+                    continue;
+                }
                 var minion = col.GetComponentInParent<StoneCreature>();
                 if (minion != null)
                 {
@@ -369,7 +462,7 @@ namespace AiHackathon.Game
                     if (!was && crystal.Done) Stats[i].crystals++;
                     continue;
                 }
-                if (col.GetComponentInParent<WardFx>() != null) { onWard++; wardPoint = rig.HitPoint; continue; }
+                if (col.GetComponentInParent<WardFx>() != null) { onWard++; wardPoint = rig.HitPoint; wardShooter = i; continue; }
                 if (col.transform.IsChildOf(boss.transform))
                 {
                     hitters[onBoss] = game.players[i].profile != null ? game.players[i].profile.playerColor : Color.white;
@@ -390,7 +483,11 @@ namespace AiHackathon.Game
             else if (onWard == 1)
             {
                 boss.TouchWard(wardPoint);
-                if (Time.unscaledTime - messageTime > 2.5f) Say("혼자서는 안 돼! 둘이 함께 결계를 쏴!");
+                if (Time.unscaledTime - messageTime > 2.5f)
+                {
+                    Say("혼자서는 안 돼! 둘이 함께 결계를 쏴!");
+                    if (wardShooter == 0) Voice.Bark(VoiceLine.AmeliaMiss, 20f);
+                }
             }
         }
 
