@@ -103,6 +103,10 @@ namespace Waaang
         static void Boot()
         {
             defaultQualityLevel = QualitySettings.GetQualityLevel();
+#if UNITY_EDITOR
+            // A fresh Play session: Unity reverted any swap from the last one.
+            UnityEditor.SessionState.EraseString(EditorBeforeKey);
+#endif
             ApplyQualityLevel();
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -115,8 +119,11 @@ namespace Waaang
 
         void OnValidate()
         {
-            if (!Application.isPlaying || this != Current || defaultQualityLevel < 0)
+            if (!Application.isPlaying || this != Current)
                 return;
+            // Scripts recompiled during Play reset the statics without re-running Boot.
+            if (defaultQualityLevel < 0)
+                defaultQualityLevel = QualitySettings.GetQualityLevel();
             ApplyQualityLevel();
             RestoreAll();
             if (tier == GraphicsTier.High)
@@ -136,9 +143,16 @@ namespace Waaang
                 int high = System.Array.IndexOf(QualitySettings.names, HighQualityLevelName);
                 if (high >= 0)
                     target = high;
+#if UNITY_EDITOR
+                else if (EditorUsePipeline(true))
+                    return;
+#endif
                 else
                     Debug.LogWarning("[GraphicsConfig] Quality level '" + HighQualityLevelName + "' is not available on this platform (excluded, or not set up: Waaang/Graphics/Set Up High Quality). Scene upgrades still apply.");
             }
+#if UNITY_EDITOR
+            EditorUsePipeline(false);
+#endif
             if (target >= 0 && QualitySettings.GetQualityLevel() != target)
             {
                 QualitySettings.SetQualityLevel(target, true);
@@ -147,6 +161,59 @@ namespace Waaang
                     Debug.LogWarning("[GraphicsConfig] Quality level '" + QualitySettings.names[target] + "' is excluded for this platform; using '" + QualitySettings.names[QualitySettings.GetQualityLevel()] + "'. Scene upgrades still apply.");
             }
         }
+
+#if UNITY_EDITOR
+        const string EditorHighPipelinePath = "Assets/Settings/PC_High_RPAsset.asset";
+        // Survives a script reload during Play, which wipes the statics below.
+        const string EditorBeforeKey = "Waaang.GraphicsConfig.PipelineBefore";
+        static bool editorPipelineSwapped;
+        static RenderPipelineAsset editorPipelineBefore;
+
+        // The editor on a mobile build target (Android here) only offers the Mobile level in Play mode, so "PC High"
+        // cannot be selected. Preview High in the Game view by swapping the active level's pipeline asset for the
+        // High one; the original is put back when High is turned off or Play mode ends, so QualitySettings stays as authored.
+        static bool EditorUsePipeline(bool high)
+        {
+            if (!editorPipelineSwapped && UnityEditor.SessionState.GetString(EditorBeforeKey, "") is { Length: > 0 } saved)
+            {
+                editorPipelineSwapped = true;
+                editorPipelineBefore = saved == "-" ? null : UnityEditor.AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(saved);
+                UnityEditor.EditorApplication.playModeStateChanged += RestoreEditorPipelineOnExit;
+            }
+            if (high)
+            {
+                var asset = UnityEditor.AssetDatabase.LoadAssetAtPath<RenderPipelineAsset>(EditorHighPipelinePath);
+                if (asset == null)
+                    return false;
+                if (!editorPipelineSwapped)
+                {
+                    editorPipelineBefore = QualitySettings.renderPipeline;
+                    editorPipelineSwapped = true;
+                    UnityEditor.SessionState.SetString(EditorBeforeKey, editorPipelineBefore != null ? UnityEditor.AssetDatabase.GetAssetPath(editorPipelineBefore) : "-");
+                    UnityEditor.EditorApplication.playModeStateChanged += RestoreEditorPipelineOnExit;
+                }
+                QualitySettings.renderPipeline = asset;
+                Debug.Log("[GraphicsConfig] Editor preview: '" + QualitySettings.names[QualitySettings.GetQualityLevel()] + "' level rendering with " + asset.name + " (High) for this Play session.");
+                return true;
+            }
+            if (editorPipelineSwapped)
+            {
+                QualitySettings.renderPipeline = editorPipelineBefore;
+                editorPipelineSwapped = false;
+                editorPipelineBefore = null;
+                UnityEditor.SessionState.EraseString(EditorBeforeKey);
+                UnityEditor.EditorApplication.playModeStateChanged -= RestoreEditorPipelineOnExit;
+            }
+            return false;
+        }
+
+        static void RestoreEditorPipelineOnExit(UnityEditor.PlayModeStateChange change)
+        {
+            // Unity reverts QualitySettings when Play ends anyway; this just clears the bookkeeping.
+            if (change == UnityEditor.PlayModeStateChange.ExitingPlayMode)
+                EditorUsePipeline(false);
+        }
+#endif
 
         // ---------- Per scene ----------
 
