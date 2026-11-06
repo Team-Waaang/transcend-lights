@@ -659,8 +659,8 @@ namespace AiHackathon.Cutscene.Editor
         }
 
         /// <summary>
-        /// Seeing Nox's light, she breathes in, lets her shoulders down, and lifts the wand in front of her face like a
-        /// torch, chin up; the left hand lets go.
+        /// Seeing Nox's light, she breathes in, lets her shoulders down, and raises the wand beside her like a torch,
+        /// chin up; the left hand lets go.
         /// </summary>
         static void AmeliaSteady(PoseRig rig, float t)
         {
@@ -676,21 +676,24 @@ namespace AiHackathon.Cutscene.Editor
             rig.Turn("Right_Shoulder", Z, 6f * tense + 3f * breathIn);
             rig.Turn("Neck", X, -3f * tense);
             rig.Turn("Head", X, -4f * tense - 4f * resolve);
+            // As she raises it she turns her chest a little to her right, toward the two-shot camera, so she presents
+            // the torch to the front.
+            rig.Turn("Spine", Y, 4f * raise);
+            rig.Turn("Chest", Y, 6f * raise);
 
-            // Held out to the right of her face, tip forward and up, so the light sits in front of her.
-            var torch = new Vector3(0.12f, 0.8f, 0.2f);
-            var torchAxis = new Vector3(0.55f, 0.3f, 0.75f).normalized;
+            var torch = TorchFist(rig, R, AmeliaTorchReach);
+            var torchAxis = TorchAxis(R, AmeliaTorchReach);
             var point = Vector3.Lerp(ClutchPoint, torch, raise) + new Vector3(0.02f, 0f, 0.05f) * Mathf.Sin(raise * Mathf.PI);
             var axis = Vector3.Slerp(ClutchAxis, torchAxis, raise);
             // Knuckles must stay across the shaft: with the wand pointed forward they face up and out.
             Grip(rig, R, point, axis, Vector3.Slerp(ClutchKnuckles, new Vector3(0.3f, 1f, -0.3f), raise),
-                Vector3.Lerp(ClutchPole, new Vector3(0.3f, -0.35f, -0.15f), raise));
+                Vector3.Lerp(ClutchPole, TorchPole(R, AmeliaTorchReach), raise));
             ClutchSupport(rig, point, axis, 1f, Ease(t, 0.75f, 1.4f));
         }
 
         /// <summary>
         /// Unbothered by the dark: she lifts the wand beside her shoulder like a torch, sweeps the room left and right
-        /// with it, and shrugs. Right hand stays on the hip.
+        /// with it, and shrugs. Right arm hangs loose at her side.
         /// </summary>
         static void NoxTorch(PoseRig rig, float t)
         {
@@ -707,18 +710,53 @@ namespace AiHackathon.Cutscene.Editor
             rig.Turn("Right_Shoulder", Z, 7f * shrug);
 
             GripPose(L, out var p0, out var a0, out var k0, out var pole0);
-            // Elbow bent, the fist out beside her shoulder and a little ahead; the wand stands steeply up and out so
-            // it clears her head and the butt clears her shoulder, and the light hangs above and ahead of her.
-            var p1 = new Vector3(-0.19f, 0.85f, 0.16f) + new Vector3(-0.05f * scanL + 0.05f * scanR, 0f, 0f);
-            var a1 = (new Vector3(-0.4f, 0.75f, 0.55f) + new Vector3(-0.3f * scanL + 0.3f * scanR, 0f, 0f)).normalized;
-            var point = Vector3.Lerp(p0, p1, up) + new Vector3(-0.04f, 0f, 0.05f) * Mathf.Sin(up * Mathf.PI);
+            var p1 = TorchFist(rig, L) + new Vector3(-0.05f * scanL + 0.05f * scanR, 0f, 0f);
+            var a1 = (TorchAxis(L) + new Vector3(-0.3f * scanL + 0.3f * scanR, 0f, 0f)).normalized;
+            // From her side to the bent-arm torch on a curve pulled in toward the shoulder, so the elbow bends as the
+            // fist comes up (a straight or outward path kept her short arm locked straight while the wand turned,
+            // cocking the wrist).
+            var shoulder = rig["Left_UpperArm"].position;
+            var bend = Vector3.Lerp(Vector3.Lerp(p0, p1, 0.5f), shoulder, 0.4f);
+            var point = (1f - up) * (1f - up) * p0 + 2f * up * (1f - up) * bend + up * up * p1;
             Grip(rig, L, point, Vector3.Slerp(a0, a1, up), Vector3.Slerp(k0, new Vector3(-0.3f, 1f, -0.3f), up),
-                Vector3.Lerp(pole0, new Vector3(-0.35f, -0.25f, -0.15f), up));
+                Vector3.Lerp(pole0, TorchPole(L), up));
 
-            HandOnHip(rig, R, out var hipWrist, out var hipHand);
-            rig.Arm(R, hipWrist, rig["Right_UpperArm"].position + new Vector3(0.4f, -0.12f, -0.28f), hipHand);
-            rig.Curl(R, 0.45f, 0.2f);
+            // Right arm hanging loose at her side, wrist straight, open fingers toward the floor (a fist on the hip
+            // read as stiff); held a little out from her side so the hand clears her flared skirt.
+            var looseHand = rig.HandRotation(R, new Vector3(0.25f, -1f, 0.1f).normalized, new Vector3(-1f, -0.2f, 0.05f).normalized);
+            var looseWrist = new Vector3(0.15f, 0.53f, 0.03f);
+            rig.Arm(R, looseWrist, rig["Right_UpperArm"].position + new Vector3(0.35f, -0.3f, -0.08f), looseHand);
+            rig.Curl(R, 0.08f, 0.1f);
         }
+
+        // The wand held up as a torch (Period 2, both girls): elbow tucked in at her side, the forearm coming up and
+        // forward so the fist sits ahead of her, below the chest and out; the wand leans up, forward and out, steep
+        // enough that the butt clears her body, beside her face in the two-shot, and the lit tip in frame. The fist is
+        // placed from the shoulder by arm length because Nox's arms are much shorter than Amelia's: a fixed point that
+        // one reaches with a bent elbow locks the other's arm straight. reach (0..1) turns fist and wand from out to
+        // her side toward held out in front: Nox carries it at her side, Amelia offers it forward.
+        static Vector3 TorchFist(PoseRig rig, string side, float reach = 0f)
+        {
+            var dir = M(Vector3.Lerp(new Vector3(0.6f, -0.6f, 0.53f), new Vector3(0.3f, -0.8f, 0.52f), reach), side).normalized;
+            return rig[side + "UpperArm"].position + dir * (ArmLength(rig, side) * Mathf.Lerp(0.7f, 0.86f, reach) + rig.KnuckleDistance(side) * 0.6f);
+        }
+
+        // Amelia holds her torch out in front, higher than her two-handed clutch so raising it is a lift; Nox carries
+        // hers out at her side.
+        const float AmeliaTorchReach = 1f;
+
+        static Vector3 TorchAxis(string side, float reach = 0f) =>
+            M(Vector3.Lerp(new Vector3(0.35f, 0.65f, 0.68f), new Vector3(0.35f, 0.65f, 0.67f), reach), side).normalized;
+
+        // Elbow pole for the torch: down by her side, a touch out; back a little when the fist is out at the side,
+        // a little forward when it is held out in front (else the elbow swings back behind her as the fist comes up).
+        static Vector3 TorchPole(string side, float reach = 0f) =>
+            M(Vector3.Lerp(new Vector3(0.08f, -0.4f, -0.1f), new Vector3(0.13f, -0.4f, 0.1f), reach), side);
+
+        /// <summary>Shoulder to elbow plus elbow to wrist (model units).</summary>
+        static float ArmLength(PoseRig rig, string side) =>
+            Vector3.Distance(rig[side + "UpperArm"].position, rig[side + "LowerArm"].position)
+            + Vector3.Distance(rig[side + "LowerArm"].position, rig[side + "Hand"].position);
 
         static Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
         {
