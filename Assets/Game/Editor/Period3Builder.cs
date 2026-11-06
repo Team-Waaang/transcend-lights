@@ -120,7 +120,7 @@ namespace AiHackathon.Game.Editor
             bossAnimator.transform.SetParent(playRoot.transform, true);
             bossAnimator.transform.localScale = Vector3.one * BossScale;
             var body = bossAnimator.GetComponentInChildren<SkinnedMeshRenderer>();
-            PinHoodToHead(body);
+            PrepareBossBody(body);
             var bossController = BuildBossController();
             bossAnimator.runtimeAnimatorController = bossController;
             var idle = FindClip(HoodedFbx, "Idle stance");
