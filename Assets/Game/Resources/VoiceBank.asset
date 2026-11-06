@@ -14,6 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AiHackathon.Game.VoiceBank
   volume: 1
   entries:
+  - line: 36
+    clip: {fileID: 8300000, guid: 5750ae875b675cb4bb00de83300af1d8, type: 3}
+  - line: 37
+    clip: {fileID: 8300000, guid: 940ac5d6b0ae0c1489df2e05594b7062, type: 3}
+  - line: 38
+    clip: {fileID: 8300000, guid: 01037aeefc1284c4fbea58bbb6d2ae0b, type: 3}
   - line: 0
     clip: {fileID: 8300000, guid: fc064848c3fc2405a8d6c8c5300e9b8c, type: 3}
   - line: 1

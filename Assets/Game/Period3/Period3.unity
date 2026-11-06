@@ -68111,12 +68111,12 @@ MonoBehaviour:
   subtitle: "\uB450 \uBE5B\uC774 \uD558\uB098\uAC00 \uB420 \uB54C, \uC800\uC8FC\uB294
     \uD480\uB9B0\uB2E4."
   titleTime: 3.4
-  phase2At: 55
-  defeatAt: 8
+  phase2At: 82.5
+  defeatAt: 12
   laserDps: 1.7
   resonanceMultiplier: 1.5
-  orbHeal: 4
-  minionHeal: 2.5
+  orbHeal: 6
+  minionHeal: 3.75
   devKeys: 1
   phase2RoarAt: 8.6
   bossBlastAt: 17.65
@@ -73590,7 +73590,7 @@ MonoBehaviour:
   roarFx: {fileID: 718986307}
   phase2Aura: {fileID: 688594946}
   hitLight: {fileID: 649033926}
-  maxHp: 100
+  maxHp: 150
   weakMultiplier: 1.8
   weakTime: 3
   phase1:
@@ -73604,7 +73604,7 @@ MonoBehaviour:
     summonVolley: 0
     minions: 3
     minionSpeed: 0.95
-    minionHp: 0.3
+    minionHp: 0.6
     decoys: 0
     decoyHp: 0.25
     cloneTime: 7
@@ -73622,7 +73622,7 @@ MonoBehaviour:
     summonVolley: 7
     minions: 5
     minionSpeed: 1.15
-    minionHp: 0.3
+    minionHp: 0.6
     decoys: 2
     decoyHp: 0.25
     cloneTime: 7

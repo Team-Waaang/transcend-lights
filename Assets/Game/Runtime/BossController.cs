@@ -36,7 +36,7 @@ namespace AiHackathon.Game
             public int minions = 3;
             public float minionSpeed = 0.95f;
             [Tooltip("Seconds of laser that break one.")]
-            public float minionHp = 0.3f;
+            public float minionHp = 0.6f;
             [Header("Clones (0 = no clone pattern)")]
             public int decoys = 0;
             public float decoyHp = 0.25f;
@@ -64,7 +64,7 @@ namespace AiHackathon.Game
         public Light hitLight;
 
         [Header("Health")]
-        public float maxHp = 100f;
+        public float maxHp = 150f;
         [Tooltip("Damage taken while staggered after a broken ward is multiplied by this.")]
         public float weakMultiplier = 1.8f;
         public float weakTime = 3f;
@@ -641,7 +641,7 @@ namespace AiHackathon.Game
             {
                 Message?.Invoke("사슬이 버텼다… 저주가 스며든다");
                 GameAudio.Play("curse_impact", transform);
-                Heal(4f);
+                Heal(6f);
                 ChainHeld?.Invoke(p);
             }
             ClearChain();
@@ -689,7 +689,7 @@ namespace AiHackathon.Game
             {
                 if (ward != null) ward.Drop();
                 Message?.Invoke("결계가 버텼다…");
-                Heal(3f);
+                Heal(4.5f);
             }
         }
 

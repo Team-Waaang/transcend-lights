@@ -65,6 +65,40 @@ namespace AiHackathon.Cutscene.Editor
         public static string[] RenderSceneCsv(string scenePath, string times) =>
             RenderScene(scenePath, times.Split(',').Select(s => float.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture)).ToArray());
 
+        static System.Collections.Generic.List<(SkinnedMeshRenderer, GameObject, Mesh)> BakeSkins()
+        {
+            var list = new System.Collections.Generic.List<(SkinnedMeshRenderer, GameObject, Mesh)>();
+            foreach (var smr in UnityEngine.Object.FindObjectsByType<SkinnedMeshRenderer>(FindObjectsSortMode.None))
+            {
+                if (!smr.enabled || !smr.gameObject.activeInHierarchy || smr.sharedMesh == null) continue;
+                var mesh = new Mesh { name = smr.sharedMesh.name + " (preview)" };
+                // useScale false: the baked skin already comes out at the bones' world size (true divides the
+                // parents' scale back out, which drew the 1.5x characters at 1x), so the stand-in stays at scale 1.
+                smr.BakeMesh(mesh, false);
+                var go = new GameObject("PreviewSkin") { hideFlags = HideFlags.HideAndDontSave };
+                go.transform.SetPositionAndRotation(smr.transform.position, smr.transform.rotation);
+                go.layer = smr.gameObject.layer;
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var mr = go.AddComponent<MeshRenderer>();
+                mr.sharedMaterials = smr.sharedMaterials;
+                mr.shadowCastingMode = smr.shadowCastingMode;
+                mr.receiveShadows = smr.receiveShadows;
+                smr.enabled = false;
+                list.Add((smr, go, mesh));
+            }
+            return list;
+        }
+
+        static void RestoreSkins(System.Collections.Generic.List<(SkinnedMeshRenderer, GameObject, Mesh)> baked)
+        {
+            foreach (var (smr, go, mesh) in baked)
+            {
+                if (smr != null) smr.enabled = true;
+                UnityEngine.Object.DestroyImmediate(go);
+                UnityEngine.Object.DestroyImmediate(mesh);
+            }
+        }
+
         /// <summary>Renders the open scene at each timeline time; returns the written file paths.</summary>
         public static string[] Render(string prefix, params float[] times)
         {
@@ -93,10 +127,16 @@ namespace AiHackathon.Cutscene.Editor
                     if (brain != null) { brain.ManualUpdate(); brain.ManualUpdate(); }
                     var prev = cam.targetTexture;
                     cam.targetTexture = rt;
-                    // The first render after a jump can still draw meshes and skins at their previous transforms
-                    // (a second, stale wand); render once to settle, then capture.
-                    cam.Render();
-                    cam.Render();
+                    // Outside the player loop skinned meshes keep the skin of an earlier pose; draw baked copies of
+                    // the current pose in their place. The first render after a jump can also still draw meshes at
+                    // their previous transforms (a second, stale wand): render once to settle, then capture.
+                    var baked = BakeSkins();
+                    try
+                    {
+                        cam.Render();
+                        cam.Render();
+                    }
+                    finally { RestoreSkins(baked); }
                     cam.targetTexture = prev;
                     var active = RenderTexture.active;
                     RenderTexture.active = rt;

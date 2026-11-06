@@ -82,6 +82,8 @@ namespace AiHackathon.Game
             {
                 switch (boss.Current)
                 {
+                    // Still Period 2's hall (and its music) until the boss shows himself in the entrance.
+                    case BossPeriod.Stage.Fall: return "bgm_dark_hall";
                     case BossPeriod.Stage.Phase2Cutscene:
                     case BossPeriod.Stage.Phase2: return "bgm_boss_phase2";
                     case BossPeriod.Stage.DefeatCutscene:
@@ -99,6 +101,7 @@ namespace AiHackathon.Game
                 case "Period2Cutscene": return "bgm_dark_hall";
                 case "Period3":
                 case "BossEntranceCutscene": return "bgm_boss_phase1";
+                case "BossFallCutscene": return "bgm_dark_hall";
                 case "BossPhase2Cutscene": return "bgm_boss_phase2";
                 case "BossDefeatCutscene":
                     return DefeatTrack();

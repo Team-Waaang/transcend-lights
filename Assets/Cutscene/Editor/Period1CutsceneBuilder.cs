@@ -172,14 +172,7 @@ namespace AiHackathon.Cutscene.Editor
 
             var volumes = new GameObject("Volumes").transform;
             volumes.SetParent(fx.transform);
-            Volume(volumes, "Base", 0, 1f, Profile("Period1Base", p =>
-            {
-                p.Add<Tonemapping>().mode.Override(TonemappingMode.Neutral);
-                var b = p.Add<Bloom>(); b.threshold.Override(1.1f); b.intensity.Override(0.5f); b.scatter.Override(0.65f);
-                var v = p.Add<Vignette>(); v.intensity.Override(0.24f); v.smoothness.Override(0.5f);
-                var ca = p.Add<ColorAdjustments>(); ca.contrast.Override(12f); ca.saturation.Override(8f); ca.postExposure.Override(0f);
-                p.Add<WhiteBalance>().temperature.Override(8f);
-            }));
+            Volume(volumes, "Base", 0, 1f, Profile("Period1Base", PeriodBaseGrade));
             // Under the title card: the scene sinks back and the far room blurs so the parchment reads.
             Volume(volumes, "Card", 2, 0f, Profile("Period1Card", p =>
             {

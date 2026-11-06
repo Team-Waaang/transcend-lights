@@ -389,7 +389,7 @@ namespace AiHackathon.Game.Editor
 
             AssetDatabase.SaveAssets();
             EditorSceneManager.SaveScene(scene, ScenePath);
-            AddToBuildSettings(ScenePath, period.entranceScene, period.phase2Scene, period.defeatScene);
+            AddToBuildSettings(ScenePath, period.fallScene, period.entranceScene, period.phase2Scene, period.defeatScene);
             PeriodSetup.Run();
             Debug.Log("[Period3] Built " + ScenePath);
         }

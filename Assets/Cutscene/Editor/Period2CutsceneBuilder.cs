@@ -706,21 +706,9 @@ namespace AiHackathon.Cutscene.Editor
 
             var volumes = new GameObject("Volumes").transform;
             volumes.SetParent(fx.transform);
-            Volume(volumes, "Base", 0, 1f, Profile("Period2Base", p =>
-            {
-                p.Add<Tonemapping>().mode.Override(TonemappingMode.Neutral);
-                var b = p.Add<Bloom>(); b.threshold.Override(1.1f); b.intensity.Override(0.6f); b.scatter.Override(0.65f);
-                var v = p.Add<Vignette>(); v.intensity.Override(0.24f); v.smoothness.Override(0.5f);
-                var ca = p.Add<ColorAdjustments>(); ca.contrast.Override(12f); ca.saturation.Override(8f);
-                p.Add<WhiteBalance>().temperature.Override(8f);
-            }));
-            // Night grade: cooler, less saturated, heavier vignette.
-            Volume(volumes, "Dark", 1, 0f, Profile("Period2Dark", p =>
-            {
-                var ca = p.Add<ColorAdjustments>(); ca.saturation.Override(-22f); ca.contrast.Override(8f);
-                p.Add<WhiteBalance>().temperature.Override(-28f);
-                var v = p.Add<Vignette>(); v.intensity.Override(0.42f); v.color.Override(new Color(0.02f, 0.03f, 0.08f));
-            }));
+            Volume(volumes, "Base", 0, 1f, Profile("Period2Base", PeriodBaseGrade));
+            // Night grade: cooler, dimmer, heavier vignette.
+            Volume(volumes, "Dark", 1, 0f, Profile("Period2Dark", Period2DarkGrade));
             Volume(volumes, "Card", 2, 0f, Profile("Period2Card", p =>
             {
                 var ca = p.Add<ColorAdjustments>(); ca.postExposure.Override(-0.5f); ca.saturation.Override(-20f);

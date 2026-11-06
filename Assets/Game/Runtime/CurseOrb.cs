@@ -17,6 +17,10 @@ namespace AiHackathon.Game
         public event Action<CurseOrb> Popped;
         public event Action<CurseOrb> Reached;
 
+        // Spawn burst: the share of the arc covered in the first half second.
+        const float BurstSeconds = 0.5f;
+        const float BurstReach = 0.3f;
+
         Vector3 from, control;
         Transform target;
         Vector3 targetOffset;
@@ -55,9 +59,20 @@ namespace AiHackathon.Game
             if (done) return;
             t += Time.deltaTime / travel;
             var end = target != null ? target.position + targetOffset : from;
-            float k = Mathf.Clamp01(t);
-            // Slow out of the wand, faster as it closes in.
-            float e = k * k * (1.6f - 0.6f * k);
+            // A fast burst out along the arc for the first BurstSeconds (the volley fans out), easing to a near stop;
+            // then the rest of the way slow at first, faster as it closes in. Total travel time is unchanged.
+            float elapsed = t * travel;
+            float e;
+            if (elapsed < BurstSeconds)
+            {
+                float u = elapsed / BurstSeconds;
+                e = BurstReach * (1f - (1f - u) * (1f - u) * (1f - u));
+            }
+            else
+            {
+                float k = Mathf.Clamp01((elapsed - BurstSeconds) / Mathf.Max(0.01f, travel - BurstSeconds));
+                e = BurstReach + (1f - BurstReach) * (k * k * (1.6f - 0.6f * k));
+            }
             var a = Vector3.Lerp(from, control, e);
             var b = Vector3.Lerp(control, end, e);
             transform.position = Vector3.Lerp(a, b, e) + Vector3.up * (Mathf.Sin(Time.time * 7f + GetInstanceID()) * 0.03f);

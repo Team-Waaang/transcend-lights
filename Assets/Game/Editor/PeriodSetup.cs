@@ -15,6 +15,9 @@ namespace AiHackathon.Game.Editor
         const string VoiceBankPath = "Assets/Game/Resources/VoiceBank.asset";
         static readonly (VoiceLine line, string file)[] VoiceFiles =
         {
+            (VoiceLine.AmeliaScream, "amelia/아멜리아 비명"),
+            (VoiceLine.KaelaScream, "nox/카엘라 비명"),
+            (VoiceLine.KaelaWhereAreWe, "nox/카엘라 여긴 어디지"),
             (VoiceLine.AmeliaCalm, "amelia/아멜리아 마력 안정"),
             (VoiceLine.AmeliaRuneSuccess, "amelia/아멜리아 룬 제작 성공"),
             (VoiceLine.AmeliaRuneFail, "amelia/아멜리아 룬 제작 실패"),
@@ -54,6 +57,7 @@ namespace AiHackathon.Game.Editor
         };
         static readonly string[] Cutscenes =
         {
+            "Assets/Cutscene/BossFall/BossFallCutscene.unity",
             "Assets/Cutscene/BossEntrance/BossEntranceCutscene.unity",
             "Assets/Cutscene/BossPhase2/BossPhase2Cutscene.unity",
             "Assets/Cutscene/BossDefeatCutscene.unity",
