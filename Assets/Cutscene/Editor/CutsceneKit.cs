@@ -69,8 +69,137 @@ namespace AiHackathon.Cutscene.Editor
             m.SetFloat("_RimFresnelPower", 2.5f);
             m.SetFloat("_RimMainStrength", 0f);
             m.SetFloat("_RimShadowMask", 0.3f);
+            BossToon(m);
             AssetDatabase.CreateAsset(m, path);
             return m;
+        }
+
+        // ---------- The storybook grade ("PP", commit 347d3e6) ----------
+        // Kept in code: the profiles and boss materials are rebuilt from here, which had dropped that look.
+
+        /// <summary>The boss's toon shading: plum outline, lavender cel shadow with a violet terminator, rim shade.</summary>
+        internal static void BossToon(Material m)
+        {
+            var outline = Shader.Find("Hidden/lilToonOutline");
+            if (outline != null && m.shader != outline) m.shader = outline;
+            m.SetFloat("_OutlineWidth", 0.13f);
+            m.SetColor("_OutlineColor", new Color(0.12f, 0.07f, 0.16f, 1f));
+            m.SetFloat("_OutlineEnableLighting", 0.55f);
+            m.SetFloat("_ShadowStrength", 0.75f);
+            m.SetFloat("_ShadowBorder", 0.45f);
+            m.SetFloat("_ShadowBlur", 0.25f);
+            m.SetFloat("_ShadowReceive", 0.5f);
+            m.SetColor("_ShadowColor", new Color(0.7f, 0.64f, 0.88f, 1f));
+            m.SetColor("_ShadowBorderColor", new Color(0.75f, 0.4f, 0.8f, 1f));
+            m.SetFloat("_ShadowBorderRange", 0.07f);
+            m.SetColor("_Shadow2ndColor", new Color(0.68f, 0.66f, 0.79f, 0f));
+            m.SetFloat("_UseRimShade", 1f);
+            m.SetColor("_RimShadeColor", new Color(0.45f, 0.36f, 0.72f, 1f));
+            m.SetFloat("_RimShadeBorder", 0.6f);
+            m.SetFloat("_RimShadeBlur", 0.4f);
+            m.SetFloat("_RimShadeFresnelPower", 1.5f);
+            m.SetFloat("_RimDirStrength", 0.6f);
+            m.SetColor("_RimIndirColor", new Color(0.6f, 0.65f, 1f, 0.8f));
+            m.SetFloat("_RimIndirBorder", 0.55f);
+            m.SetFloat("_RimIndirBlur", 0.15f);
+        }
+
+        /// <summary>Base grade of the boss cutscenes and Period 3: ACES, warm highlights over cool shadows, a lift.</summary>
+        internal static void CutsceneBaseGrade(VolumeProfile p)
+        {
+            p.Add<Tonemapping>().mode.Override(TonemappingMode.ACES);
+            var b = p.Add<Bloom>(); b.threshold.Override(0.9f); b.intensity.Override(1.15f); b.scatter.Override(0.72f);
+            b.tint.Override(new Color(1f, 0.94f, 0.9f)); b.highQualityFiltering.Override(true);
+            var v = p.Add<Vignette>(); v.intensity.Override(0.3f); v.smoothness.Override(0.45f); v.color.Override(new Color(0.03f, 0.02f, 0.06f));
+            var ca = p.Add<ColorAdjustments>(); ca.contrast.Override(10f); ca.postExposure.Override(0.45f); ca.saturation.Override(6f);
+            var g = p.Add<FilmGrain>(); g.type.Override(FilmGrainLookup.Thin1); g.intensity.Override(0.14f);
+            var lgg = p.Add<LiftGammaGain>(); lgg.lift.Override(new Vector4(1f, 1f, 1.02f, 0.02f)); lgg.gain.Override(new Vector4(1.02f, 1f, 0.99f, 0f));
+            var st = p.Add<SplitToning>(); st.shadows.Override(new Color(0.46f, 0.47f, 0.56f)); st.highlights.Override(new Color(0.58f, 0.53f, 0.48f)); st.balance.Override(-10f);
+            var wb = p.Add<WhiteBalance>(); wb.temperature.Override(-2f); wb.tint.Override(0f);
+        }
+
+        /// <summary>The curse grade on top of it: muted rather than grey, cool shadows.</summary>
+        internal static void CutsceneCurseGrade(VolumeProfile p)
+        {
+            var ca = p.Add<ColorAdjustments>(); ca.saturation.Override(-40f); ca.colorFilter.Override(new Color(0.94f, 0.93f, 1f)); ca.postExposure.Override(0f);
+            var v = p.Add<Vignette>(); v.intensity.Override(0.42f); v.color.Override(new Color(0.05f, 0.02f, 0.1f));
+            var st = p.Add<SplitToning>(); st.shadows.Override(new Color(0.47f, 0.46f, 0.56f)); st.highlights.Override(new Color(0.57f, 0.53f, 0.5f)); st.balance.Override(-15f);
+        }
+
+        /// <summary>Base grade of the Period 1 and 2 classrooms: warm, bright and a little saturated.</summary>
+        internal static void PeriodBaseGrade(VolumeProfile p)
+        {
+            p.Add<Tonemapping>().mode.Override(TonemappingMode.ACES);
+            var b = p.Add<Bloom>(); b.threshold.Override(0.9f); b.intensity.Override(0.8f); b.scatter.Override(0.75f);
+            b.tint.Override(new Color(1f, 0.92f, 0.8f)); b.highQualityFiltering.Override(true);
+            var v = p.Add<Vignette>(); v.intensity.Override(0.3f); v.smoothness.Override(0.45f); v.color.Override(new Color(0.1f, 0.06f, 0.03f));
+            var ca = p.Add<ColorAdjustments>(); ca.contrast.Override(12f); ca.saturation.Override(16f); ca.postExposure.Override(0.45f);
+            var wb = p.Add<WhiteBalance>(); wb.temperature.Override(12f); wb.tint.Override(2f);
+            var g = p.Add<FilmGrain>(); g.type.Override(FilmGrainLookup.Thin1); g.intensity.Override(0.1f);
+            var lgg = p.Add<LiftGammaGain>(); lgg.lift.Override(new Vector4(0.99f, 1f, 1.02f, 0.01f)); lgg.gain.Override(new Vector4(1.02f, 1f, 0.97f, 0f));
+            var st = p.Add<SplitToning>(); st.shadows.Override(new Color(0.47f, 0.49f, 0.53f)); st.highlights.Override(new Color(0.6f, 0.54f, 0.45f)); st.balance.Override(-5f);
+        }
+
+        /// <summary>Period 2's night: cool and dim, but not drained.</summary>
+        internal static void Period2DarkGrade(VolumeProfile p)
+        {
+            var ca = p.Add<ColorAdjustments>(); ca.saturation.Override(-8f); ca.contrast.Override(10f); ca.postExposure.Override(0.35f);
+            var wb = p.Add<WhiteBalance>(); wb.temperature.Override(-18f); wb.tint.Override(3f);
+            var v = p.Add<Vignette>(); v.intensity.Override(0.4f); v.color.Override(new Color(0.01f, 0.02f, 0.06f));
+            var b = p.Add<Bloom>(); b.intensity.Override(1.1f); b.threshold.Override(0.82f); b.tint.Override(new Color(0.88f, 0.94f, 1f));
+            var st = p.Add<SplitToning>(); st.shadows.Override(new Color(0.42f, 0.46f, 0.58f)); st.highlights.Override(new Color(0.6f, 0.54f, 0.44f)); st.balance.Override(-20f);
+        }
+
+        /// <summary>Rewrites an existing profile asset in place (scenes keep referencing it) with <paramref name="fill"/>.</summary>
+        internal static bool RefillProfile(string path, Action<VolumeProfile> fill)
+        {
+            var p = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+            if (p == null) return false;
+            foreach (var c in p.components.ToArray())
+            {
+                AssetDatabase.RemoveObjectFromAsset(c);
+                UnityEngine.Object.DestroyImmediate(c, true);
+            }
+            p.components.Clear();
+            fill(p);
+            foreach (var c in p.components)
+            {
+                c.name = c.GetType().Name;
+                c.hideFlags = HideFlags.HideInInspector | HideFlags.HideInHierarchy;
+                AssetDatabase.AddObjectToAsset(c, p);
+            }
+            EditorUtility.SetDirty(p);
+            return true;
+        }
+
+        /// <summary>
+        /// Puts the storybook grade back on the profiles and boss materials already in the project, without rebuilding
+        /// any scene. The builders produce the same from now on.
+        /// </summary>
+        [MenuItem("Tools/Cutscene/Restore Storybook Grade")]
+        public static string RestoreStorybookGrade()
+        {
+            var done = new List<string>();
+            string[] cutsceneDirs = { "Assets/Cutscene/BossEntrance", "Assets/Cutscene/BossPhase2", "Assets/Cutscene", "Assets/Game/Period3", "Assets/Cutscene/BossFall" };
+            foreach (var dir in cutsceneDirs)
+            {
+                if (RefillProfile(dir + "/Volumes/CutsceneBase.asset", CutsceneBaseGrade)) done.Add(dir + " Base");
+                if (RefillProfile(dir + "/Volumes/CutsceneCurse.asset", CutsceneCurseGrade)) done.Add(dir + " Curse");
+            }
+            if (RefillProfile("Assets/Cutscene/Period1/Volumes/Period1Base.asset", PeriodBaseGrade)) done.Add("Period1Base");
+            if (RefillProfile("Assets/Cutscene/Period2/Volumes/Period2Base.asset", PeriodBaseGrade)) done.Add("Period2Base");
+            if (RefillProfile("Assets/Cutscene/Period2/Volumes/Period2Dark.asset", Period2DarkGrade)) done.Add("Period2Dark");
+            foreach (var guid in AssetDatabase.FindAssets("t:Material Boss", new[] { "Assets/Cutscene", "Assets/Game/Period3" }))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!path.EndsWith("_Rim.mat")) continue;
+                var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+                BossToon(m);
+                EditorUtility.SetDirty(m);
+                done.Add(path);
+            }
+            AssetDatabase.SaveAssets();
+            return string.Join("\n", done);
         }
 
         internal static Material LitMaterial(string name, Color color, float smoothness)
@@ -700,19 +829,8 @@ namespace AiHackathon.Cutscene.Editor
         {
             var volumes = new GameObject("Volumes").transform;
             volumes.SetParent(parent);
-            Volume(volumes, "Base", 0, 1f, Profile("CutsceneBase", p =>
-            {
-                p.Add<Tonemapping>().mode.Override(TonemappingMode.Neutral);
-                var b = p.Add<Bloom>(); b.threshold.Override(0.95f); b.intensity.Override(1.1f); b.scatter.Override(0.7f);
-                var v = p.Add<Vignette>(); v.intensity.Override(0.3f); v.smoothness.Override(0.45f);
-                p.Add<ColorAdjustments>().contrast.Override(8f);
-                var g = p.Add<FilmGrain>(); g.type.Override(FilmGrainLookup.Thin1); g.intensity.Override(0.18f);
-            }));
-            Volume(volumes, "Curse", 1, 1f, Profile("CutsceneCurse", p =>
-            {
-                var ca = p.Add<ColorAdjustments>(); ca.saturation.Override(-75f); ca.colorFilter.Override(new Color(0.85f, 0.82f, 0.96f)); ca.postExposure.Override(-0.05f);
-                var v = p.Add<Vignette>(); v.intensity.Override(0.45f); v.color.Override(new Color(0.08f, 0f, 0.12f));
-            }));
+            Volume(volumes, "Base", 0, 1f, Profile("CutsceneBase", CutsceneBaseGrade));
+            Volume(volumes, "Curse", 1, 1f, Profile("CutsceneCurse", CutsceneCurseGrade));
             Volume(volumes, "Impact", 3, 0f, Profile("CutsceneImpact", p =>
             {
                 var b = p.Add<Bloom>(); b.intensity.Override(5f); b.threshold.Override(0.6f);

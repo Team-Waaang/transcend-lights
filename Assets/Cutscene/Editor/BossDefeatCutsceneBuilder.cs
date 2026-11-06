@@ -400,19 +400,8 @@ namespace AiHackathon.Cutscene.Editor
 
             var volumes = new GameObject("Volumes").transform;
             volumes.SetParent(fx.transform);
-            Volume(volumes, "Base", 0, 1f, Profile("CutsceneBase", p =>
-            {
-                p.Add<Tonemapping>().mode.Override(TonemappingMode.Neutral);
-                var b = p.Add<Bloom>(); b.threshold.Override(0.95f); b.intensity.Override(1.1f); b.scatter.Override(0.7f);
-                var v = p.Add<Vignette>(); v.intensity.Override(0.3f); v.smoothness.Override(0.45f);
-                p.Add<ColorAdjustments>().contrast.Override(8f);
-                var g = p.Add<FilmGrain>(); g.type.Override(FilmGrainLookup.Thin1); g.intensity.Override(0.18f);
-            }));
-            Volume(volumes, "Curse", 1, 1f, Profile("CutsceneCurse", p =>
-            {
-                var ca = p.Add<ColorAdjustments>(); ca.saturation.Override(-75f); ca.colorFilter.Override(new Color(0.85f, 0.82f, 0.96f)); ca.postExposure.Override(-0.05f);
-                var v = p.Add<Vignette>(); v.intensity.Override(0.45f); v.color.Override(new Color(0.08f, 0f, 0.12f));
-            }));
+            Volume(volumes, "Base", 0, 1f, Profile("CutsceneBase", CutsceneBaseGrade));
+            Volume(volumes, "Curse", 1, 1f, Profile("CutsceneCurse", CutsceneCurseGrade));
             Volume(volumes, "Warm", 2, 0f, Profile("CutsceneWarm", p =>
             {
                 var ca = p.Add<ColorAdjustments>(); ca.saturation.Override(5f); ca.colorFilter.Override(new Color(1f, 0.97f, 0.92f));
