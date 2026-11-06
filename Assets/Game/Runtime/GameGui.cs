@@ -299,6 +299,42 @@ namespace AiHackathon.Game
             Label(r, text, style, color, alpha);
         }
 
+        static readonly Texture2D[] crosshairs = new Texture2D[2];
+        static readonly string[] CrosshairNames = { "UI/Crosshair_Amelia", "UI/Crosshair_Nox" };
+
+        /// <summary>The player's painted crosshair (0 Amelia gold, 1 Nox blue), or null if it is missing.</summary>
+        public static Texture2D CrosshairTexture(int player)
+        {
+            if (player < 0 || player >= crosshairs.Length) return null;
+            if (crosshairs[player] == null) crosshairs[player] = Resources.Load<Texture2D>(CrosshairNames[player]);
+            return crosshairs[player];
+        }
+
+        /// <summary>
+        /// The player's painted crosshair at a viewport point (0..1, origin bottom-left); <paramref name="color"/>'s
+        /// alpha fades it. Falls back to the drawn crosshair if the texture is missing.
+        /// </summary>
+        static Texture2D crosshairGlow;
+
+        /// <param name="glow">0..1: the ring lights up white (while firing).</param>
+        public static void Crosshair(Vector2 uv, Color color, float size, int player, float glow = 0f)
+        {
+            var tex = CrosshairTexture(player);
+            if (tex == null) { Crosshair(uv, color, size); return; }
+            // The painted ring fills ~90% of its square and its strokes are fine, so it is drawn well past the old
+            // crosshair's reach and twice over, which firms up the thin lines and glow against the dark arena.
+            var at = new Vector2(uv.x * Screen.width, (1f - uv.y) * Screen.height);
+            float side = size * 1.75f;
+            var tint = new Color(1f, 1f, 1f, color.a);
+            DrawCentered(tex, at, side, tint);
+            DrawCentered(tex, at, side, tint);
+            if (glow <= 0.001f) return;
+            if (crosshairGlow == null) crosshairGlow = Resources.Load<Texture2D>("UI/Crosshair_Glow");
+            // A white bloom behind it, then the ring itself in white over the player's colour.
+            DrawCentered(Soft, at, side * 1.15f, new Color(1f, 1f, 1f, 0.22f * glow));
+            if (crosshairGlow != null) DrawCentered(crosshairGlow, at, side, new Color(1f, 1f, 1f, glow));
+        }
+
         /// <summary>Screen-space crosshair at a viewport point (0..1, origin bottom-left).</summary>
         public static void Crosshair(Vector2 uv, Color color, float size)
         {

@@ -268,7 +268,8 @@ namespace AiHackathon.Cutscene
                     if (!hasPointer[i]) continue;
                     float tapK = Mathf.Clamp01(1f - (now - lastTap[i]) / 0.25f);
                     var c = inside[i] ? colors[i] : new Color(colors[i].r, colors[i].g, colors[i].b, 0.5f);
-                    GameGui.Crosshair(pointer[i], c, (68f + 26f * tapK) * s);
+                    // A tap lights the crosshair up white instead of swelling it.
+                    GameGui.Crosshair(pointer[i], c, 68f * s, i, tapK);
                     if (tapK > 0f)
                         GameGui.DrawCentered(GameGui.Ring, new Vector2(pointer[i].x * Screen.width, (1f - pointer[i].y) * Screen.height), (60f + 110f * (1f - tapK)) * s, new Color(colors[i].r, colors[i].g, colors[i].b, tapK));
                 }
