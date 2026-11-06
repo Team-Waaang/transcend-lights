@@ -20,7 +20,7 @@ namespace AiHackathon.Game
         string scene;
 
         public static bool Supports(string name) => name == "Period1Cutscene" || name == "Period2Cutscene" ||
-            name == "BossEntranceCutscene" || name == "BossPhase2Cutscene" || name == "BossDefeatCutscene";
+            name == "BossFallCutscene" || name == "BossEntranceCutscene" || name == "BossPhase2Cutscene" || name == "BossDefeatCutscene";
 
         void Awake()
         {
@@ -33,6 +33,13 @@ namespace AiHackathon.Game
                     break;
                 case "Period2Cutscene":
                     beats = new[] { new Beat(2.2, "blackout"), new Beat(7.0, "magic_ignite"), new Beat(10.85, "magic_ignite") };
+                    break;
+                case "BossFallCutscene":
+                    // Rumble, cracks, the floor gives way, the drop, the landing, the seal stirs, he takes shape.
+                    beats = new[] { new Beat(3.3, "ominous_pulse"), new Beat(3.55, "curse_charge"), new Beat(4.25, "ominous_pulse"),
+                        new Beat(4.8, "ward_break"), new Beat(4.83, "stone_impact"), new Beat(5.75, "teleport"),
+                        new Beat(8.78, "cutscene_slam"), new Beat(8.8, "stone_impact"), new Beat(12.3, "ominous_pulse"),
+                        new Beat(13.0, "summon"), new Beat(16.0, "curse_charge") };
                     break;
                 case "BossEntranceCutscene":
                     beats = new[] { new Beat(0.15, "ominous_pulse"), new Beat(2.45, "summon"), new Beat(2.53, "blast"),

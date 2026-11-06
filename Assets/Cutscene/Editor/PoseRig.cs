@@ -102,6 +102,16 @@ namespace AiHackathon.Cutscene.Editor
             }
         }
 
+        /// <summary>
+        /// Like <see cref="Hips"/> but leaves the legs free (airborne poses: jumping, falling); bend them with
+        /// <see cref="Turn"/> afterwards.
+        /// </summary>
+        public void HipsFree(Vector3 offset, Vector3 euler)
+        {
+            hips.position = hipsBindWorld + offset;
+            hips.rotation = Quaternion.Euler(euler) * hipsBindRotation;
+        }
+
         public Transform this[string name] => bones[name];
 
         public void Reset()

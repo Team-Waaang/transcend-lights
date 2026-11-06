@@ -54,6 +54,7 @@ namespace AiHackathon.Game.Editor
         };
         static readonly string[] Cutscenes =
         {
+            "Assets/Cutscene/BossFall/BossFallCutscene.unity",
             "Assets/Cutscene/BossEntrance/BossEntranceCutscene.unity",
             "Assets/Cutscene/BossPhase2/BossPhase2Cutscene.unity",
             "Assets/Cutscene/BossDefeatCutscene.unity",

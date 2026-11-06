@@ -21,6 +21,9 @@ EditorBuildSettings:
     path: Assets/Game/Period3/Period3.unity
     guid: 86c14c80f68b75d46b53c0c230df09c1
   - enabled: 1
+    path: Assets/Cutscene/BossFall/BossFallCutscene.unity
+    guid: e64d77ea83db3ee4f965a51c5ba6bc4a
+  - enabled: 1
     path: Assets/Cutscene/BossEntrance/BossEntranceCutscene.unity
     guid: 892e01b0d718740f68e74e2d9afe9635
   - enabled: 1

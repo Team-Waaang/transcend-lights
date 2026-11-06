@@ -39,6 +39,8 @@ namespace AiHackathon.Game
         public Font bodyFont;
 
         [Header("Cutscenes (scene paths, in Build Settings)")]
+        [Tooltip("Before the entrance: the floor of Period 2's hall gives way and the two fall into the arena. Empty: none.")]
+        public string fallScene = "Assets/Cutscene/BossFall/BossFallCutscene.unity";
         public string entranceScene = "Assets/Cutscene/BossEntrance/BossEntranceCutscene.unity";
         public string phase2Scene = "Assets/Cutscene/BossPhase2/BossPhase2Cutscene.unity";
         public string defeatScene = "Assets/Cutscene/BossDefeatCutscene.unity";
@@ -79,7 +81,8 @@ namespace AiHackathon.Game
         [Tooltip("Two orbs landing on the same player within this many seconds count as a heavy hit.")]
         public float heavyHitWindow = 1.5f;
 
-        public enum Stage { Entrance, Title, Phase1, Phase2Cutscene, Phase2Qte, Phase2, DefeatCutscene, Cleared }
+        /// <summary><see cref="Fall"/>: the fall cutscene before the entrance (listed last so the others keep their values).</summary>
+        public enum Stage { Entrance, Title, Phase1, Phase2Cutscene, Phase2Qte, Phase2, DefeatCutscene, Cleared, Fall }
         public Stage Current { get; private set; } = Stage.Entrance;
 
         float fade = 1f;
@@ -143,6 +146,11 @@ namespace AiHackathon.Game
         IEnumerator Run()
         {
             fade = 1f;
+            if (playCutscenes && !string.IsNullOrEmpty(fallScene))
+            {
+                Current = Stage.Fall;
+                yield return PlayCutscene(fallScene);
+            }
             Current = Stage.Entrance;
             if (playCutscenes) yield return PlayCutscene(entranceScene);
             EnterPlay();
