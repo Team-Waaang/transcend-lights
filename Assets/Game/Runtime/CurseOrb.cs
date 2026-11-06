@@ -77,7 +77,8 @@ namespace AiHackathon.Game
             if (done) return false;
             hp -= seconds;
             hitFlash = 1f;
-            if (hp > 0f) return false;
+            // Laser contact sizzle; the catalog cooldown keeps a held beam from stacking it every frame.
+            if (hp > 0f) { GameAudio.Play("orb_hit", transform); return false; }
             GameAudio.Play("orb_break", transform);
             done = true;
             Popped?.Invoke(this);

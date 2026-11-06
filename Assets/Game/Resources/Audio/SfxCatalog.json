@@ -209,7 +209,7 @@
     },
     {
       "name": "orb_launch",
-      "volume": 0.706,
+      "volume": 0.4455,
       "cooldown": 0.08,
       "priority": 90,
       "loop": false,
@@ -476,6 +476,87 @@
       "loop": true,
       "spatial": false,
       "ambience": true
+    },
+    {
+      "name": "boss_hit",
+      "volume": 0.1081,
+      "cooldown": 0.12,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "boss_hit_weak",
+      "volume": 0.1172,
+      "cooldown": 0.12,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "boss_stagger",
+      "volume": 0.72,
+      "cooldown": 0.3,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "seal_appear",
+      "volume": 0.1945,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "seal_set",
+      "volume": 0.4506,
+      "cooldown": 0.05,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "seal_miss",
+      "volume": 0.2715,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "barrier_hold",
+      "volume": 0.6589,
+      "cooldown": 0.3,
+      "priority": 24,
+      "loop": false,
+      "spatial": false,
+      "ambience": false
+    },
+    {
+      "name": "stone_impact",
+      "volume": 0.72,
+      "cooldown": 0.1,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
+    },
+    {
+      "name": "orb_hit",
+      "volume": 0.0986,
+      "cooldown": 0.12,
+      "priority": 90,
+      "loop": false,
+      "spatial": true,
+      "ambience": false
     }
   ]
 }

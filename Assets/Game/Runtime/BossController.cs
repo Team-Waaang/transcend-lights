@@ -243,7 +243,8 @@ namespace AiHackathon.Game
         public float TakeDamage(float amount, Color from)
         {
             if (!Fighting || ShieldUp || amount <= 0f) return 0f;
-            GameAudio.Play("spell_hit", transform);
+            // A heavier crunch while he is open to bonus damage.
+            GameAudio.Play(Weak ? "boss_hit_weak" : "boss_hit", transform);
             float before = Hp;
             Hp = Mathf.Max(0f, Hp - amount * (Weak ? weakMultiplier : 1f));
             hitGlow = 1f;
@@ -279,6 +280,7 @@ namespace AiHackathon.Game
         /// <summary>He reels (hit pose, flinch) and stays weak for <paramref name="weakSeconds"/>.</summary>
         public void Stagger(float weakSeconds)
         {
+            GameAudio.Play("boss_stagger");
             flinch = 1f;
             Play("Hit", 0.1f, 1.0f);
             weakUntil = Mathf.Max(weakUntil, Time.time + weakSeconds);
@@ -545,6 +547,7 @@ namespace AiHackathon.Game
             if (Hp <= hp0 - 0.01f)
             {
                 GameAudio.Play("magic_reveal", transform);
+                GameAudio.Play("boss_stagger", null, 0.8f);
                 Message?.Invoke("진짜를 찾았다!");
                 flinch = 1f;
                 weakUntil = Mathf.Max(weakUntil, Time.time + 1.5f);
@@ -629,7 +632,11 @@ namespace AiHackathon.Game
             while (Time.time < end && !chainCrystal.Done) yield return null;
             bool broken = chainCrystal.Done;
             FxUtil.Burst(crystalBreakFx, chainCrystal.crystal != null ? chainCrystal.crystal.position : at);
-            if (broken) Message?.Invoke("사슬이 끊어졌다!");
+            if (broken)
+            {
+                GameAudio.Play("boss_stagger", null, 0.6f);
+                Message?.Invoke("사슬이 끊어졌다!");
+            }
             else
             {
                 Message?.Invoke("사슬이 버텼다… 저주가 스며든다");
@@ -671,6 +678,7 @@ namespace AiHackathon.Game
             {
                 if (ward != null) ward.Break();
                 WardBroken?.Invoke();
+                GameAudio.Play("boss_stagger");
                 Message?.Invoke("결계 파괴! 지금이야!");
                 weakUntil = Time.time + weakTime;
                 flinch = 1f;

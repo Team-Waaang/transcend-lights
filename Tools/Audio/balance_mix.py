@@ -24,7 +24,9 @@ def main():
                "summon": -33, "curse_charge": -32, "curse_impact": -29, "chain_bind": -30,
                "chain_break": -28, "ward_break": -27, "qte_tap": -33, "qte_start": -29,
                "qte_retry": -31, "resonance": -28, "ultimate": -29, "blast": -28,
-               "purify": -29, "period_clear": -28, "game_complete": -28}
+               "purify": -29, "period_clear": -28, "game_complete": -28,
+               "boss_hit": -34, "boss_hit_weak": -33, "boss_stagger": -27, "seal_appear": -33,
+               "seal_set": -31, "seal_miss": -32, "barrier_hold": -27, "stone_impact": -29, "orb_hit": -36}
     for cue in catalog["cues"]:
         name = cue["name"]
         if cue["ambience"]:
@@ -33,8 +35,10 @@ def main():
             target, cap, bus = loop_targets.get(name, -40), 0.24, 0.8 * 0.8
         else:
             target, cap, bus = targets.get(name, -31), 0.72, 0.8 * 0.8
-            if name in ("spell_hit", "ward_hit", "qte_tap"):
+            if name in ("spell_hit", "ward_hit", "qte_tap", "boss_hit", "orb_hit"):
                 cap = 0.30
+            elif name == "boss_hit_weak":
+                cap = 0.45
         mean = audit[name]["mean_db"]
         level = round(min(cap, max(0.045, 10 ** ((target - mean) / 20) / bus)), 4)
         changes.append({"name": name, "previous_gain": cue["volume"], "gain": level,
@@ -62,7 +66,7 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
         voices = list(pool.map(measure, paths))
     config = {"master": 0.8, "effects": 0.8, "ambience": 0.35, "music": 0.52, "voice": 0.95,
-              "musicVoiceDuck": 0.30, "musicEventDuck": 0.65, "effectsVoiceDuck": 0.70,
+              "musicVoiceDuck": 0.80, "musicEventDuck": 0.65, "effectsVoiceDuck": 0.70,
               "importantEffectsVoiceDuck": 0.88, "ambienceVoiceDuck": 0.50,
               "voiceAttack": 0.045, "voiceRelease": 0.6, "voiceHold": 0.18,
               "musicCrossfade": 1.8,

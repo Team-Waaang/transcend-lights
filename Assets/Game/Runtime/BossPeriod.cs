@@ -394,7 +394,8 @@ namespace AiHackathon.Game
 
         void OnMinionReached(int i)
         {
-            GameAudio.Play("curse_impact");
+            // The rock crash itself comes from the spirit (StoneCreature); this is the curse healing him.
+            GameAudio.Play("curse_impact", null, 0.6f);
             boss.Heal(minionHeal);
             shake = Mathf.Max(shake, 0.09f);
             flash = Mathf.Max(flash, 0.3f);

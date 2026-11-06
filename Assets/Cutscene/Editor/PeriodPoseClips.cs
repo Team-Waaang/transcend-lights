@@ -47,6 +47,16 @@ namespace AiHackathon.Cutscene.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /// <summary>Re-bakes only the Period 2 clips (lights out, torches up).</summary>
+        public static string BuildPeriod2()
+        {
+            Save(Make(AmeliaFbx, "Amelia_A3_Flinch", 4.0f, AmeliaFlinch));
+            Save(Make(AmeliaFbx, "Amelia_A4_Steady", 3.6f, AmeliaSteady));
+            Save(Make(NoxFbx, "Nox_N3_Torch", 4.4f, NoxTorch));
+            AssetDatabase.SaveAssets();
+            return "baked";
+        }
+
         internal static AnimationClip Load(string name) => AssetDatabase.LoadAssetAtPath<AnimationClip>(AnimDir + "/" + name + ".anim");
 
         /// <summary>

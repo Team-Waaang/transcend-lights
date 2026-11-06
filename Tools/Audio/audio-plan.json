@@ -191,10 +191,10 @@
     {
       "kind": "sfx",
       "file": "orb_launch.wav",
-      "seconds": 0.55,
+      "seconds": 0.6,
       "category": "boss",
       "loop": false,
-      "prompt": "One small dark magic orb is launched: rounded hollow energy pop and short airy whizz, readable soft attack. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+      "prompt": "A dark magic orb pops into existence: a round punchy magical poof with a soft bassy whump, a bubbly shimmer of purple curse energy bursting outward, then a tiny swirl. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
     },
     {
       "kind": "sfx",
@@ -427,6 +427,78 @@
       "category": "environment",
       "loop": true,
       "prompt": "Seamless ruined magic academy courtyard at night, restrained soft wind around stone pillars and diffuse low enchanted crystal resonance, spacious and tense, no people or monsters. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "boss_hit.wav",
+      "seconds": 0.35,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A wand laser strikes a towering dark sorcerer: short punchy muffled thud on heavy cloth and shadow, a crackle of purple curse energy spitting off, satisfying repeatable damage hit marker, a bit heavier than a tick. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "boss_hit_weak.wav",
+      "seconds": 0.5,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A critical magical hit on a staggered dark sorcerer: crunchy deep impact with a bright crystal ring and a burst of crackling energy, rewarding bonus-damage feel, short and punchy. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "boss_stagger.wav",
+      "seconds": 1.3,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A dark sorcerer's spell pattern breaks and he reels: a magical seal cracks and bursts with a deep rounded boom, a short reverse inhale of dark energy, then glittering fragments falling. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "seal_appear.wav",
+      "seconds": 0.5,
+      "category": "qte",
+      "loop": false,
+      "prompt": "A glowing rune seal materializes in the air as a target: quick bright shimmer swelling in with a soft crystalline chime and a faint tightening ring, urgent but gentle, short. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "seal_set.wav",
+      "seconds": 0.55,
+      "category": "qte",
+      "loop": false,
+      "prompt": "A wand laser locks a glowing rune seal into a protective barrier: crisp bright crystal clack with a warm magical lock-in shimmer, satisfying success confirmation, short and repeatable. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "seal_miss.wav",
+      "seconds": 0.6,
+      "category": "qte",
+      "loop": false,
+      "prompt": "A glowing rune seal fades out unfinished: a soft dull glassy fizzle and dissipating sparks, a little downward deflating, gentle failure, not a buzzer. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "barrier_hold.wav",
+      "seconds": 1.8,
+      "category": "qte",
+      "loop": false,
+      "prompt": "A shining magical barrier holds and throws a huge dark blast back: bright resonant shield ring, deep whoosh of dark energy reflected, ending in a heroic shimmering swell. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "stone_impact.wav",
+      "seconds": 0.7,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A small stone spirit slams into a person and bursts: a heavy rocky crunch and thud, chunks of rock and gravel scattering, a faint puff of magical dust. Punchy and short. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
+    },
+    {
+      "kind": "sfx",
+      "file": "orb_hit.wav",
+      "seconds": 0.25,
+      "category": "boss",
+      "loop": false,
+      "prompt": "A wand laser strikes a floating dark curse orb: a very short sizzling crackle of purple energy with a soft hollow bubble pop, light and repeatable hit marker. Stylized fantasy magic-school co-op game, polished warm tactile sound design. Isolated sound effect, starts immediately. No speech, voices, breathing, footsteps, animal calls, music, melody, harsh piercing highs or long reverb."
     }
   ]
 }

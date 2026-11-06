@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "events": [
+    {
+      "track": "bgm_boss_phase1",
+      "stage": "Entrance",
+      "frame": 521
+    },
+    {
+      "track": "bgm_boss_phase2",
+      "stage": "Phase2Cutscene",
+      "frame": 735
+    },
+    {
+      "track": "bgm_boss_resonance",
+      "stage": "DefeatCutscene",
+      "frame": 1000
+    }
+  ],
+  "outputPeak": 0.19549197,
+  "maxMusicSources": 2,
+  "currentGain": 0.415996283,
+  "frame": 1169
+}

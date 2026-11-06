@@ -1000,6 +1000,8 @@ namespace Waaang
             pointerVisible = true;
         }
 
+        float crosshairGlow;
+
         void OnGUI()
         {
             if (!pointerVisible)
@@ -1008,10 +1010,12 @@ namespace Waaang
             float x = pointerUv.x * Screen.width;
             float y = (1f - pointerUv.y) * Screen.height;
             var color = phoneSlot == 0 ? new Color(1f, 0.82f, 0.3f, 1f) : new Color(0.45f, 0.75f, 1f, 1f);
-            // Tightens and brightens while firing.
-            float size = (Firing ? 34f : 42f) * AiHackathon.Game.GameGui.Scale;
-            if (!Firing) color.a = 0.8f;
-            AiHackathon.Game.GameGui.Crosshair(pointerUv, color, size);
+            // Lights up white while firing (fast in, softer out); the size stays put.
+            if (Event.current.type == EventType.Repaint)
+                crosshairGlow = Mathf.MoveTowards(crosshairGlow, Firing ? 1f : 0f, Time.unscaledDeltaTime * (Firing ? 12f : 5f));
+            float size = 66f * AiHackathon.Game.GameGui.Scale;
+            color.a = Mathf.Lerp(0.9f, 1f, crosshairGlow);
+            AiHackathon.Game.GameGui.Crosshair(pointerUv, color, size, phoneSlot, crosshairGlow);
             if (showHitLabel && !string.IsNullOrEmpty(hitName))
                 GUI.Label(new Rect(x + 16f, y - 10f, 240f, 24f), hitName);
         }

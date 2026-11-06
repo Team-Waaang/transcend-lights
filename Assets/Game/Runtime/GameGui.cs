@@ -36,12 +36,14 @@ namespace AiHackathon.Game
             if (bodyFont == null) bodyFont = fonts.body;
         }
 
-        static Texture2D ring, disc, soft, stripe, diamond, banner, vignette;
+        static Texture2D ring, thickRing, disc, soft, stripe, diamond, banner, vignette;
         static readonly Dictionary<long, Texture2D> gradients = new Dictionary<long, Texture2D>();
 
         public static float Scale => Screen.height / 1080f;
 
         public static Texture2D Ring => ring != null ? ring : ring = MakeRadial(128, (r, aa) => Mathf.Clamp01((0.98f - r) / aa) * Mathf.Clamp01((r - 0.86f) / aa));
+        /// <summary>Bolder ring for the crosshair.</summary>
+        public static Texture2D ThickRing => thickRing != null ? thickRing : thickRing = MakeRadial(128, (r, aa) => Mathf.Clamp01((0.98f - r) / aa) * Mathf.Clamp01((r - 0.68f) / aa));
         public static Texture2D Disc => disc != null ? disc : disc = MakeRadial(64, (r, aa) => Mathf.Clamp01((1f - r) / aa));
         /// <summary>Soft glow blob.</summary>
         public static Texture2D Soft => soft != null ? soft : soft = MakeRadial(64, (r, aa) => Mathf.Pow(Mathf.Clamp01(1f - r), 2f));
@@ -297,17 +299,64 @@ namespace AiHackathon.Game
             Label(r, text, style, color, alpha);
         }
 
+        static readonly Texture2D[] crosshairs = new Texture2D[2];
+        static readonly string[] CrosshairNames = { "UI/Crosshair_Amelia", "UI/Crosshair_Nox" };
+
+        /// <summary>The player's painted crosshair (0 Amelia gold, 1 Nox blue), or null if it is missing.</summary>
+        public static Texture2D CrosshairTexture(int player)
+        {
+            if (player < 0 || player >= crosshairs.Length) return null;
+            if (crosshairs[player] == null) crosshairs[player] = Resources.Load<Texture2D>(CrosshairNames[player]);
+            return crosshairs[player];
+        }
+
+        /// <summary>
+        /// The player's painted crosshair at a viewport point (0..1, origin bottom-left); <paramref name="color"/>'s
+        /// alpha fades it. Falls back to the drawn crosshair if the texture is missing.
+        /// </summary>
+        static Texture2D crosshairGlow;
+
+        /// <param name="glow">0..1: the ring lights up white (while firing).</param>
+        public static void Crosshair(Vector2 uv, Color color, float size, int player, float glow = 0f)
+        {
+            var tex = CrosshairTexture(player);
+            if (tex == null) { Crosshair(uv, color, size); return; }
+            // The painted ring fills ~90% of its square and its strokes are fine, so it is drawn well past the old
+            // crosshair's reach and twice over, which firms up the thin lines and glow against the dark arena.
+            var at = new Vector2(uv.x * Screen.width, (1f - uv.y) * Screen.height);
+            float side = size * 1.75f;
+            var tint = new Color(1f, 1f, 1f, color.a);
+            DrawCentered(tex, at, side, tint);
+            DrawCentered(tex, at, side, tint);
+            if (glow <= 0.001f) return;
+            if (crosshairGlow == null) crosshairGlow = Resources.Load<Texture2D>("UI/Crosshair_Glow");
+            // A white bloom behind it, then the ring itself in white over the player's colour.
+            DrawCentered(Soft, at, side * 1.15f, new Color(1f, 1f, 1f, 0.22f * glow));
+            if (crosshairGlow != null) DrawCentered(crosshairGlow, at, side, new Color(1f, 1f, 1f, glow));
+        }
+
         /// <summary>Screen-space crosshair at a viewport point (0..1, origin bottom-left).</summary>
         public static void Crosshair(Vector2 uv, Color color, float size)
         {
             float x = uv.x * Screen.width, y = (1f - uv.y) * Screen.height;
-            float t = Mathf.Max(2f, 3f * Scale);
-            DrawCentered(Soft, new Vector2(x, y), size * 1.2f, new Color(color.r, color.g, color.b, color.a * 0.35f));
-            Rect(new Rect(x - size * 0.5f, y - t * 0.5f, size * 0.32f, t), color);
-            Rect(new Rect(x + size * 0.18f, y - t * 0.5f, size * 0.32f, t), color);
-            Rect(new Rect(x - t * 0.5f, y - size * 0.5f, t, size * 0.32f), color);
-            Rect(new Rect(x - t * 0.5f, y + size * 0.18f, t, size * 0.32f), color);
-            DrawCentered(Ring, new Vector2(x, y), size * 0.55f, color);
+            var c = new Vector2(x, y);
+            float t = Mathf.Max(4f, 7f * Scale);   // arm thickness
+            float o = Mathf.Max(1.5f, 2f * Scale); // dark outline so it reads on bright backgrounds
+            var dark = new Color(0f, 0f, 0f, color.a * 0.6f);
+            DrawCentered(Soft, c, size * 1.3f, new Color(color.r, color.g, color.b, color.a * 0.4f));
+            // Outline pass, then the colored pass on top.
+            for (int pass = 0; pass < 2; pass++)
+            {
+                float e = pass == 0 ? o : 0f;
+                var col = pass == 0 ? dark : color;
+                Rect(new Rect(x - size * 0.5f - e, y - t * 0.5f - e, size * 0.32f + 2f * e, t + 2f * e), col);
+                Rect(new Rect(x + size * 0.18f - e, y - t * 0.5f - e, size * 0.32f + 2f * e, t + 2f * e), col);
+                Rect(new Rect(x - t * 0.5f - e, y - size * 0.5f - e, t + 2f * e, size * 0.32f + 2f * e), col);
+                Rect(new Rect(x - t * 0.5f - e, y + size * 0.18f - e, t + 2f * e, size * 0.32f + 2f * e), col);
+            }
+            DrawCentered(ThickRing, c, size * 0.6f + 2f * o, dark);
+            DrawCentered(ThickRing, c, size * 0.6f, color);
+            DrawCentered(Disc, c, t * 1.1f, color); // center dot
         }
 
         /// <summary>A ring of dots around <paramref name="center"/> from angle a0 to a1 (radians, 0 = up, clockwise), lit up to <paramref name="fill"/>.</summary>

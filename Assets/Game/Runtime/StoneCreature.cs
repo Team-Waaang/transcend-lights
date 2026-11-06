@@ -255,6 +255,7 @@ namespace AiHackathon.Game
                     if (toward.magnitude < reachDistance)
                     {
                         // Got there: it bursts against the player.
+                        GameAudio.Play("stone_impact", transform);
                         Current = State.Petrified;
                         flash = 0.6f;
                         Reached?.Invoke(this);
@@ -293,11 +294,11 @@ namespace AiHackathon.Game
                 // Walk where it faces, so turns arc rather than slide.
                 Vector3 step = transform.forward * (speed * dt);
                 var p = transform.position + step;
-                transform.position = Clamp(p);
+                transform.position = Clamp(Depenetrate(p));
             }
             else if (speed > 0f)
             {
-                transform.position += transform.forward * (speed * dt);
+                transform.position = Depenetrate(transform.position + transform.forward * (speed * dt));
             }
 
             Animate(dt);
@@ -343,6 +344,44 @@ namespace AiHackathon.Game
             p.z = Mathf.Clamp(p.z, areaMin.y, areaMax.y);
             float half = HalfWidthAt(p.z);
             p.x = Mathf.Clamp(p.x, Mathf.Max(areaMin.x, viewApex.x - half), Mathf.Min(areaMax.x, viewApex.x + half));
+            return p;
+        }
+
+        static readonly Collider[] overlaps = new Collider[16];
+
+        /// <summary>
+        /// Steering only looks ahead, so a creature brushing a prop at an angle could sink into it. Push it back out
+        /// sideways from whatever collider it overlaps (props moved or added in the hall are picked up as they are).
+        /// </summary>
+        Vector3 Depenetrate(Vector3 p)
+        {
+            float r = radius * 0.8f;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                Vector3 center = p + Vector3.up * (height * 0.45f);
+                int n = Physics.OverlapSphereNonAlloc(center, r, overlaps, obstacleMask, QueryTriggerInteraction.Ignore);
+                bool moved = false;
+                for (int i = 0; i < n; i++)
+                {
+                    var col = overlaps[i];
+                    // Itself, and flat things underfoot (floor, runner).
+                    if (col.transform.IsChildOf(transform) || col.bounds.max.y < 0.15f) continue;
+                    Vector3 delta = center - col.ClosestPoint(center);
+                    delta.y = 0f;
+                    float d = delta.magnitude;
+                    if (d >= r) continue;
+                    if (d < 1e-4f)
+                    {
+                        // Centre already inside: leave away from the collider's middle.
+                        delta = center - col.bounds.center; delta.y = 0f;
+                        d = 0f;
+                        if (delta.sqrMagnitude < 1e-6f) delta = -transform.forward;
+                    }
+                    p += delta.normalized * (r - d);
+                    moved = true;
+                }
+                if (!moved) break;
+            }
             return p;
         }
 

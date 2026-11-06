@@ -27,13 +27,15 @@
         "respect_sections_durations": true,
         "composition_plan": {
           "positive_global_styles": [
-            "instrumental fantasy academy chamber-orchestra combat underscore",
-            "120 BPM, D minor, 4/4, same tempo and tonic across every section",
-            "one recurring four-note D-A-C-F magic-school motif",
-            "continuous coherent three-variation suite, not three unrelated songs",
-            "elegant ominous playful sorcery, no horror",
-            "transparent dialogue-friendly mids and restrained bass",
-            "seventeen bars per section: sixteen-bar pattern plus one wraparound bar"
+            "instrumental high-stakes fantasy action boss battle, urgent and relentless from the first bar",
+            "150 BPM, D minor, 4/4, identical tempo and tonic across all three variations",
+            "recurring urgent four-note D-A-C-F combat motif, rhythmic short statements",
+            "one continuous three-variation orchestral-hybrid battle suite with shared musical identity",
+            "rapid sixteenth-note spiccato strings, tight low string ostinati, punchy orchestral toms and timpani",
+            "short forceful low brass accents, rhythmic dark synth-bass pulse supporting real orchestral instruments",
+            "constant forward momentum, immediate danger and time pressure, tense game combat instead of exploration music",
+            "dialogue-friendly midrange, controlled sub-bass and consistent mastering across phases",
+            "each primary section is twenty bars plus one wraparound bar; the final guard tail continues the battle beyond all primary loops"
           ],
           "negative_global_styles": [
             "vocals",
@@ -41,7 +43,15 @@
             "choir",
             "chanting",
             "speech",
-            "heavy metal",
+            "cozy",
+            "playful",
+            "lullaby",
+            "ambient",
+            "slow pads",
+            "sparse arrangement",
+            "long intro",
+            "quiet breakdown",
+            "fade-out",
             "EDM drop",
             "trailer booms",
             "piercing treble",
@@ -49,59 +59,93 @@
           ],
           "sections": [
             {
-              "section_name": "Phase 1 - The Curse Seal",
-              "duration_ms": 34000,
+              "section_name": "Phase 1 - Immediate Danger",
+              "duration_ms": 33600,
               "positive_local_styles": [
-                "sparse low string ostinato",
-                "plucked cello pulse and soft frame drums",
-                "muted celesta plays the shared four-note motif",
-                "controlled tension, medium energy, steady pulse, no giant accents",
-                "final bar naturally leads into its own first bar"
+                "immediately driving high-energy combat ostinato, urgent from beat one",
+                "fast low string spiccato in sixteenth notes, insistent cello rhythm",
+                "tight energetic tom-and-timpani pattern and short snare pickups",
+                "short accented brass phrases state the shared D-A-C-F motif",
+                "continuous tense minor harmony, no restful interlude",
+                "last bar cycles into the first with the same unstoppable pulse"
               ],
               "negative_local_styles": [
                 "vocals",
                 "choir",
                 "sound effects",
+                "slowdown",
+                "soft intro",
+                "calm passage",
+                "breakdown",
                 "long pauses",
                 "fade-out"
               ],
               "lines": []
             },
             {
-              "section_name": "Phase 2 - Fractured Seal",
-              "duration_ms": 34000,
+              "section_name": "Phase 2 - Overwhelming Curse",
+              "duration_ms": 33600,
               "positive_local_styles": [
-                "same motif, key, tempo and harmonic foundation as phase 1",
-                "more urgent sixteenth-note string variations",
-                "add restrained low toms, brighter celesta doubling and warm low brass",
-                "stronger forward momentum and intensity without louder mastering",
-                "final bar naturally leads into its own first bar"
+                "same tempo, key and motif as phase 1 but a denser and more threatening arrangement",
+                "add racing upper-string sixteenth-note figures and rising arpeggios",
+                "more intense layered toms, martial snare subdivisions and syncopated low brass stabs",
+                "insistent synth-bass pulse adds pressure without a loud sub-bass wash",
+                "relentless escalating danger, no pauses or calm sections, no increase in mastering loudness",
+                "last bar drives straight back into the first"
               ],
               "negative_local_styles": [
                 "vocals",
                 "choir",
                 "sound effects",
+                "slowdown",
+                "soft intro",
+                "calm passage",
+                "breakdown",
                 "long pauses",
                 "fade-out"
               ],
               "lines": []
             },
             {
-              "section_name": "Resonance - Two Lights",
-              "duration_ms": 34000,
+              "section_name": "Resonance - Against the Clock",
+              "duration_ms": 33600,
               "positive_local_styles": [
-                "same motif, key, tempo and harmonic foundation",
-                "driving co-op finale variation, interlocking pizzicato and high string ostinato",
-                "restrained taiko-like tom pattern, warm brass motif in longer values",
-                "hopeful rising harmony over the dark tonic pedal, urgent but clear",
-                "no final hit or ending: final bar leads back to the opening pulse"
+                "same shared motif, tonic and 150 BPM as the previous sections",
+                "maximum time-pressure cooperative finale with racing interlocked strings",
+                "driving orchestral tom and snare pattern with rapid rhythmic accents",
+                "heroic brass motif fights through tense minor-harmony ostinato",
+                "full forward momentum, determined and urgent, clear space for shouted dialogue and magic impacts",
+                "a continuous looping struggle, no victory ending, final hit or fade-out"
               ],
               "negative_local_styles": [
                 "vocals",
                 "choir",
                 "sound effects",
+                "slowdown",
+                "soft intro",
+                "calm passage",
+                "breakdown",
                 "long pauses",
                 "fade-out"
+              ],
+              "lines": []
+            },
+            {
+              "section_name": "Guard tail - The battle continues beyond the looping sections",
+              "duration_ms": 8000,
+              "positive_local_styles": [
+                "continue the resonance section with identical 150 BPM rhythmic intensity",
+                "full strings, urgent toms and short brass patterns keep driving",
+                "this is an extra continuation beyond the usable gameplay loops",
+                "no cadence or final release before this tail begins"
+              ],
+              "negative_local_styles": [
+                "vocals",
+                "choir",
+                "calm passage",
+                "breakdown",
+                "fade before this section",
+                "long silence"
               ],
               "lines": []
             }
@@ -142,27 +186,27 @@
       "kind": "bgm",
       "file": "bgm_boss_phase1.ogg",
       "job": "boss_suite",
-      "start": 0,
-      "seconds": 34,
-      "crossfade": 2,
+      "start": 0.0,
+      "seconds": 33.6,
+      "crossfade": 1.6,
       "role": "Boss entrance, title and phase 1"
     },
     {
       "kind": "bgm",
       "file": "bgm_boss_phase2.ogg",
       "job": "boss_suite",
-      "start": 34,
-      "seconds": 34,
-      "crossfade": 2,
+      "start": 33.6,
+      "seconds": 33.6,
+      "crossfade": 1.6,
       "role": "Boss awakening cutscene and phase 2"
     },
     {
       "kind": "bgm",
       "file": "bgm_boss_resonance.ogg",
       "job": "boss_suite",
-      "start": 68,
-      "seconds": 34,
-      "crossfade": 2,
+      "start": 67.2,
+      "seconds": 33.6,
+      "crossfade": 1.6,
       "role": "Final beam-clash cutscene and live QTE"
     },
     {

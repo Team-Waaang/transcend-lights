@@ -79,8 +79,8 @@ namespace AiHackathon.Game
             {
                 SetPhase(Phase.Held);
                 flashGold = 1f;
-                GameAudio.Play("ward_raise", null, 0.9f);
-                GameAudio.Play("purify", null, 0.7f);
+                // The boss's Stagger below adds the reel.
+                GameAudio.Play("barrier_hold");
                 owner.Impact(0.1f, 0f);
                 // Weak from now through the result and into the first seconds of the fight.
                 boss?.Stagger(resultTime + weakTime);
@@ -124,20 +124,21 @@ namespace AiHackathon.Game
                 var seal = go.GetComponent<QteSeal>();
                 seal.Arm(player, color, window);
                 live[player] = seal;
-                GameAudio.Play("ward_hit", go.transform, 0.45f, 1.4f);
+                GameAudio.Play("seal_appear", go.transform);
                 while (!seal.Broken && !seal.Expired) yield return null;
                 live[player] = null;
                 if (seal.Broken)
                 {
                     results[player][k] = 1;
                     FxUtil.Burst(breakFx, spot);
-                    GameAudio.Play("qte_tap", go.transform, 0.9f, 1f + 0.08f * k);
+                    // Each seal set rises a little in pitch, so the barrier audibly builds.
+                    GameAudio.Play("seal_set", go.transform, 1f, 1f + 0.06f * k);
                 }
                 else
                 {
                     results[player][k] = 2;
                     FxUtil.Burst(missFx, spot);
-                    GameAudio.Play("qte_retry", go.transform, 0.6f);
+                    GameAudio.Play("seal_miss", go.transform);
                     period.Flinch(player, 0.4f);
                 }
                 spawned.Remove(go);
