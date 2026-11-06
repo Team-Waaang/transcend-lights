@@ -40,7 +40,7 @@ namespace AiHackathon.Cutscene.Editor
             Save(Make(NoxFbx, "Nox_N1_Taunt", 4.0f, NoxShoulder));
             Save(Make(NoxFbx, "Nox_N2_Flourish", 4.4f, NoxFlourish));
             Save(Make(NoxFbx, "Nox_Ready", 3.0f, (rig, t) => Ready(rig, t, L)));
-            Save(Make(AmeliaFbx, "Caster_Idle", IdleLength, CasterIdle));
+            Save(Make(AmeliaFbx, "Caster_Idle", IdleLength, CasterIdle, true));
             Save(Make(AmeliaFbx, "Amelia_A3_Flinch", 4.0f, AmeliaFlinch));
             Save(Make(AmeliaFbx, "Amelia_A4_Steady", 3.6f, AmeliaSteady));
             Save(Make(NoxFbx, "Nox_N3_Torch", 4.4f, NoxTorch));
@@ -49,11 +49,22 @@ namespace AiHackathon.Cutscene.Editor
 
         internal static AnimationClip Load(string name) => AssetDatabase.LoadAssetAtPath<AnimationClip>(AnimDir + "/" + name + ".anim");
 
-        static AnimationClip Make(string fbx, string name, float length, Action<PoseRig, float> pose)
+        /// <summary>
+        /// Keys <paramref name="pose"/> at every frame. A <paramref name="loop"/> clip is posed through once before it
+        /// is keyed, so what carries over from frame to frame (the grips, <see cref="PoseRig.GripPalm"/>) starts the
+        /// keyed lap where the lap before ended and the loop has no seam.
+        /// </summary>
+        static AnimationClip Make(string fbx, string name, float length, Action<PoseRig, float> pose, bool loop = false)
         {
             using (var rig = new PoseRig(fbx))
             {
                 int frames = Mathf.RoundToInt(length * Fps);
+                if (loop)
+                    for (int i = 0; i < frames; i++)
+                    {
+                        rig.Reset();
+                        pose(rig, i / Fps);
+                    }
                 for (int i = 0; i <= frames; i++)
                 {
                     float t = i / Fps;
@@ -101,30 +112,117 @@ namespace AiHackathon.Cutscene.Editor
             rig.Turn("Right_Shoulder", Z, 0.6f * breath);
         }
 
+        // Degrees the shaft runs diagonally across the palm, off the knuckle line toward the fingers (the game's
+        // WandPointerRig.gripOblique / supportGripOblique). A wand held square to the fingers can only point along the
+        // forearm with the wrist cocked 90 degrees; held like this it leaves between thumb and index, as a real one does.
+        const float LeadOblique = 45f;
+        const float SupportOblique = 15f;
+
         /// <summary>
         /// Rotation of a fist closed on a wand: the shaft runs along <paramref name="axis"/> (tip direction) through the
-        /// palm, knuckles toward <paramref name="knuckles"/>.
+        /// palm, <paramref name="oblique"/> degrees off the knuckle line, the back of the hand turned toward
+        /// <paramref name="knuckles"/> (only its part across the shaft counts).
         /// </summary>
-        static Quaternion GripRotation(PoseRig rig, string side, Vector3 axis, Vector3 knuckles)
+        static Quaternion GripRotation(PoseRig rig, string side, Vector3 axis, Vector3 knuckles, float oblique) =>
+            PalmGripRotation(rig, side, axis, KnucklesToPalm(side, axis, knuckles), oblique);
+
+        // The palm's facing (across the shaft) of a fist whose back is turned toward knuckles.
+        static Vector3 KnucklesToPalm(string side, Vector3 axis, Vector3 knuckles)
         {
             axis.Normalize();
             var f = Vector3.ProjectOnPlane(knuckles, axis).normalized;
-            var p = side == R ? Vector3.Cross(f, axis) : Vector3.Cross(axis, f);
-            return rig.HandRotation(side, f, p);
+            return side == R ? Vector3.Cross(f, axis) : Vector3.Cross(axis, f);
         }
 
-        // Where the shaft passes through a closed fist, in hand space: across the palm just short of the knuckles,
-        // one shaft radius plus the palm's thickness below the bones, so the fingers have room to close around it.
-        static Vector3 GripLocal(PoseRig rig, string side) =>
-            rig.FingerLocal(side) * (rig.KnuckleDistance(side) * 0.86f) + rig.PalmLocal(side) * 0.021f;
-        static Vector3 AxisLocal(PoseRig rig, string side) =>
-            Vector3.Cross(rig.FingerLocal(side), -rig.PalmLocal(side)).normalized * (side == R ? 1f : -1f);
+        /// <summary>Rotation of a fist on a shaft along <paramref name="axis"/> with the palm facing <paramref name="palm"/>
+        /// (only its part across the shaft counts).</summary>
+        static Quaternion PalmGripRotation(PoseRig rig, string side, Vector3 axis, Vector3 palm, float oblique)
+        {
+            var a = AxisLocal(rig, side, oblique);
+            var from = Quaternion.LookRotation(a, Vector3.ProjectOnPlane(rig.PalmLocal(side), a));
+            return Quaternion.LookRotation(axis, Vector3.ProjectOnPlane(palm, axis)) * Quaternion.Inverse(from);
+        }
 
-        /// <summary>Closes the hand on the shaft at <paramref name="point"/> (world), reaching it with arm IK.</summary>
+        /// <summary>
+        /// The fist on the shaft that the wrist holds most easily: the hand turned about the shaft (the one thing the
+        /// wand's line leaves free) to where it lines up with the forearm the arm IK gives, with the authored
+        /// <paramref name="knuckles"/> breaking ties. The first frame of a clip searches all the way round; later frames carry the palm on from the frame before (<see cref="PoseRig.GripPalm"/>)
+        /// and only ease it a little toward the easiest grip, so the hand never flips between two equally easy grips, nor when the authored
+        /// knuckles pass along the shaft. Returns the rotation and the wrist target. Leaves the arm solved somewhere
+        /// along the search; callers solve it again.
+        /// </summary>
+        static Quaternion EasyGrip(PoseRig rig, string side, Vector3 point, Vector3 axis, Vector3 knuckles, Vector3 pole,
+            float oblique, out Vector3 wrist)
+        {
+            axis.Normalize();
+            var local = GripLocal(rig, side, oblique);
+            var poleWorld = rig[side + "UpperArm"].position + pole;
+            // The authored grip only counts as far as its knuckles point across the shaft.
+            var hintPalm = KnucklesToPalm(side, axis, knuckles);
+            float hintWeight = Vector3.ProjectOnPlane(knuckles.normalized, axis).magnitude;
+            bool follow = rig.GripPalm.TryGetValue(side, out var previous) && Vector3.ProjectOnPlane(previous, axis).sqrMagnitude > 1e-4f;
+            var start = follow ? Vector3.ProjectOnPlane(previous, axis).normalized : hintPalm;
+            float Strain(float roll, out Quaternion rot, out Vector3 w)
+            {
+                var palm = Quaternion.AngleAxis(roll, axis) * start;
+                rot = PalmGripRotation(rig, side, axis, palm, oblique);
+                w = point - rot * local;
+                return rig.WristStrain(side, w, poleWorld, rot) + 0.05f * hintWeight * Vector3.Angle(palm, hintPalm);
+            }
+            float best = 0f, bestStrain = float.MaxValue;
+            void Search(float from, float to, float step)
+            {
+                for (float roll = from; roll <= to + 0.001f; roll += step)
+                {
+                    float s = Strain(roll, out _, out _);
+                    if (s < bestStrain) { bestStrain = s; best = roll; }
+                }
+            }
+            if (follow)
+            {
+                // Ease toward the easiest grip nearby rather than jump onto it: where several grips are about as easy
+                // (a tremor nudging the arm) the easiest one wanders, and the hand would twitch after it.
+                Search(-8f, 8f, 0.5f);
+                best *= 0.35f;
+            }
+            else
+            {
+                Search(-180f, 174f, 6f);
+                float coarse = best;
+                Search(coarse - 6f, coarse + 6f, 0.5f);
+            }
+            rig.GripPalm[side] = Quaternion.AngleAxis(best, axis) * start;
+            Strain(best, out var result, out wrist);
+            return result;
+        }
+
+        // Where the shaft passes through a closed fist, in hand space: one shaft radius plus the palm's thickness below
+        // the bones, so the fingers have room to close around it, and as far toward the knuckles as the diagonal allows:
+        // where it leaves the index side it should just reach the knuckle, not run under the finger (which would then
+        // count as already touching and stay straight).
+        static Vector3 GripLocal(PoseRig rig, string side, float oblique = LeadOblique)
+        {
+            float along = rig.KnuckleDistance(side) * 0.95f - rig.KnuckleHalfWidth(side) * Mathf.Tan(oblique * Mathf.Deg2Rad);
+            return rig.FingerLocal(side) * along + rig.PalmLocal(side) * 0.021f;
+        }
+
+        /// <summary>The shaft's direction (toward the tip) in hand space: the knuckle line from pinky to index, tilted
+        /// <paramref name="oblique"/> degrees toward the fingers.</summary>
+        static Vector3 AxisLocal(PoseRig rig, string side, float oblique = LeadOblique)
+        {
+            var across = Vector3.Cross(rig.FingerLocal(side), -rig.PalmLocal(side)).normalized * (side == R ? 1f : -1f);
+            float o = oblique * Mathf.Deg2Rad;
+            return (across * Mathf.Cos(o) + rig.FingerLocal(side) * Mathf.Sin(o)).normalized;
+        }
+
+        /// <summary>
+        /// Closes the hand on the shaft at <paramref name="point"/> (world), reaching it with arm IK. The shaft's line
+        /// is the pose's; how the fist turns about it is picked for an easy wrist (<see cref="EasyGrip"/>).
+        /// </summary>
         static void Grip(PoseRig rig, string side, Vector3 point, Vector3 axis, Vector3 knuckles, Vector3 pole, float curl = 0.85f)
         {
-            var rot = GripRotation(rig, side, axis, knuckles);
-            rig.Arm(side, point - rot * GripLocal(rig, side), rig[side + "UpperArm"].position + pole, rot);
+            var rot = EasyGrip(rig, side, point, axis, knuckles, pole, LeadOblique, out var wrist);
+            rig.Arm(side, wrist, rig[side + "UpperArm"].position + pole, rot);
             // Fingers and thumb close around the shaft itself rather than into a fixed fist beside it. Wrap around
             // where the wand really is (it hangs off this hand), not the target: when the arm can't quite reach,
             // the hand and the wand stop short together.
@@ -388,10 +486,10 @@ namespace AiHackathon.Cutscene.Editor
             Grip(rig, lead, point, axis, Vector3.Slerp(k0, k1, u), Vector3.Lerp(pole0, pole1, u));
 
             // Support hand joins the shaft once it is up.
-            ArmDown(rig, support, out var restWrist, out var restHand);
-            var gripRot = GripRotation(rig, support, axis, M(new Vector3(-0.2f, -1f, 0.3f), lead));
             var supportPoint = point - axis * 0.075f;
-            var supportWrist = supportPoint - gripRot * GripLocal(rig, support);
+            var gripRot = EasyGrip(rig, support, supportPoint, axis, M(new Vector3(-0.2f, -1f, 0.3f), lead),
+                M(new Vector3(-0.3f, -0.38f, 0.0f), lead), SupportOblique, out var supportWrist);
+            ArmDown(rig, support, out var restWrist, out var restHand);
             FreeArm(rig, support, restWrist, restHand, supportWrist, gripRot, set, M(new Vector3(0.02f, -0.02f, 0.05f), lead),
                 M(new Vector3(-0.35f, -0.3f, -0.08f), lead), M(new Vector3(-0.3f, -0.38f, 0.0f), lead), 0.3f, 0.2f);
             ShaftLine(rig, lead, out var held, out var heldAxis);
@@ -521,9 +619,9 @@ namespace AiHackathon.Cutscene.Editor
 
         static void ClutchSupport(PoseRig rig, Vector3 point, Vector3 axis, float u, float release = 0f)
         {
+            var gripRot = EasyGrip(rig, L, point - axis * 0.07f, axis, new Vector3(0.3f, 0.1f, 1f),
+                new Vector3(-0.3f, -0.35f, -0.15f), SupportOblique, out var gripWrist);
             ArmDown(rig, L, out var restWrist, out var restHand);
-            var gripRot = GripRotation(rig, L, axis, new Vector3(0.3f, 0.1f, 1f));
-            var gripWrist = point - axis * 0.07f - gripRot * GripLocal(rig, L);
             float k = u * (1f - release);
             FreeArm(rig, L, restWrist, restHand, gripWrist, gripRot, k, new Vector3(-0.02f, 0f, 0.04f),
                 new Vector3(-0.35f, -0.3f, -0.08f), new Vector3(-0.3f, -0.35f, -0.15f), 0.3f, 0.2f);
@@ -561,8 +659,8 @@ namespace AiHackathon.Cutscene.Editor
         }
 
         /// <summary>
-        /// Seeing Nox's light, she breathes in, lets her shoulders down, and lifts the wand in front of her face like a
-        /// torch, chin up; the left hand lets go.
+        /// Seeing Nox's light, she breathes in, lets her shoulders down, and raises the wand beside her like a torch,
+        /// chin up; the left hand lets go.
         /// </summary>
         static void AmeliaSteady(PoseRig rig, float t)
         {
@@ -578,21 +676,24 @@ namespace AiHackathon.Cutscene.Editor
             rig.Turn("Right_Shoulder", Z, 6f * tense + 3f * breathIn);
             rig.Turn("Neck", X, -3f * tense);
             rig.Turn("Head", X, -4f * tense - 4f * resolve);
+            // As she raises it she turns her chest a little to her right, toward the two-shot camera, so she presents
+            // the torch to the front.
+            rig.Turn("Spine", Y, 4f * raise);
+            rig.Turn("Chest", Y, 6f * raise);
 
-            // Held out to the right of her face, tip forward and up, so the light sits in front of her.
-            var torch = new Vector3(0.12f, 0.8f, 0.2f);
-            var torchAxis = new Vector3(0.55f, 0.3f, 0.75f).normalized;
+            var torch = TorchFist(rig, R, AmeliaTorchReach);
+            var torchAxis = TorchAxis(R, AmeliaTorchReach);
             var point = Vector3.Lerp(ClutchPoint, torch, raise) + new Vector3(0.02f, 0f, 0.05f) * Mathf.Sin(raise * Mathf.PI);
             var axis = Vector3.Slerp(ClutchAxis, torchAxis, raise);
             // Knuckles must stay across the shaft: with the wand pointed forward they face up and out.
             Grip(rig, R, point, axis, Vector3.Slerp(ClutchKnuckles, new Vector3(0.3f, 1f, -0.3f), raise),
-                Vector3.Lerp(ClutchPole, new Vector3(0.3f, -0.35f, -0.15f), raise));
+                Vector3.Lerp(ClutchPole, TorchPole(R, AmeliaTorchReach), raise));
             ClutchSupport(rig, point, axis, 1f, Ease(t, 0.75f, 1.4f));
         }
 
         /// <summary>
-        /// Unbothered by the dark: she lifts the wand above her shoulder like a torch, sweeps the room left and right
-        /// with it, and shrugs. Right hand stays on the hip.
+        /// Unbothered by the dark: she lifts the wand beside her shoulder like a torch, sweeps the room left and right
+        /// with it, and shrugs. Right arm hangs loose at her side.
         /// </summary>
         static void NoxTorch(PoseRig rig, float t)
         {
@@ -609,17 +710,53 @@ namespace AiHackathon.Cutscene.Editor
             rig.Turn("Right_Shoulder", Z, 7f * shrug);
 
             GripPose(L, out var p0, out var a0, out var k0, out var pole0);
-            // Raised to shoulder height, tip out ahead and up: the light hangs in front of her, not over her head.
-            var p1 = new Vector3(-0.15f, 0.86f, 0.12f) + new Vector3(-0.05f * scanL + 0.05f * scanR, 0f, 0f);
-            var a1 = (new Vector3(-0.55f, 0.3f, 0.75f) + new Vector3(-0.3f * scanL + 0.3f * scanR, 0f, 0f)).normalized;
-            var point = Vector3.Lerp(p0, p1, up) + new Vector3(-0.04f, 0f, 0.05f) * Mathf.Sin(up * Mathf.PI);
+            var p1 = TorchFist(rig, L) + new Vector3(-0.05f * scanL + 0.05f * scanR, 0f, 0f);
+            var a1 = (TorchAxis(L) + new Vector3(-0.3f * scanL + 0.3f * scanR, 0f, 0f)).normalized;
+            // From her side to the bent-arm torch on a curve pulled in toward the shoulder, so the elbow bends as the
+            // fist comes up (a straight or outward path kept her short arm locked straight while the wand turned,
+            // cocking the wrist).
+            var shoulder = rig["Left_UpperArm"].position;
+            var bend = Vector3.Lerp(Vector3.Lerp(p0, p1, 0.5f), shoulder, 0.4f);
+            var point = (1f - up) * (1f - up) * p0 + 2f * up * (1f - up) * bend + up * up * p1;
             Grip(rig, L, point, Vector3.Slerp(a0, a1, up), Vector3.Slerp(k0, new Vector3(-0.3f, 1f, -0.3f), up),
-                Vector3.Lerp(pole0, new Vector3(-0.35f, -0.25f, -0.15f), up));
+                Vector3.Lerp(pole0, TorchPole(L), up));
 
-            HandOnHip(rig, R, out var hipWrist, out var hipHand);
-            rig.Arm(R, hipWrist, rig["Right_UpperArm"].position + new Vector3(0.4f, -0.12f, -0.28f), hipHand);
-            rig.Curl(R, 0.45f, 0.2f);
+            // Right arm hanging loose at her side, wrist straight, open fingers toward the floor (a fist on the hip
+            // read as stiff); held a little out from her side so the hand clears her flared skirt.
+            var looseHand = rig.HandRotation(R, new Vector3(0.25f, -1f, 0.1f).normalized, new Vector3(-1f, -0.2f, 0.05f).normalized);
+            var looseWrist = new Vector3(0.15f, 0.53f, 0.03f);
+            rig.Arm(R, looseWrist, rig["Right_UpperArm"].position + new Vector3(0.35f, -0.3f, -0.08f), looseHand);
+            rig.Curl(R, 0.08f, 0.1f);
         }
+
+        // The wand held up as a torch (Period 2, both girls): elbow tucked in at her side, the forearm coming up and
+        // forward so the fist sits ahead of her, below the chest and out; the wand leans up, forward and out, steep
+        // enough that the butt clears her body, beside her face in the two-shot, and the lit tip in frame. The fist is
+        // placed from the shoulder by arm length because Nox's arms are much shorter than Amelia's: a fixed point that
+        // one reaches with a bent elbow locks the other's arm straight. reach (0..1) turns fist and wand from out to
+        // her side toward held out in front: Nox carries it at her side, Amelia offers it forward.
+        static Vector3 TorchFist(PoseRig rig, string side, float reach = 0f)
+        {
+            var dir = M(Vector3.Lerp(new Vector3(0.6f, -0.6f, 0.53f), new Vector3(0.3f, -0.8f, 0.52f), reach), side).normalized;
+            return rig[side + "UpperArm"].position + dir * (ArmLength(rig, side) * Mathf.Lerp(0.7f, 0.86f, reach) + rig.KnuckleDistance(side) * 0.6f);
+        }
+
+        // Amelia holds her torch out in front, higher than her two-handed clutch so raising it is a lift; Nox carries
+        // hers out at her side.
+        const float AmeliaTorchReach = 1f;
+
+        static Vector3 TorchAxis(string side, float reach = 0f) =>
+            M(Vector3.Lerp(new Vector3(0.35f, 0.65f, 0.68f), new Vector3(0.35f, 0.65f, 0.67f), reach), side).normalized;
+
+        // Elbow pole for the torch: down by her side, a touch out; back a little when the fist is out at the side,
+        // a little forward when it is held out in front (else the elbow swings back behind her as the fist comes up).
+        static Vector3 TorchPole(string side, float reach = 0f) =>
+            M(Vector3.Lerp(new Vector3(0.08f, -0.4f, -0.1f), new Vector3(0.13f, -0.4f, 0.1f), reach), side);
+
+        /// <summary>Shoulder to elbow plus elbow to wrist (model units).</summary>
+        static float ArmLength(PoseRig rig, string side) =>
+            Vector3.Distance(rig[side + "UpperArm"].position, rig[side + "LowerArm"].position)
+            + Vector3.Distance(rig[side + "LowerArm"].position, rig[side + "Hand"].position);
 
         static Vector3 CatmullRom(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
         {

@@ -21,11 +21,25 @@ namespace AiHackathon.Cutscene.Editor
         readonly Dictionary<string, Vector3> fingerLocal = new Dictionary<string, Vector3>();
         readonly Dictionary<string, Vector3> palmLocal = new Dictionary<string, Vector3>();
         readonly Dictionary<string, float> knuckle = new Dictionary<string, float>();
+        readonly Dictionary<string, float> knuckleHalfWidth = new Dictionary<string, float>();
         readonly Transform hips;
         readonly Vector3 hipsBindLocal, hipsBindWorld;
         readonly Quaternion hipsBindRotation;
         readonly Dictionary<string, (Vector3 position, Quaternion rotation, Vector3 knee)> feet = new Dictionary<string, (Vector3, Quaternion, Vector3)>();
         readonly List<Keyframe>[] hipsKeys = { new List<Keyframe>(), new List<Keyframe>(), new List<Keyframe>() };
+        readonly Dictionary<string, Waaang.ArmIk.Limits> armLimits = new Dictionary<string, Waaang.ArmIk.Limits>();
+
+        /// <summary>
+        /// Share of the hand's twist about the forearm that the forearm carries. The Tripo skeleton has no twist bones,
+        /// so a hand turned on a still forearm wrings the wrist skin; the game's rig uses the same share.
+        /// </summary>
+        public const float ForearmTwist = 0.5f;
+
+        /// <summary>
+        /// Per hand side, which way the palm of the last wand grip faced (world), so the next frame of the clip carries
+        /// on from it. A rig is built per clip, so every clip starts afresh.
+        /// </summary>
+        public readonly Dictionary<string, Vector3> GripPalm = new Dictionary<string, Vector3>();
 
         static readonly string[] Fingers = { "Index", "Middle", "Ring", "Pinky" };
         static readonly string[] Joints = { "Proximal", "Intermediate", "Distal" };
@@ -50,9 +64,13 @@ namespace AiHackathon.Cutscene.Editor
                 var toLocal = Quaternion.Inverse(hand.rotation);
                 fingerLocal[side] = (toLocal * (this[side + "MiddleProximal"].position - hand.position)).normalized;
                 knuckle[side] = (this[side + "MiddleProximal"].position - hand.position).magnitude;
+                var across = Vector3.ProjectOnPlane(this[side + "IndexProximal"].position - this[side + "PinkyProximal"].position,
+                    this[side + "MiddleProximal"].position - hand.position);
+                knuckleHalfWidth[side] = across.magnitude * 0.5f;
                 // Tripo binds in a T-pose with both palms facing the floor.
                 palmLocal[side] = toLocal * Vector3.down;
                 feet[side] = (this[side + "Foot"].position, this[side + "Foot"].rotation, this[side + "LowerLeg"].position);
+                armLimits[side] = BindArm(this[side + "UpperArm"], this[side + "LowerArm"], hand);
             }
             hips = this["Hips"];
             hipsBindLocal = hips.localPosition;
@@ -64,6 +82,8 @@ namespace AiHackathon.Cutscene.Editor
         public Vector3 PalmLocal(string side) => palmLocal[side];
         /// <summary>Wrist to the middle knuckle in the bind pose (model units).</summary>
         public float KnuckleDistance(string side) => knuckle[side];
+        /// <summary>Half the knuckle line, index to pinky, across the hand (model units).</summary>
+        public float KnuckleHalfWidth(string side) => knuckleHalfWidth[side];
 
         /// <summary>
         /// Moves and turns the hips (world offset from bind, world-space euler), then bends the legs with IK so both feet
@@ -105,11 +125,60 @@ namespace AiHackathon.Cutscene.Editor
             return Quaternion.LookRotation(finger, -palm) * Quaternion.Inverse(from);
         }
 
-        /// <summary>Two-bone IK of the upper/lower arm so the wrist reaches <paramref name="wrist"/>, then sets the hand's world rotation.</summary>
+        // Elbow hinge (upper-arm space) and straight-wrist hand rotation (forearm space) from the T-pose bind, as the
+        // game's WandPointerRig.BindArm takes them: the elbow only bends the way the mesh was rigged to and the forearm
+        // starts every solve untwisted.
+        static Waaang.ArmIk.Limits BindArm(Transform upper, Transform lower, Transform hand)
+        {
+            var limits = Waaang.ArmIk.Limits.Default;
+            var upperDir = lower.position - upper.position;
+            var lowerDir = hand.position - lower.position;
+            var hinge = Vector3.Angle(upperDir, lowerDir) > 10f ? Vector3.Cross(upperDir, lowerDir) : Vector3.Cross(upperDir, Vector3.forward);
+            limits.hingeLocal = Quaternion.Inverse(upper.rotation) * hinge.normalized;
+            limits.handBindLocal = Quaternion.Inverse(lower.rotation) * hand.rotation;
+            limits.hasHandBind = true;
+            limits.lowerBindLocal = Quaternion.Inverse(upper.rotation) * lower.rotation;
+            limits.hasLowerBind = true;
+            return limits;
+        }
+
+        /// <summary>
+        /// Two-bone IK of the upper/lower arm so the wrist reaches <paramref name="wrist"/>, then sets the hand's world
+        /// rotation; the forearm takes <see cref="ForearmTwist"/> of the hand's twist.
+        /// </summary>
         public void Arm(string side, Vector3 wrist, Vector3 pole, Quaternion hand)
         {
-            Waaang.ArmIk.Solve(this[side + "UpperArm"], this[side + "LowerArm"], this[side + "Hand"], wrist, pole);
-            this[side + "Hand"].rotation = hand;
+            var lower = this[side + "LowerArm"];
+            var handBone = this[side + "Hand"];
+            var limits = armLimits[side];
+            Waaang.ArmIk.Solve(this[side + "UpperArm"], lower, handBone, wrist, pole, limits);
+            var axis = handBone.position - lower.position;
+            if (axis.sqrMagnitude > 1e-10f)
+            {
+                axis.Normalize();
+                float twist = Waaang.ArmIk.TwistAngle(hand * Quaternion.Inverse(lower.rotation * limits.handBindLocal), axis);
+                lower.rotation = Quaternion.AngleAxis(twist * ForearmTwist, axis) * lower.rotation;
+            }
+            handBone.rotation = hand;
+        }
+
+        /// <summary>
+        /// How hard a wrist works to hold <paramref name="hand"/> with the wrist at <paramref name="wrist"/>: degrees the
+        /// hand bends off the straight-wrist line of the solved forearm, plus a share of its twist about the forearm
+        /// (steeply more past what a forearm can turn), plus a penalty for a wrist the arm cannot reach. Moves the arm.
+        /// </summary>
+        public float WristStrain(string side, Vector3 wrist, Vector3 pole, Quaternion hand)
+        {
+            var lower = this[side + "LowerArm"];
+            var handBone = this[side + "Hand"];
+            var limits = armLimits[side];
+            Waaang.ArmIk.Solve(this[side + "UpperArm"], lower, handBone, wrist, pole, limits);
+            var axis = (handBone.position - lower.position).normalized;
+            var delta = hand * Quaternion.Inverse(lower.rotation * limits.handBindLocal);
+            float twist = Waaang.ArmIk.TwistAngle(delta, axis);
+            float bend = Quaternion.Angle(Quaternion.identity, delta * Quaternion.Inverse(Quaternion.AngleAxis(twist, axis)));
+            float miss = (handBone.position - wrist).magnitude;
+            return bend + 0.3f * Mathf.Abs(twist) + 2f * Mathf.Max(0f, Mathf.Abs(twist) - 90f) + 2000f * miss;
         }
 
         public Vector3 Palm(string side) => this[side + "Hand"].rotation * palmLocal[side];
