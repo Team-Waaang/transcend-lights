@@ -51,7 +51,7 @@ namespace AiHackathon.Cutscene.Editor
 
             var boss = SpawnCharacter(HoodedFbx, "Boss_Hooded", true);
             var body = boss.GetComponentInChildren<SkinnedMeshRenderer>();
-            PinHoodToHead(body);
+            PrepareBossBody(body);
             var idle = FindClip(HoodedFbx, "Idle stance");
             var hit = FindClip(HoodedFbx, "Young mage gets hit");
             var kneelRise = FindClip(NewAnimFbx, "Young mage kneeling on one knee");

@@ -110,7 +110,7 @@ namespace AiHackathon.Cutscene.Editor
             var cam = BuildCamera();
 
             var hooded = SpawnCharacter(HoodedFbx, "Boss_Hooded", true);
-            PinHoodToHead(hooded.GetComponentInChildren<SkinnedMeshRenderer>());
+            PrepareBossBody(hooded.GetComponentInChildren<SkinnedMeshRenderer>());
             var unhooded = SpawnCharacter(UnhoodedFbx, "Boss_Unhooded", false);
             var castClip = FindClip(HoodedFbx, "Young mage casts");
             var hitClip = FindClip(HoodedFbx, "Young mage gets hit");
