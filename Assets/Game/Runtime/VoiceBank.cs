@@ -16,6 +16,9 @@ namespace AiHackathon.Game
         Ultimate,
 
         VillainDefeat, VillainSkill, VillainShield, VillainPhase2, VillainPush,
+
+        // Added later: appended so the values already saved in VoiceBank.asset keep their meaning.
+        AmeliaScream, KaelaScream, KaelaWhereAreWe,
     }
 
     /// <summary>

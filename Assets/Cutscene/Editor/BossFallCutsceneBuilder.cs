@@ -16,8 +16,9 @@ namespace AiHackathon.Cutscene.Editor
     /// <summary>
     /// The way into Period 3, played right before the boss entrance (<see cref="BossPeriod.fallScene"/>): back in
     /// Period 2's stone hall Amelia and Nox cheer, the floor rumbles and cracks with violet light, it gives way and
-    /// they drop through the dark, crash down onto the boss court, get up and look round, and the boss slowly takes
-    /// shape out of the curse at the seal. Ends on black, where the entrance cutscene picks up.
+    /// they drop through the dark screaming, crash down onto the boss court, get up and look round (Kaela: "where are
+    /// we?"), and after a beat of black the empty seal where he will rise fades in. Ends on black, where the entrance
+    /// cutscene picks up. Voice and sound beats live in <see cref="CutsceneSoundtrack"/>: keep their times in step.
     ///
     /// Three places in one scene, far apart so they never see each other: the hall at <see cref="HallOrigin"/>
     /// (turned so the girls face +X as in the arena), an empty void at <see cref="VoidCenter"/> for the fall, and the
@@ -30,7 +31,6 @@ namespace AiHackathon.Cutscene.Editor
         public const string ScenePath = Root + "/BossFallCutscene.unity";
         const string TimelinePath = Root + "/BossFall.playable";
         const string ProfileDir = "Assets/Game/Profiles";
-        const string StandFbx = "Assets/TripoModels/fantasy_character_3d_model_2/fantasy_character_3d_model_2.fbx";
 
         // Beats (seconds)
         const float TRumble = 3.3f;    // the floor starts to shake
@@ -40,12 +40,10 @@ namespace AiHackathon.Cutscene.Editor
         const float TArena = 7.9f;     // cut: the boss court
         const float TDrop = 8.4f;      // they come down into frame
         const float TLand = 8.78f;
-        const float TOmen = 12.3f;     // the seal stirs
-        const float TSmoke = 13.0f;    // curse smoke rises; the boss is inside it
-        const float TReveal = 13.6f;   // light finds his silhouette
-        const float TGlint = 16.0f;
-        const float TFadeOut = 16.35f;
-        const float TEnd = 17f;
+        const float TWhere = 10.85f;   // Kaela: "where are we?" (2.85s) on her close-up, see CutsceneSoundtrack
+        const float TSeal = 14.0f;     // black, then the empty seal fades in
+        const float TFadeOut = 17.05f;
+        const float TEnd = 17.75f;
 
         static readonly Vector3 HallOrigin = new Vector3(300f, 0f, 0f);
         static readonly Quaternion HallRotation = Quaternion.Euler(0f, 90f, 0f); // hall +Z (where the class faces) → world +X
@@ -56,6 +54,9 @@ namespace AiHackathon.Cutscene.Editor
         static readonly Vector3 HoleLocal = new Vector3(0f, 0f, 1f);
         // Where each hangs in the void (offsets from VoidCenter).
         static readonly Vector3[] VoidLocal = { new Vector3(0f, 0.4f, 0.75f), new Vector3(0.25f, -0.15f, -0.8f) };
+        // Kaela's face once she is up on the court (her head bone in the ready stance, a little higher). A fixed point:
+        // she starts the cutscene in the hall, so a tracking camera would be built facing there.
+        static readonly Vector3 KaelaFace = new Vector3(-4.67f, 1.34f, -0.78f);
         static readonly Color Violet = new Color(0.62f, 0.38f, 1f);
         static readonly Color Warm = new Color(1f, 0.84f, 0.62f);
 
@@ -121,18 +122,7 @@ namespace AiHackathon.Cutscene.Editor
                 rig.character.localPosition = Vector3.zero;
             }
 
-            // ---- The boss, dark at the seal until the light finds him ----
-            var boss = SpawnCharacter(HoodedFbx, "Boss_Hooded", false);
-            var bossBody = boss.GetComponentInChildren<SkinnedMeshRenderer>(true);
-            PinHoodToHead(bossBody);
-            var stand = FindClip(StandFbx, "Young mage standing still");
-            boss.gameObject.SetActive(true);
-            stand.SampleAnimation(boss.gameObject, 2f);
-            var bossHead = FindBone(boss.transform, "Head");
-            var headPos = bossHead.position;
-            boss.gameObject.SetActive(false);
-
-            var fx = BuildFx(headPos, out var controlled, out var debris, out var slabs);
+            var fx = BuildFx(out var controlled, out var debris, out var slabs);
             foreach (var loop in envLoops) controlled.Add((loop, 0f, TEnd));
             var ui = BuildUi(cam);
 
@@ -152,10 +142,6 @@ namespace AiHackathon.Cutscene.Editor
                 director.SetGenericBinding(move, movers[i]);
                 Place(move, MoverClip(i), 0f, TEnd);
             }
-            var bossAnim = timeline.CreateTrack<AnimationTrack>(chars, "Boss Anim");
-            director.SetGenericBinding(bossAnim, boss);
-            Place(bossAnim, stand, TSmoke, TEnd - TSmoke, 0f, 0.7f);
-            Activation(timeline, chars, director, "Boss Active", boss.gameObject, TSmoke + 0.25f, TEnd);
 
             var hole = Hall(HoleLocal);
             var voidMid = VoidCenter + new Vector3(0f, 1.1f, 0f);
@@ -171,10 +157,12 @@ namespace AiHackathon.Cutscene.Editor
                 new Shot { Name = "D_Void", Start = TVoid, End = TArena, From = voidMid + new Vector3(2.7f, -0.2f, 1.2f), To = voidMid + new Vector3(2.35f, -0.35f, 1.0f), LookPoint = voidMid, Fov = 46f, Shake = 0.45f },
                 // The court, low: they crash down.
                 new Shot { Name = "E_Land", Start = TArena, End = 10.2f, From = new Vector3(-2.85f, 0.42f, 1.95f), To = new Vector3(-2.95f, 0.46f, 1.8f), LookPoint = new Vector3(-4.62f, 0.75f, 0f), Fov = 46f, Shake = 0.15f, Thud = TLand, Kicks = new[] { TLand + 0.01f }, KickPeak = 2.4f, KickDecay = 0.9f },
-                // Facing them from the court: they get up and look round.
-                new Shot { Name = "F_Rise", Start = 10.2f, End = TOmen, From = new Vector3(-1.55f, 1.3f, 0.4f), To = new Vector3(-1.75f, 1.25f, 0.28f), LookPoint = new Vector3(-4.62f, 1.05f, 0f), Fov = 40f, Shake = 0.08f },
-                // Over their shoulders to the seal: something takes shape in the curse.
-                new Shot { Name = "G_Reveal", Start = TOmen, End = TEnd, From = new Vector3(-6.05f, 1.3f, 0.05f), To = new Vector3(-5.8f, 1.27f, 0.03f), LookPoint = new Vector3(0f, 0.9f, 0f), Fov = 32f, FovTo = 19f, Shake = 0.06f, Kicks = new[] { TSmoke + 0.02f }, KickPeak = 0.7f },
+                // Facing them from the court, low: they finish getting up.
+                new Shot { Name = "F_Rise", Start = 10.2f, End = TWhere - 0.1f, From = new Vector3(-2.45f, 0.95f, 0.2f), To = new Vector3(-2.6f, 1.0f, 0.12f), LookPoint = new Vector3(-4.62f, 0.95f, 0f), Fov = 46f, Shake = 0.07f },
+                // Kaela, close from her front-right (clear of the wand held out level ahead of her), as she says it.
+                new Shot { Name = "F_Kaela", Start = TWhere - 0.1f, End = TSeal, From = new Vector3(-3.72f, 1.46f, -1.82f), To = new Vector3(-3.85f, 1.44f, -1.7f), LookPoint = KaelaFace + new Vector3(0.05f, -0.02f, 0.38f), Fov = 40f, FovTo = 35f, Shake = 0.06f },
+                // After a beat of black: the empty court and the seal at its heart, where he will rise.
+                new Shot { Name = "G_Seal", Start = TSeal, End = TEnd, From = new Vector3(-2.95f, 0.72f, 0.75f), To = new Vector3(-2.35f, 0.66f, 0.55f), LookPoint = new Vector3(0f, 0.3f, 0f), Fov = 42f, FovTo = 34f, Shake = 0.05f },
             });
 
             var fxGroup = timeline.CreateTrack<GroupTrack>(null, "FX");
@@ -184,12 +172,12 @@ namespace AiHackathon.Cutscene.Editor
             Activation(timeline, fxGroup, director, "Slabs Active", slabs.gameObject, TBreak, TVoid);
             AddAnimation(timeline, fxGroup, director, "Slabs Fall", slabs, DebrisClip(slabs.transform), TEnd);
             AddControlled(timeline, fxGroup, director, controlled);
-            // The court sleeps until they land; the braziers catch, then the seal stirs and the curse answers.
+            // The court sleeps until they land; the braziers catch, and the seal glows faintly as it fades in.
             BossArena.AddTimelineClip(timeline, fxGroup, director, "Arena_BossFall", TEnd, clip =>
             {
-                BossArena.SealCurve(clip, Smooth(0f, 0.04f, TOmen, 0.04f, TSmoke, 0.25f, TReveal + 1f, 0.12f, TEnd, 0.08f));
-                BossArena.FireCurve(clip, Smooth(0f, 0.15f, TLand + 1.4f, 0.15f, TLand + 2.2f, 0.8f, TSmoke, 0.6f, TSmoke + 0.4f, 1.4f, TEnd, 0.6f));
-                BossArena.CrystalCurve(clip, Smooth(0f, 0.1f, TLand + 1.4f, 0.1f, TLand + 2.4f, 0.35f, TSmoke + 0.3f, 0.8f, TEnd, 0.3f));
+                BossArena.SealCurve(clip, Smooth(0f, 0.04f, TSeal, 0.04f, TSeal + 1.6f, 0.14f, TEnd, 0.2f));
+                BossArena.FireCurve(clip, Smooth(0f, 0.15f, TLand + 1.4f, 0.15f, TLand + 2.2f, 0.8f, TEnd, 0.7f));
+                BossArena.CrystalCurve(clip, Smooth(0f, 0.1f, TLand + 1.4f, 0.1f, TLand + 2.4f, 0.35f, TEnd, 0.4f));
             });
 
             AssetDatabase.SaveAssets();
@@ -265,7 +253,7 @@ namespace AiHackathon.Cutscene.Editor
 
         // ------------------------------------------------------------------ effects
 
-        static Animator BuildFx(Vector3 bossHead, out List<(GameObject, float, float)> controlled, out Animator debris, out Animator slabs)
+        static Animator BuildFx(out List<(GameObject, float, float)> controlled, out Animator debris, out Animator slabs)
         {
             controlled = new List<(GameObject, float, float)>();
             var fx = new GameObject("FX");
@@ -287,11 +275,9 @@ namespace AiHackathon.Cutscene.Editor
             below.transform.position = VoidCenter + Vector3.down * 3f;
             var voidKey = Light(lights, "Void Key", LightType.Point, new Color(0.75f, 0.75f, 1f), 0f, 8f);
             voidKey.transform.position = VoidCenter + new Vector3(2f, 2.2f, 1.5f);
-            // Arena: the seal's omen, and a light on his face for the last look.
+            // Arena: a faint pulse of curse light at the seal.
             var omen = Light(lights, "Omen", LightType.Point, Violet, 0f, 3.5f);
             omen.transform.position = new Vector3(0f, 0.2f, 0f);
-            var face = Light(lights, "Face", LightType.Point, Violet, 0f, 1.2f);
-            face.transform.position = bossHead + BossRotation * Vector3.forward * 0.35f;
 
             var volumes = StandardVolumes(fx.transform);
             Volume(volumes, "Warm", 2, 0f, Profile("FallWarm", p =>
@@ -344,12 +330,8 @@ namespace AiHackathon.Cutscene.Editor
             var ash = Motes(vfx, "AshMotes", new Color(0.7f, 0.68f, 0.76f, 0.7f), 45f, 0.018f, 0.06f);
             controlled.Add((ash, TArena, TEnd));
 
-            // The seal stirs: petals of curse, then a smoke pillar he stands inside.
-            controlled.Add((Vfx(vfx, "HCFX_Appear_03", Vector3.zero, 0.1f), TOmen, TSmoke + 1f));
-            var smoke = Tint(Vfx(vfx, "HCFX_Smoke_02_Floor", Vector3.zero, 0.1f, 0.6f), new Color(0.28f, 0.18f, 0.38f));
-            controlled.Add((smoke, TSmoke - 0.1f, TEnd));
-            controlled.Add((FloorRing(vfx, 0.22f, Violet), TSmoke, TSmoke + 1.4f));
-            controlled.Add((CurseWispsAt(vfx), TReveal, TEnd));
+            // The seal: a few curse wisps drifting up from it, nothing more (he rises in the entrance cutscene).
+            controlled.Add((CurseWispsAt(vfx), TSeal, TEnd));
 
             debris = BuildDebris(fx.transform, hole);
             slabs = BuildSlabs(fx.transform, hole);
@@ -359,7 +341,7 @@ namespace AiHackathon.Cutscene.Editor
 
         static GameObject CurseWispsAt(Transform parent)
         {
-            var wisps = Motes(parent, "Curse Wisps", new Color(0.62f, 0.38f, 1f, 0.85f), 30f, 0.035f, 0.5f);
+            var wisps = Motes(parent, "Curse Wisps", new Color(0.62f, 0.38f, 1f, 0.7f), 14f, 0.03f, 0.35f);
             wisps.transform.position = new Vector3(0f, 0.6f, 0f);
             var shape = wisps.GetComponent<ParticleSystem>().shape;
             shape.scale = new Vector3(0.9f, 1.2f, 0.9f);
@@ -600,15 +582,14 @@ namespace AiHackathon.Cutscene.Editor
             Bind(clip, "VFX/Hole", typeof(Transform), "m_LocalScale.z", Lin(0f, 1f, TEnd, 1f));
             Bind(clip, "Lights/Void Glow", typeof(Light), "m_Intensity", Smooth(0f, 0f, TVoid - 0.1f, 0f, TVoid + 0.3f, 3f, TArena - 0.3f, 8f, TArena, 0f));
             Bind(clip, "Lights/Void Key", typeof(Light), "m_Intensity", Smooth(0f, 0f, TVoid - 0.1f, 0f, TVoid + 0.2f, 2.5f, TArena, 2.5f, TArena + 0.01f, 0f));
-            // Arena: dim until they are down; the omen breathes, the rim and the face light find him.
-            Bind(clip, "Lights/Key", typeof(Light), "m_Intensity", Smooth(0f, 0.5f, TArena, 0.5f, TLand + 0.5f, 0.9f, TOmen, 0.9f, TReveal, 0.7f));
-            Bind(clip, "Lights/Rim", typeof(Light), "m_Intensity", Smooth(0f, 0f, TReveal, 0f, TReveal + 2.4f, 5f, TGlint, 7f, TEnd, 7f));
-            Bind(clip, "Lights/Omen", typeof(Light), "m_Intensity", Smooth(0f, 0f, TOmen, 0f, TOmen + 0.5f, 2.2f, TOmen + 0.9f, 1f, TSmoke, 3.5f, TReveal + 1.5f, 1.2f, TEnd, 0.8f));
-            Bind(clip, "Lights/Face", typeof(Light), "m_Intensity", Smooth(0f, 0f, TGlint - 0.4f, 0f, TGlint, 2.6f, TEnd, 2.2f));
-            // Warm in the hall, the curse grade in the dark, dread as he appears.
+            // Arena: dim until they are down; the seal's omen breathes once it fades in.
+            Bind(clip, "Lights/Key", typeof(Light), "m_Intensity", Smooth(0f, 0.5f, TArena, 0.5f, TLand + 0.5f, 0.9f, TEnd, 0.85f));
+            Bind(clip, "Lights/Rim", typeof(Light), "m_Intensity", Lin(0f, 0f, TEnd, 0f));
+            Bind(clip, "Lights/Omen", typeof(Light), "m_Intensity", Smooth(0f, 0f, TSeal, 0f, TSeal + 1.2f, 1.4f, TSeal + 2f, 0.7f, TFadeOut - 0.3f, 1.8f, TEnd, 1.2f));
+            // Warm in the hall, the curse grade in the dark, a touch of dread on the empty seal.
             Bind(clip, "Volumes/Warm", typeof(Volume), "weight", Smooth(0f, 1f, TRumble, 1f, TBreak, 0.3f, TVoid, 0f, TEnd, 0f));
             Bind(clip, "Volumes/Curse", typeof(Volume), "weight", Smooth(0f, 0f, TRumble, 0f, TBreak, 0.4f, TVoid, 1f, TEnd, 1f));
-            Bind(clip, "Volumes/Dread", typeof(Volume), "weight", Smooth(0f, 0f, TSmoke - 0.1f, 0f, TReveal + 1.8f, 1f, TEnd, 1f));
+            Bind(clip, "Volumes/Dread", typeof(Volume), "weight", Smooth(0f, 0f, TSeal, 0f, TEnd, 0.6f));
             Bind(clip, "Volumes/Impact", typeof(Volume), "weight", Lin(Pulses(0f, 0.35f, 0.5f, TBreak, TLand)));
             return SaveClip(clip);
         }
@@ -616,8 +597,10 @@ namespace AiHackathon.Cutscene.Editor
         static AnimationClip BuildUiClip()
         {
             var clip = new AnimationClip { name = "UI_BossFall" };
-            // From black; a beat of black between the fall and the court; to black for the entrance cutscene.
-            Bind(clip, "BlackFade", typeof(Image), "m_Color.a", Lin(0f, 1f, 0.8f, 0f, TArena - 0.25f, 0f, TArena - 0.05f, 1f, TArena + 0.3f, 1f, TDrop - 0.05f, 0f, TFadeOut, 0f, TEnd - 0.1f, 1f, TEnd, 1f));
+            // From black; a beat of black between the fall and the court, and again before the seal fades in; to
+            // black for the entrance cutscene.
+            Bind(clip, "BlackFade", typeof(Image), "m_Color.a", Lin(0f, 1f, 0.8f, 0f, TArena - 0.25f, 0f, TArena - 0.05f, 1f, TArena + 0.3f, 1f, TDrop - 0.05f, 0f,
+                TSeal - 0.45f, 0f, TSeal - 0.05f, 1f, TSeal + 0.35f, 1f, TSeal + 1.5f, 0f, TFadeOut, 0f, TEnd - 0.1f, 1f, TEnd, 1f));
             Bind(clip, "WhiteFlash", typeof(Image), "m_Color.a", Lin(Pulses(0f, 0.18f, 0.35f, TBreak + 0.02f)));
             return SaveClip(clip);
         }

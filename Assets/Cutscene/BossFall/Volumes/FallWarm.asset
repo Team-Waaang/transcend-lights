@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: FallWarm
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
-  - {fileID: 4345386450153262818}
---- !u!114 &4345386450153262818
+  - {fileID: 7354603973255592420}
+--- !u!114 &7354603973255592420
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}

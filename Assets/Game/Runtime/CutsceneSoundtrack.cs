@@ -14,8 +14,17 @@ namespace AiHackathon.Game
             public Beat(double time, string id) { this.time = time; this.id = id; }
         }
 
+        readonly struct Line
+        {
+            public readonly double time;
+            public readonly VoiceLine line;
+            public readonly float patience;
+            public Line(double time, VoiceLine line, float patience) { this.time = time; this.line = line; this.patience = patience; }
+        }
+
         PlayableDirector director;
         Beat[] beats;
+        Line[] lines = new Line[0];
         double previous = -0.001;
         string scene;
 
@@ -35,11 +44,14 @@ namespace AiHackathon.Game
                     beats = new[] { new Beat(2.2, "blackout"), new Beat(7.0, "magic_ignite"), new Beat(10.85, "magic_ignite") };
                     break;
                 case "BossFallCutscene":
-                    // Rumble, cracks, the floor gives way, the drop, the landing, the seal stirs, he takes shape.
+                    // Rumble, cracks, the floor gives way, the drop, the landing, and the empty seal where he will rise.
                     beats = new[] { new Beat(3.3, "ominous_pulse"), new Beat(3.55, "curse_charge"), new Beat(4.25, "ominous_pulse"),
                         new Beat(4.8, "ward_break"), new Beat(4.83, "stone_impact"), new Beat(5.75, "teleport"),
-                        new Beat(8.78, "cutscene_slam"), new Beat(8.8, "stone_impact"), new Beat(12.3, "ominous_pulse"),
-                        new Beat(13.0, "summon"), new Beat(16.0, "curse_charge") };
+                        new Beat(8.78, "cutscene_slam"), new Beat(8.8, "stone_impact"), new Beat(14.65, "ominous_pulse") };
+                    // Screams one after the other through the fall (one voice at a time: Kaela's waits for Amelia's),
+                    // then Kaela once they are up and looking round.
+                    lines = new[] { new Line(4.85, VoiceLine.AmeliaScream, 1f), new Line(4.9, VoiceLine.KaelaScream, 3f),
+                        new Line(10.85, VoiceLine.KaelaWhereAreWe, 1.5f) };
                     break;
                 case "BossEntranceCutscene":
                     beats = new[] { new Beat(0.15, "ominous_pulse"), new Beat(2.45, "summon"), new Beat(2.53, "blast"),
@@ -64,8 +76,12 @@ namespace AiHackathon.Game
             // Large jumps are skips/seeks: never emit all the cues that were skipped over.
             bool continuous = now >= previous && now - previous < 0.5;
             if (continuous)
+            {
                 foreach (var beat in beats)
                     if (previous < beat.time && now >= beat.time) GameAudio.Play(beat.id);
+                foreach (var l in lines)
+                    if (previous < l.time && now >= l.time) Voice.Say(l.line, l.patience);
+            }
             previous = now;
             if (scene == "Period1Cutscene" && now >= 9.3 && now < 11.0)
                 GameAudio.Loop("rune_trace_loop", transform, 0.65f);

@@ -72,7 +72,9 @@ namespace AiHackathon.Cutscene.Editor
             {
                 if (!smr.enabled || !smr.gameObject.activeInHierarchy || smr.sharedMesh == null) continue;
                 var mesh = new Mesh { name = smr.sharedMesh.name + " (preview)" };
-                smr.BakeMesh(mesh, true);
+                // useScale false: the baked skin already comes out at the bones' world size (true divides the
+                // parents' scale back out, which drew the 1.5x characters at 1x), so the stand-in stays at scale 1.
+                smr.BakeMesh(mesh, false);
                 var go = new GameObject("PreviewSkin") { hideFlags = HideFlags.HideAndDontSave };
                 go.transform.SetPositionAndRotation(smr.transform.position, smr.transform.rotation);
                 go.layer = smr.gameObject.layer;
