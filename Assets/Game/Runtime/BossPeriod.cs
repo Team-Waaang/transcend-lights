@@ -53,17 +53,17 @@ namespace AiHackathon.Game
         public float titleTime = 3.4f;
 
         [Header("Fight")]
-        public float phase2At = 55f;
+        public float phase2At = 82.5f;
         [Tooltip("The defeat cutscene starts when the boss is down to this (\"아주 조금\").")]
-        public float defeatAt = 8f;
+        public float defeatAt = 12f;
         [Tooltip("HP per second one laser takes off the boss.")]
         public float laserDps = 1.7f;
         [Tooltip("Both lasers on the boss at once: each deals this much more.")]
         public float resonanceMultiplier = 1.5f;
         [Tooltip("HP the boss gets back when a curse orb reaches the players.")]
-        public float orbHeal = 4f;
+        public float orbHeal = 6f;
         [Tooltip("HP the boss gets back when a stone spirit reaches a player.")]
-        public float minionHeal = 2.5f;
+        public float minionHeal = 3.75f;
         [Tooltip("Dev keys: F1 = to the phase 2 cutscene, F2 = to the defeat cutscene.")]
         public bool devKeys = true;
 
