@@ -123,9 +123,10 @@ namespace AiHackathon.Cutscene.Editor
         /// <summary>
         /// Tripo's auto-rig lets shoulder/arm bones pull on the hood, so raising the wand arm drags the hood off the
         /// hair. On a cutscene-only mesh copy, shift those influences onto the head, ramping from neck to head height
-        /// (the hood hem still follows the shoulders; hand and wand vertices are left alone).
+        /// (the hood hem still follows the shoulders; hand and wand vertices are left alone). The same copy also closes
+        /// his right hand on the wand (<see cref="PeriodPoseClips.CloseBossHandOnWand"/>).
         /// </summary>
-        internal static void PinHoodToHead(SkinnedMeshRenderer body)
+        internal static void PrepareBossBody(SkinnedMeshRenderer body)
         {
             var src = body.sharedMesh;
             var bones = body.bones;
@@ -171,6 +172,7 @@ namespace AiHackathon.Cutscene.Editor
                 weights[v] = nw;
             }
             mesh.boneWeights = weights;
+            PeriodPoseClips.CloseBossHandOnWand(mesh, AssetDatabase.GetAssetPath(src));
             var path = $"{AssetRoot}/Meshes/{mesh.name}.asset";
             AssetDatabase.DeleteAsset(path);
             AssetDatabase.CreateAsset(mesh, path);
