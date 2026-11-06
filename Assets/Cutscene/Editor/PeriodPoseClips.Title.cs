@@ -12,8 +12,8 @@ namespace AiHackathon.Cutscene.Editor
 
         public static void BuildTitle()
         {
-            Save(Make(AmeliaFbx, "Amelia_Title", TitleLength, AmeliaTitle));
-            Save(Make(NoxFbx, "Nox_Title", TitleLength, NoxTitle));
+            Save(Make(AmeliaFbx, "Amelia_Title", TitleLength, AmeliaTitle, true));
+            Save(Make(NoxFbx, "Nox_Title", TitleLength, NoxTitle, true));
         }
 
         /// <summary>Hold the light: wand upright at her right side, a small light cupped in her raised left palm, head bowed a touch toward it.</summary>

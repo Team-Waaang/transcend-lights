@@ -22,8 +22,8 @@ namespace AiHackathon.Cutscene.Editor
         public static void BuildBattle()
         {
             EnsureFolder(AnimDir);
-            Save(Make(AmeliaFbx, "Amelia_Struggle", StruggleLength, (rig, t) => Struggle(rig, t, R)));
-            Save(Make(NoxFbx, "Nox_Struggle", StruggleLength, (rig, t) => Struggle(rig, t, L)));
+            Save(Make(AmeliaFbx, "Amelia_Struggle", StruggleLength, (rig, t) => Struggle(rig, t, R), true));
+            Save(Make(NoxFbx, "Nox_Struggle", StruggleLength, (rig, t) => Struggle(rig, t, L), true));
             Save(Make(AmeliaFbx, "Amelia_Resonance", ResonanceLength, (rig, t) => Resonance(rig, t, R)));
             Save(Make(NoxFbx, "Nox_Resonance", ResonanceLength, (rig, t) => Resonance(rig, t, L)));
             Save(Make(AmeliaFbx, "Amelia_Ultimate", UltimateLength, (rig, t) => Ultimate(rig, t, R)));
@@ -65,9 +65,11 @@ namespace AiHackathon.Cutscene.Editor
             var axis = M(new Vector3(-0.05f + 0.01f * shake, 0.42f - 0.3f * lower, 1f), lead).normalized;
             var point = M(new Vector3(0.03f, 0.665f - 0.025f * lower - 0.0015f * lean + 0.002f * shake, 0.2f + 0.06f * extend + 0.0035f * lean), lead);
             Grip(rig, lead, point, axis, M(new Vector3(0.35f, 1f, 0f), lead), M(new Vector3(0.32f, -0.35f, -0.05f), lead));
-            var gripRot = GripRotation(rig, support, axis, M(new Vector3(-0.2f, -1f, 0.3f), lead));
             var supportPoint = point - axis * 0.075f;
-            rig.Arm(support, supportPoint - gripRot * GripLocal(rig, support), rig[support + "UpperArm"].position + M(new Vector3(-0.3f, -0.38f, 0f), lead), gripRot);
+            var supportPole = M(new Vector3(-0.3f, -0.38f, 0f), lead);
+            var gripRot = EasyGrip(rig, support, supportPoint, axis, M(new Vector3(-0.2f, -1f, 0.3f), lead), supportPole,
+                SupportOblique, out var supportWrist);
+            rig.Arm(support, supportWrist, rig[support + "UpperArm"].position + supportPole, gripRot);
             rig.Curl(support, 0.85f, 0.7f);
         }
 
