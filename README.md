@@ -15,7 +15,7 @@
 [![macOS 다운로드](https://img.shields.io/badge/macOS-다운로드-111111?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-macOS.zip)
 [![Android 지팡이 앱](https://img.shields.io/badge/Android-지팡이%20다운로드-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Wand.apk)
 
-<sub>PC에서 게임을 실행한 뒤 안드로이드 휴대폰에서 <b>지팡이 앱</b>을 실행해 연결합니다 · <a href="https://github.com/Team-Waaang/ai-hackathon/releases/latest">전체 릴리스</a></sub>
+<sub>PC에서 게임을 실행한 뒤 안드로이드 휴대폰에서 <b>지팡이 앱</b>을 실행해 연결합니다 · <a href="https://github.com/Team-Waaang/transcend-lights/releases/latest">전체 릴리스</a></sub>
 
 </div>
 
