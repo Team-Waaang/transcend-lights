@@ -11,22 +11,13 @@
 
 <br>
 
-[![Windows 다운로드](https://img.shields.io/badge/Windows-게임%20다운로드-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Windows.zip)
-[![macOS 다운로드](https://img.shields.io/badge/macOS-게임%20다운로드-111111?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-macOS.zip)
-[![Android 지팡이 앱](https://img.shields.io/badge/Android-지팡이%20앱%20APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Wand.apk)
+[![Windows 다운로드](https://img.shields.io/badge/Windows-다운로드-0078D4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Windows.zip)
+[![macOS 다운로드](https://img.shields.io/badge/macOS-다운로드-111111?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-macOS.zip)
+[![Android 지팡이 앱](https://img.shields.io/badge/Android-지팡이%20다운로드-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Wand.apk)
 
 <sub>PC에서 게임을 실행하고, 플레이어마다 안드로이드 휴대폰에 <b>지팡이 앱</b>을 설치해 연결합니다 · <a href="https://github.com/Team-Waaang/ai-hackathon/releases/latest">전체 릴리스</a></sub>
 
-<br>
-
-![Unity](https://img.shields.io/badge/Unity-6000.4.7f1-222?logo=unity&logoColor=white)
-![URP](https://img.shields.io/badge/URP-17-4B6BFB)
-![Players](https://img.shields.io/badge/플레이어-2인%20로컬%20협동-F2B84B)
-![Controller](https://img.shields.io/badge/컨트롤러-휴대폰%20(AR%20·%20에어마우스)-6FB6FF)
-
 </div>
-
----
 
 ## 🎬 플레이 영상
 
@@ -40,7 +31,7 @@
 
 </div>
 
----
+</br>
 
 ## ✨ 게임 소개
 
@@ -58,7 +49,7 @@
 **"가리키고, 누르기"** 만으로 모든 교시를 진행할 수 있어서 게임을 처음 해 보는 사람도 바로 함께할 수 있어요.
 대부분의 휴대폰에 들어 있는 **카메라와 가속도·자이로 센서만으로** 위치를 파악하기 때문에 별도 장비 없이 간단하게 참여할 수 있습니다.
 
----
+</br>
 
 ## 🏫 마법학교의 하루
 
@@ -141,7 +132,7 @@
   <sub>각자 보스에게 준 피해와 비율, 구슬 격추·돌정령 처치·사슬 수정 파괴·공명 시간, 그리고 MVP</sub>
 </div>
 
----
+</br>
 
 ## 🎮 플레이 방법
 
@@ -155,9 +146,9 @@
 
 | 대상 | 다운로드 | 실행 |
 | --- | --- | --- |
-| 🪟 **Windows** | [TranscendLights-Windows.zip](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Windows.zip) | 압축을 풀고 `TranscendLights.exe` 실행. 방화벽 허용 창이 뜨면 **허용** (휴대폰 연결에 필요) |
-| 🍎 **macOS** | [TranscendLights-macOS.zip](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-macOS.zip) | 압축을 풀고 `TranscendLights.app`을 **우클릭 → 열기** (서명되지 않은 앱이라 처음 한 번 필요) |
-| 🤖 **Android 지팡이 앱** | [TranscendLights-Wand.apk](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Wand.apk) | 휴대폰에서 APK를 받아 설치 (출처를 알 수 없는 앱 설치 허용 필요) |
+| **Windows** | [TranscendLights-Windows.zip](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Windows.zip) | 압축을 풀고 `TranscendLights.exe` 실행. 방화벽 허용 창이 뜨면 **허용** (휴대폰 연결에 필요) |
+| **macOS** | [TranscendLights-macOS.zip](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-macOS.zip) | 압축을 풀고 `TranscendLights.app`을 **우클릭 → 열기** (서명되지 않은 앱이라 처음 한 번 필요) |
+| **Android 지팡이 앱** | [TranscendLights-Wand.apk](https://github.com/Team-Waaang/ai-hackathon/releases/latest/download/TranscendLights-Wand.apk) | 휴대폰에서 APK를 받아 설치 (출처를 알 수 없는 앱 설치 허용 필요) |
 
 ### 휴대폰 연결과 게임 시작
 
@@ -176,7 +167,7 @@
 | 조준 보정 | 좌측 하단 **CENTER** | — |
 | 시작 · 건너뛰기 | — | **Enter** / **Space** |
 
----
+</br>
 
 ## 🛠 주요 기능
 
@@ -190,9 +181,10 @@
 - **AI 보이스** — Amelia, Nox, 보스의 상황별 대사를 AI 더빙으로 제작해 룬 성공/실패, 연속 처치, 피격, QTE 등에 맞춰 재생해요.
 - **사운드** — AI로 생성한 효과음 50종, 환경음 3종, BGM 6종(보스 1·2페이즈, 공명 등).
 
----
 
 <div align="center">
+
+</br>
 
 ### 만든 사람들
 
