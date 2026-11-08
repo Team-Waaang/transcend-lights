@@ -49,6 +49,8 @@ namespace AiHackathon.Cutscene.Editor
         static readonly Vector3 AmeliaPos = new Vector3(0.66f, 0f, 0f);
         static readonly Vector3 NoxPos = new Vector3(-0.66f, 0f, -0.06f);
         const float AmeliaYaw = -14f, NoxYaw = 14f;
+        // The circles are eight-fold symmetric: one 45° step per title loop (the pose clips' length) turns back into itself.
+        const float LoopSpin = 45f / PeriodPoseClips.TitleLength;
 
         [MenuItem("Tools/Periods/Build Title Scene")]
         static void BuildFromMenu()
@@ -536,10 +538,10 @@ namespace AiHackathon.Cutscene.Editor
             var blue = Glow("CircleBlue", T("MagicCircle"), new Color(Blue.r * 1.5f, Blue.g * 1.5f, Blue.b * 1.5f, 0.5f));
             var haloGold = Glow("HaloGold", T("MagicCircle"), new Color(Gold.r * 1.3f, Gold.g * 1.3f, Gold.b * 1.3f, 0.075f));
             var haloBlue = Glow("HaloBlue", T("MagicCircle"), new Color(Blue.r * 1.2f, Blue.g * 1.2f, Blue.b * 1.2f, 0.065f));
-            Ring(root, "Floor Circle", new Vector3(0f, 0.012f, 0.05f), 3.8f, Quaternion.Euler(90f, 0f, 0f), gold, 4f);
-            Ring(root, "Floor Circle Inner", new Vector3(0f, 0.016f, 0.05f), 2.4f, Quaternion.Euler(90f, 0f, 0f), blue, -7f);
-            Ring(root, "Halo", new Vector3(0f, 0.95f, -1.45f), 2.25f, Quaternion.identity, haloGold, 2.5f);
-            Ring(root, "Halo Inner", new Vector3(0f, 0.95f, -1.4f), 1.45f, Quaternion.identity, haloBlue, -4f);
+            Ring(root, "Floor Circle", new Vector3(0f, 0.012f, 0.05f), 3.8f, Quaternion.Euler(90f, 0f, 0f), gold, LoopSpin);
+            Ring(root, "Floor Circle Inner", new Vector3(0f, 0.016f, 0.05f), 2.4f, Quaternion.Euler(90f, 0f, 0f), blue, -LoopSpin);
+            Ring(root, "Halo", new Vector3(0f, 0.95f, -1.45f), 2.25f, Quaternion.identity, haloGold, LoopSpin);
+            Ring(root, "Halo Inner", new Vector3(0f, 0.95f, -1.4f), 1.45f, Quaternion.identity, haloBlue, -LoopSpin);
             return 4;
         }
 
@@ -690,7 +692,7 @@ namespace AiHackathon.Cutscene.Editor
                 ribbon.center = new Vector3(0f, 0.85f, -0.03f);
                 ribbon.radius = new Vector2(1.35f, 0.82f);
                 ribbon.height = 0.42f;
-                ribbon.lap = 7.5f;
+                ribbon.lap = PeriodPoseClips.TitleLength;
                 ribbon.phase = i * 0.5f;
                 ribbon.heightPhase = i * Mathf.PI;
                 go.transform.position = ribbon.center + new Vector3(ribbon.radius.x, 0f, 0f);
@@ -1370,8 +1372,9 @@ namespace AiHackathon.Cutscene.Editor
             }
             var star = new Vector2[8];
             for (int i = 0; i < 8; i++) star[i] = new Vector2(Mathf.Cos(i * Mathf.PI / 4f + Mathf.PI / 8f), Mathf.Sin(i * Mathf.PI / 4f + Mathf.PI / 8f)) * 0.74f;
-            var hex = new Vector2[6];
-            for (int i = 0; i < 6; i++) hex[i] = new Vector2(Mathf.Cos(i * Mathf.PI / 3f + Mathf.PI / 2f), Mathf.Sin(i * Mathf.PI / 3f + Mathf.PI / 2f)) * 0.38f;
+            // Inner eight-point star (two squares): the whole circle repeats every 45°, so a 45° turn per loop is seamless.
+            var hex = new Vector2[8];
+            for (int i = 0; i < 8; i++) hex[i] = new Vector2(Mathf.Cos(i * Mathf.PI / 4f + Mathf.PI / 8f), Mathf.Sin(i * Mathf.PI / 4f + Mathf.PI / 8f)) * 0.38f;
             float aa = 2f / N * 1.2f;
             float Line(Vector2 p, Vector2 a, Vector2 b)
             {
@@ -1400,7 +1403,8 @@ namespace AiHackathon.Cutscene.Editor
                     var gp = new Vector2((cell - g - 0.5f) * cellW, r - 0.9035f);
                     var scale = new Vector2(cellW * 0.32f, 0.024f);
                     float d = 10f;
-                    foreach (var s in glyphs[g])
+                    // Five glyphs repeated round the band: eight-fold symmetric like the stars.
+                    foreach (var s in glyphs[g % 5])
                         d = Mathf.Min(d, Line(gp, new Vector2(s.x * scale.x, s.y * scale.y), new Vector2(s.z * scale.x, s.w * scale.y)));
                     a = Mathf.Max(a, Stroke(d, 0.0042f));
                 }
@@ -1416,7 +1420,7 @@ namespace AiHackathon.Cutscene.Editor
                 }
                 a = Mathf.Max(a, Stroke(Mathf.Abs(r - 0.42f), 0.005f));
                 a = Mathf.Max(a, Stroke(Mathf.Abs(r - 0.395f), 0.0025f));
-                for (int i = 0; i < 6; i++) a = Mathf.Max(a, Stroke(Line(p, hex[i], hex[(i + 2) % 6]), 0.004f));
+                for (int i = 0; i < 8; i++) a = Mathf.Max(a, Stroke(Line(p, hex[i], hex[(i + 2) % 8]), 0.004f));
                 a = Mathf.Max(a, Stroke(Mathf.Abs(r - 0.13f), 0.006f));
                 a = Mathf.Max(a, Stroke(r, 0.03f));
                 // A faint fill inside the star so the circle glows as a whole, not only its lines.

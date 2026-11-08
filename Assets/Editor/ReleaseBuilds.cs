@@ -25,6 +25,16 @@ public static class ReleaseBuilds
     [MenuItem("Tools/Release/Build macOS")]
     public static void Mac() => Game(BuildTarget.StandaloneOSX, "Builds/macOS/TranscendLights.app");
 
+    /// <summary>
+    /// The title scene alone, for recording the README loop: run it with
+    /// <c>-screen-fullscreen 0 -screen-width 1280 -screen-height 720 -titleLoop &lt;folder&gt;</c> (TitleLoopRecorder).
+    /// </summary>
+    public static void TitleLoopPlayer()
+    {
+        AiHackathon.Cutscene.Editor.TitleSceneBuilder.Build();
+        Done(Run(new[] { AiHackathon.Cutscene.Editor.TitleSceneBuilder.ScenePath }, BuildTarget.StandaloneOSX, "Builds/TitleLoop/TitleLoop.app"));
+    }
+
     [MenuItem("Tools/Release/Build Phone App (Android)")]
     public static void PhoneApp()
     {
